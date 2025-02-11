@@ -1,0 +1,26 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}UserQuizSelection{% endblock %}
+
+{% block body %}
+    <h1>UserQuizSelection</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ user_quiz_selection.id }}</td>
+            </tr>
+            <tr>
+                <th>EstCorrecte</th>
+                <td>{{ user_quiz_selection.estCorrecte ? 'Yes' : 'No' }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_user_quiz_selection_index') }}">back to list</a>
+
+    <a href="{{ path('app_user_quiz_selection_edit', {'id': user_quiz_selection.id}) }}">edit</a>
+
+    {{ include('user_quiz_selection/_delete_form.html.twig') }}
+{% endblock %}
