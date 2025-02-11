@@ -1,0 +1,99 @@
+<?php
+
+namespace App\Entity;
+
+use App\Repository\ReponseRepository;
+use Doctrine\ORM\Mapping as ORM;
+
+#[ORM\Entity(repositoryClass: ReponseRepository::class)]
+class Reponse
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $text = null;
+
+    #[ORM\Column]
+    private ?bool $is_correct = false; // Valeur par défaut false
+
+    #[ORM\ManyToOne(inversedBy: 'Reponses')]
+    private ?Question $question = null;
+
+    #[ORM\OneToOne(inversedBy: 'reponse', cascade: ['persist', 'remove'])]
+    private ?Resultat $resultat = null;
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $userId = null;
+
+
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function setId(int $id): static
+    {
+        $this->id = $id;
+        return $this;
+    }
+
+    public function getText(): ?string
+    {
+        return $this->text;
+    }
+
+    public function setText(string $text): static
+    {
+        $this->text = $text;
+        return $this;
+    }
+
+    public function isCorrect(): ?bool
+    {
+        return $this->is_correct;
+    }
+
+    public function setIsCorrect(bool $is_correct): static
+    {
+        $this->is_correct = $is_correct;
+        return $this;
+    }
+
+    public function getQuestion(): ?Question
+    {
+        return $this->question;
+    }
+
+    public function setQuestion(?Question $question): static
+    {
+        $this->question = $question;
+        return $this;
+    }
+
+    public function getResultat(): ?Resultat
+    {
+        return $this->resultat;
+    }
+
+    public function setResultat(?Resultat $resultat): static
+    {
+        $this->resultat = $resultat;
+        return $this;
+    }
+
+    
+    public function getUserId(): ?int
+    {
+        return $this->userId;
+    }
+
+    public function setUserId(?int $userId): self
+    {
+        $this->userId = $userId;
+
+        return $this;
+    }
+
+}

@@ -1,0 +1,55 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Résultat - Félicitations ! 🎉{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white text-center">
+            <h1 class="fw-bold">🎯 Résultat de votre test</h1>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered">
+                <tbody>
+                    <tr>
+                        <th class="bg-light text-primary">ID</th>
+                        <td>{{ resultat.id }}</td>
+                    </tr>
+                    <tr>
+                        <th class="bg-light text-primary">Score</th>
+                        <td class="fw-bold text-success">{{ resultat.score }} / 100</td>
+                    </tr>
+                    <tr>
+                        <th class="bg-light text-primary">Date de soumission</th>
+                        <td>{{ resultat.submittedAt ? resultat.submittedAt|date('d/m/Y H:i:s') : 'Non disponible' }}</td>
+                    </tr>
+                    <tr>
+                        <th class="bg-light text-primary">Feedback</th>
+                        <td class="fst-italic">"{{ resultat.feedback }}"</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="alert alert-info text-center mt-3">
+                {% if resultat.score >= 80 %}
+                    🎉 Félicitations ! Vous avez obtenu un excellent score !
+                {% elseif resultat.score >= 50 %}
+                    👍 Bon travail ! Vous pouvez encore progresser.
+                {% else %}
+                    💪 Ne vous découragez pas ! Continuez à apprendre et à vous améliorer.
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{{ path('app_resultat_index') }}" class="btn btn-secondary">
+                    ⬅ Retour à la liste
+                </a>
+                <a href="{{ path('app_resultat_edit', {'id': resultat.id}) }}" class="btn btn-warning">
+                    ✏ Modifier
+                </a>
+                {{ include('resultat/_delete_form.html.twig') }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

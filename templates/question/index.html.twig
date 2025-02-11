@@ -1,0 +1,68 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des Questions{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ asset('assets/css/indexquestion.css') }}">
+{% endblock %}
+
+{% block body %}
+    <div class="container1">
+        <h1 class="mb-4 text-center">Liste des Énoncés de Questions</h1>
+        
+        <div class="text-end mb-3">
+            <!-- Lien pour ajouter une nouvelle question, associée à une évaluation spécifique -->
+            <a href="{{ path('app_question_new', {'evaluationId': evaluation.id}) }}" class="btn btn-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Ajouter un nouvel énoncé">➕ Nouvel Énoncé</a>
+        </div>
+
+        <table class="table table-striped table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Points</th>
+                    <th>Ordre</th>
+                    <th>Évaluation</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for question in questions %}
+                    <tr>
+                        <td>{{ question.id }}</td>
+                        <td>{{ question.point }}</td>
+                        <td>{{ question.ordreQuestion }}</td>
+                        <td>
+                            <a href="{{ path('app_evaluation_show', {'id': question.evaluation.id}) }}">
+                                {{ question.evaluation.id }}
+                            </a>
+                        </td>
+                        <td>
+                            <a href="{{ path('app_question_show', {'id': question.id}) }}" class="btn btn-primary btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="Voir l'énoncé">👀 Voir</a>
+                            <a href="{{ path('app_question_edit', {'id': question.id}) }}" class="btn btn-warning btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="Modifier l'énoncé">✏️ Modifier</a>
+                            <form method="post" action="{{ path('app_question_delete', {'id': question.id}) }}" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet énoncé de question ?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ question.id) }}">
+                                <button class="btn btn-danger btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="Supprimer l'énoncé">🗑️ Supprimer</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center">Aucun énoncé de question trouvé.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Activer les tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    </script>
+{% endblock %}
