@@ -28,43 +28,83 @@ final class ReponseController extends AbstractController
     {
         // Récupérer la question par ID
         $question = $questionRepository->find($questionId);
-
+    
         if (!$question) {
             throw $this->createNotFoundException('Question non trouvée');
         }
-
+    
         // Créer une nouvelle réponse liée à la question
         $reponse = new Reponse();
         $reponse->setQuestion($question);
-
-        // Récupérer un ID utilisateur temporaire (à remplacer par un utilisateur authentifié plus tard)
-        $userId = 123; // Remplacez cela par l'ID utilisateur réel lorsque l'authentification sera en place
+    
+        // Récupérer l'ID utilisateur (remplacez cette ligne par l'authentification réelle plus tard)
+        $userId = 123; // Remplacer par l'ID réel de l'utilisateur connecté
         $reponse->setUserId($userId);
-
+    
         $form = $this->createForm(ReponseType::class, $reponse);
         $form->handleRequest($request);
-
+    
+        // Initialisation de la variable nextQuestionId
+        $nextQuestionId = null;
+    
+        // Logique pour récupérer la question suivante
+        $nextQuestion = $questionRepository->findOneBy([
+            'ordreQuestion' => $question->getOrdreQuestion() + 1,
+            'evaluation' => $question->getEvaluation()
+        ]);
+    
+        if ($nextQuestion) {
+            $nextQuestionId = $nextQuestion->getId(); // Assigner l'ID de la question suivante
+        }
+    
         if ($form->isSubmitted() && $form->isValid()) {
             // Vérification de la réponse correcte
-            if ($this->isAnswerCorrect($reponse, $question)) {
-                $reponse->setIsCorrect(true); // Marquer la réponse comme correcte
-            } else {
-                $reponse->setIsCorrect(false); // Marquer la réponse comme incorrecte
-            }
-
+            
+    
             $entityManager->persist($reponse);
             $entityManager->flush();
-
-            return $this->redirectToRoute('app_reponse_index', [], Response::HTTP_SEE_OTHER);
+    
+            // Vérification de la question suivante
+            if ($reponse->getQuestion()) {
+                $evaluation = $reponse->getQuestion()->getEvaluation();
+                $questions = $evaluation->getQuestions();
+                $maxOrder = null;
+    
+                foreach ($questions as $question) {
+                    if ($maxOrder === null || $question->getOrdreQuestion() > $maxOrder) {
+                        $maxOrder = $question->getOrdreQuestion();
+                    }
+                }
+    
+                // Si c'est la dernière question, rediriger vers la page d'évaluation
+                if ($reponse->getQuestion()->getOrdreQuestion() === $maxOrder) {
+                    return $this->redirectToRoute('etudiant_evaluation_index', [], Response::HTTP_SEE_OTHER);
+                } else {
+                    // Sinon, passer à la question suivante
+                    $nextQuestion = $questionRepository->findOneBy([
+                        'ordreQuestion' => $reponse->getQuestion()->getOrdreQuestion() + 1,
+                        'evaluation' => $evaluation
+                    ]);
+    
+                    if ($nextQuestion) {
+                        return $this->redirectToRoute('app_reponse_new', ['questionId' => $nextQuestion->getId()], Response::HTTP_SEE_OTHER);
+                    } else {
+                        return $this->redirectToRoute('app_evaluation_index', [], Response::HTTP_SEE_OTHER);
+                    }
+                }
+            }
         }
-
+    
+        // Passer la question et nextQuestionId à la vue
         return $this->render('reponse/new.html.twig', [
             'reponse' => $reponse,
             'form' => $form->createView(),
-            'question' => $question->getText(), // Passer la question à la vue
+            'question' => $question->getText(),
+            'nextQuestionId' => $nextQuestionId,
         ]);
     }
-
+    
+    
     #[Route('/{id}', name: 'app_reponse_show', methods: ['GET'])]
     public function show(Reponse $reponse): Response
     {

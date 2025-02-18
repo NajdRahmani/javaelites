@@ -1,136 +1,203 @@
 <?php
 namespace App\Controller;
 
+use App\Entity\Reponse;
+use App\Form\ReponseType;
 use App\Entity\Evaluation;
 use App\Form\EvaluationType;
+use App\Entity\Question;
+use App\Repository\QuestionRepository;
 use App\Repository\EvaluationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Form\FormError;
 
 #[Route('/evaluation')]
 final class EvaluationController extends AbstractController
 {
-    #[Route(name: 'app_evaluation_index', methods: ['GET'])]
-    public function index(EvaluationRepository $evaluationRepository): Response
+    // Routes pour l'enseignant
+    #[Route('/enseignant', name: 'app_evaluation_indexenseignant', methods: ['GET'])]
+    public function indexEnseignant(EvaluationRepository $evaluationRepository): Response
+    {
+        return $this->render('evaluation/indexenseignant.html.twig', [
+            'evaluations' => $evaluationRepository->findAll(),
+        ]);
+    }
+
+    #[Route('/enseignant/new', name: 'app_evaluation_new_enseignant', methods: ['GET', 'POST'])]
+    public function newEnseignant(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $evaluation = new Evaluation();
+        $form = $this->createForm(EvaluationType::class, $evaluation);
+        $form->handleRequest($request);
+    
+        if ($form->isSubmitted() && $form->isValid()) {
+            $currentDate = new \DateTime();
+            if ($evaluation->getDeadline() <= $currentDate) {
+                $form->get('deadline')->addError(new FormError('La date limite doit être supérieure à la date actuelle.'));
+            } else {
+                $entityManager->persist($evaluation);
+                $entityManager->flush();
+                return $this->redirectToRoute('app_question_new', ['evaluationId' => $evaluation->getId()], Response::HTTP_SEE_OTHER);
+            }
+        }
+    
+        return $this->render('evaluation/new.html.twig', [
+            'evaluation' => $evaluation,
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/enseignant/{id}', name: 'app_evaluation_showenseignant', methods: ['GET', 'POST'])]
+    public function showEnseignant(Request $request, Evaluation $evaluation, QuestionRepository $questionRepository, EntityManagerInterface $entityManager): Response
+    {
+        // Récupérer les questions existantes pour l'évaluation
+        $questions = $questionRepository->findBy(['evaluation' => $evaluation]);
+    
+        // Créer une nouvelle question si le formulaire a été soumis
+        $newQuestion = new Question();
+        $newQuestion->setEvaluation($evaluation); // Associer la question à l'évaluation
+        $form = $this->createForm(QuestionType::class, $newQuestion);
+        $form->handleRequest($request);
+    
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Associer un ordre de question unique
+            $lastQuestion = $entityManager->getRepository(Question::class)
+                ->findOneBy(['evaluation' => $evaluation], ['ordreQuestion' => 'DESC']);
+            $newOrder = $lastQuestion ? $lastQuestion->getOrdreQuestion() + 1 : 1;
+            $newQuestion->setOrdreQuestion($newOrder);
+    
+            // Sauvegarder la nouvelle question
+            $entityManager->persist($newQuestion);
+            $entityManager->flush();
+    
+            $this->addFlash('success', 'La question a été ajoutée avec succès.');
+    
+            // Rediriger vers la page avec les questions mises à jour
+            return $this->redirectToRoute('app_evaluation_showenseignant', ['id' => $evaluation->getId()]);
+        }
+    
+        return $this->render('evaluation/showenseignant.html.twig', [
+            'evaluation' => $evaluation,
+            'questions' => $questions,
+            'form' => $form->createView(),
+        ]);
+    }
+    
+
+    #[Route('/enseignant/{id}/edit', name: 'app_evaluation_edit', methods: ['GET', 'POST'])]
+
+    public function editEnseignant(Request $request, Evaluation $evaluation, EntityManagerInterface $entityManager): Response
+    {
+        $form = $this->createForm(EvaluationType::class, $evaluation);
+        $form->handleRequest($request);
+    
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->persist($evaluation);
+            $entityManager->flush();
+            $this->addFlash('success', 'Évaluation mise à jour avec succès.');
+            return $this->redirectToRoute('app_evaluation_showenseignant', ['id' => $evaluation->getId()], Response::HTTP_SEE_OTHER);
+        }
+    
+        return $this->render('evaluation/edit.html.twig', [
+            'evaluation' => $evaluation,
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/enseignant/{id}', name: 'app_evaluation_delete', methods: ['POST'])]
+public function deleteEnseignant(Request $request, Evaluation $evaluation, EntityManagerInterface $entityManager): Response
+{
+    if ($this->isCsrfTokenValid('delete' . $evaluation->getId(), $request->get('_token'))) {
+        $entityManager->remove($evaluation);
+        $entityManager->flush();
+        $entityManager->clear(); // Assurer que les données sont bien rafraîchies
+        $this->addFlash('success', 'L\'évaluation a été supprimée avec succès.');
+    }
+
+    return $this->redirectToRoute('app_evaluation_indexenseignant', [], Response::HTTP_SEE_OTHER);
+}
+
+    // Routes pour l'étudiant
+    #[Route('/etudiant', name: 'etudiant_evaluation_index', methods: ['GET'])]
+    public function indexEtudiant(EvaluationRepository $evaluationRepository): Response
     {
         return $this->render('evaluation/index.html.twig', [
             'evaluations' => $evaluationRepository->findAll(),
         ]);
     }
 
-    #[Route('/home', name: 'app_home')]
-    public function home(): Response
+    #[Route('/etudiant/{id}', name: 'etudiant_evaluation_show', methods: ['GET'])]
+    public function showEtudiant(Request $request, Evaluation $evaluation, QuestionRepository $questionRepository, EntityManagerInterface $entityManager): Response
     {
-        return $this->render('home/index.html.twig');
+        $questionsArray = $questionRepository->findBy(['evaluation' => $evaluation], ['orderQuestion' => 'ASC']);
+        
+        if (empty($questionsArray)) {
+            $this->addFlash('warning', 'Aucune question n\'est disponible pour cette évaluation.');
+            return $this->redirectToRoute('app_evaluation_index');
+        }
+
+        if ($request->isMethod('POST')) {
+            $responses = $request->request->get('responses', []);
+            foreach ($questionsArray as $question) {
+                if (isset($responses[$question->getId()])) {
+                    $reponse = new Reponse();
+                    $reponse->setQuestion($question);
+                    $reponse->setContent($responses[$question->getId()]);
+                    $reponse->setEvaluation($evaluation);
+                    $reponse->setUser($this->getUser());
+                    $entityManager->persist($reponse);
+                }
+            }
+    
+            $entityManager->flush();
+            $this->addFlash('success', 'Vos réponses ont été enregistrées avec succès.');
+            return $this->redirectToRoute('etudiant_evaluation_show', ['id' => $evaluation->getId()]);
+        }
+
+        return $this->render('evaluation/showEtudiant.html.twig', [
+            'evaluation' => $evaluation,
+            'questions' => $questionsArray,
+        ]);
     }
 
-    #[Route('/new', name: 'app_evaluation_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    #[Route('/etudiant/{evaluationId}/repondre', name: 'etudiant_evaluation_answer', methods: ['GET', 'POST'])]
+    public function answerEtudiant(int $evaluationId, Request $request, EntityManagerInterface $entityManager): Response
     {
-        // Créer une nouvelle instance d'évaluation
-        $evaluation = new Evaluation();
-        $form = $this->createForm(EvaluationType::class, $evaluation);
-        $form->handleRequest($request);
-    
-        // Vérifier si le formulaire est soumis et valide
-        if ($form->isSubmitted() && $form->isValid()) {
-            // Vérification de la date limite
-            $currentDate = new \DateTime();
-            if ($evaluation->getDeadline() <= $currentDate) {
-                // Ajouter une erreur de validation sur le champ 'deadline' si la date limite est passée
-                $form->get('deadline')->addError(new FormError('La date limite doit être supérieure à la date actuelle.'));
-            } else {
-                // Persister l'évaluation si la date limite est valide
-                $entityManager->persist($evaluation);
-                $entityManager->flush();
-    
-                // Rediriger vers la page de création de question en passant l'ID de l'évaluation
-                return $this->redirectToRoute('app_question_new', ['evaluationId' => $evaluation->getId()], Response::HTTP_SEE_OTHER);
-            }
+        $evaluation = $entityManager->getRepository(Evaluation::class)->find($evaluationId);
+        $questions = $entityManager->getRepository(Question::class)->findBy(['evaluation' => $evaluation]);
+
+        if (!$evaluation) {
+            throw $this->createNotFoundException('Évaluation non trouvée');
         }
-    
-        // Renvoyer le formulaire si non soumis ou non valide
-        return $this->render('evaluation/new.html.twig', [
+
+        $responses = [];
+        foreach ($questions as $question) {
+            $response = new Reponse();
+            $response->setQuestion($question);
+            $responses[] = $response;
+        }
+
+        $form = $this->createForm(ReponseType::class, $responses);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            foreach ($responses as $response) {
+                $entityManager->persist($response);
+            }
+            $entityManager->flush();
+            return $this->redirectToRoute('etudiant_evaluation_results', ['evaluationId' => $evaluationId]);
+        }
+
+        return $this->render('evaluation/answer.html.twig', [
             'evaluation' => $evaluation,
+            'questions' => $questions,
             'form' => $form->createView(),
         ]);
     }
-    
-
-    #[Route('/{id}', name: 'app_evaluation_show', methods: ['GET'])]
-    public function show(Evaluation $evaluation): Response
-    {
-        return $this->render('evaluation/show.html.twig', [
-            'evaluation' => $evaluation,
-        ]);
-    }
-
-    #[Route('/{id}/edit', name: 'app_evaluation_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Evaluation $evaluation, EntityManagerInterface $entityManager): Response
-    {
-        $form = $this->createForm(EvaluationType::class, $evaluation);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
-
-            return $this->redirectToRoute('app_evaluation_index', [], Response::HTTP_SEE_OTHER);
-        }
-
-        return $this->render('evaluation/edit.html.twig', [
-            'evaluation' => $evaluation,
-            'form' => $form,
-        ]);
-    }
-    #[Route('/{evaluationId}/repondre', name: 'app_evaluation_answer', methods: ['GET', 'POST'])]
-public function answer(int $evaluationId, Request $request, EntityManagerInterface $entityManager): Response
-{
-    $evaluation = $entityManager->getRepository(Evaluation::class)->find($evaluationId);
-    $questions = $entityManager->getRepository(Question::class)->findBy(['evaluation' => $evaluation]);
-
-    if (!$evaluation) {
-        throw $this->createNotFoundException('Évaluation non trouvée');
-    }
-
-    $responses = [];
-    foreach ($questions as $question) {
-        $response = new Reponse();
-        $response->setQuestion($question);
-        $responses[] = $response;
-    }
-
-    $form = $this->createForm(ReponseType::class, $responses);
-    $form->handleRequest($request);
-
-    if ($form->isSubmitted() && $form->isValid()) {
-        foreach ($responses as $response) {
-            $entityManager->persist($response);
-        }
-        $entityManager->flush();
-
-        return $this->redirectToRoute('app_evaluation_results', ['evaluationId' => $evaluationId]);
-    }
-
-    return $this->render('evaluation/answer.html.twig', [
-        'evaluation' => $evaluation,
-        'questions' => $questions,
-        'form' => $form->createView(),
-    ]);
 }
 
-
-    #[Route('/{id}', name: 'app_evaluation_delete', methods: ['POST'])]
-    public function delete(Request $request, Evaluation $evaluation, EntityManagerInterface $entityManager): Response
-    {
-        if ($this->isCsrfTokenValid('delete' . $evaluation->getId(), $request->get('_token'))) {
-            $entityManager->remove($evaluation);
-            $entityManager->flush();
-        }
-
-        return $this->redirectToRoute('app_evaluation_index', [], Response::HTTP_SEE_OTHER);
-    }
-}

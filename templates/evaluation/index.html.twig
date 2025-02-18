@@ -58,12 +58,13 @@
                                     </td>
                                     <td>{{ evaluation.cours }}</td>
                                     <td>
-                                        <a href="{{ path('app_evaluation_show', {'id': evaluation.id}) }}" class="btn btn-info btn-sm">
-                                            <i class="fas fa-eye"></i> Voir
-                                        </a>
-                                        <a href="{{ path('app_evaluation_edit', {'id': evaluation.id}) }}" class="btn btn-warning btn-sm">
-                                            <i class="fas fa-edit"></i> Modifier
-                                        </a>
+                                        {% if evaluation.questions|length > 0 %}
+                                            <a href="{{ path('app_reponse_new', {'questionId': evaluation.questions|first.id}) }}" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-check"></i> Évaluer
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">Aucune question</span>
+                                        {% endif %}
                                     </td>
                                 </tr>
                             {% else %}
@@ -78,12 +79,6 @@
             </div>
             <!-- /.card -->
         </div>
-    </div>
-    <!-- Bouton Ajouter -->
-    <div class="text-center mt-4">
-        <a href="{{ path('app_evaluation_new') }}" class="btn btn-primary btn-lg">
-            <i class="fas fa-plus"></i> Ajouter une nouvelle évaluation
-        </a>
     </div>
 </div>
 {% endblock %}

@@ -36,7 +36,7 @@ class Question
     #[ORM\OneToMany(targetEntity: Reponse::class, mappedBy: 'question', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $reponses;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]  // Marquer comme nullable
     private ?string $title = null;
 
     public function __construct()

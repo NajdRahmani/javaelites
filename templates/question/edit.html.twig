@@ -35,7 +35,7 @@
                 {{ form_errors(form.point) }}
             </div>
             <button type="submit" class="btn btn-primary">Mettre à jour</button>
-            <a href="{{ path('app_question_index') }}" class="btn btn-secondary">Annuler</a>
+            <a href="{{ path('app_question_index', {'evaluationId': question.evaluation.id}) }}" class="btn btn-secondary">Annuler</a>
         {{ form_end(form) }}
     </div>
 {% endblock %}

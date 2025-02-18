@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Entity;
 
 use App\Repository\ResultatRepository;
@@ -30,12 +29,13 @@ class Resultat
     #[ORM\Column(length: 255)]
     private ?string $feedback = null;
 
-    #[ORM\OneToOne(mappedBy: 'resultat', cascade: ['persist', 'remove'])]
-    private ?Reponse $reponse = null;
+    #[ORM\OneToMany(mappedBy: 'resultat', targetEntity: Reponse::class, cascade: ['persist', 'remove'])]
+    private $reponses;
 
     public function __construct()
     {
         $this->submitted_at = new \DateTime(); // Définit la date de soumission par défaut à la date actuelle
+        $this->reponses = new \Doctrine\Common\Collections\ArrayCollection(); // Initialiser la collection de réponses
     }
 
     public function getId(): ?int
@@ -76,22 +76,28 @@ class Resultat
         return $this;
     }
 
-    public function getReponse(): ?Reponse
+    public function getReponses()
     {
-        return $this->reponse;
+        return $this->reponses;
     }
 
-    public function setReponse(?Reponse $reponse): static
+    public function addReponse(Reponse $reponse): static
     {
-        if ($reponse === null && $this->reponse !== null) {
-            $this->reponse->setResultat(null);
-        }
-
-        if ($reponse !== null && $reponse->getResultat() !== $this) {
+        if (!$this->reponses->contains($reponse)) {
+            $this->reponses[] = $reponse;
             $reponse->setResultat($this);
         }
 
-        $this->reponse = $reponse;
+        return $this;
+    }
+
+    public function removeReponse(Reponse $reponse): static
+    {
+        $this->reponses->removeElement($reponse);
+        if ($reponse->getResultat() === $this) {
+            $reponse->setResultat(null);
+        }
+
         return $this;
     }
 }

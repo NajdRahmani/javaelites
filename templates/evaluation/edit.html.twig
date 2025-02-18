@@ -1,41 +1,47 @@
-<form method="post">
-    {{ form_start(form) }}
+   
+   
+  {% extends 'base2.html.twig' %}
 
-    <div class="form-group">
-        {{ form_label(form.title, 'Title') }}
-        {{ form_widget(form.title, {'attr': {'class': 'form-control'}}) }}
-        {{ form_errors(form.title) }}
-    </div>
+{% block body %}
+    <form method="post">
+        {{ form_start(form) }}
 
-    <div class="form-group">
-        {{ form_label(form.description, 'Description') }}
-        {{ form_widget(form.description, {'attr': {'class': 'form-control'}}) }}
-        {{ form_errors(form.description) }}
-    </div>
+        <div class="form-group">
+            {{ form_label(form.title, 'Title') }}
+            {{ form_widget(form.title, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(form.title) }}
+        </div>
 
-    <div class="form-group">
-        {{ form_label(form.max_score, 'Max Score') }}
-        {{ form_widget(form.max_score, {'attr': {'class': 'form-control'}}) }}
-        {{ form_errors(form.max_score) }}
-    </div>
+        <div class="form-group">
+            {{ form_label(form.description, 'Description') }}
+            {{ form_widget(form.description, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(form.description) }}
+        </div>
 
-    <div class="form-group">
-        {{ form_label(form.deadline, 'Deadline') }}
-        {{ form_widget(form.deadline, {'attr': {'class': 'form-control', 'type': 'date'}}) }}
-        {{ form_errors(form.deadline) }}
-    </div>
+        <div class="form-group">
+            {{ form_label(form.max_score, 'Max Score') }}
+            {{ form_widget(form.max_score, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(form.max_score) }}
+        </div>
 
-    <div class="form-group">
-        {{ form_label(form.cours, 'Number of Courses') }}
-        {{ form_widget(form.cours, {'attr': {'class': 'form-control'}}) }}
-        {{ form_errors(form.cours) }}
-    </div>
+        <div class="form-group">
+            {{ form_label(form.deadline, 'Deadline') }}
+            {{ form_widget(form.deadline, {'attr': {'class': 'form-control', 'type': 'date'}}) }}
+            {{ form_errors(form.deadline) }}
+        </div>
 
-    <div class="form-group text-center mt-4">
-        <button class="btn btn-primary btn-lg" type="submit">
-            {{ button_label|default('Submit') }}
-        </button>
-    </div>
+        <div class="form-group">
+            {{ form_label(form.cours, 'Number of Courses') }}
+            {{ form_widget(form.cours, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(form.cours) }}
+        </div>
 
-    {{ form_end(form) }}
-</form>
+        <div class="form-group text-center mt-4">
+            <button class="btn btn-primary btn-lg" type="submit">
+                {{ button_label|default('Submit') }}
+            </button>
+        </div>
+
+        {{ form_end(form) }}
+    </form>
+{% endblock %}

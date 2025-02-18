@@ -6,20 +6,21 @@ use App\Entity\Evaluation;
 use App\Entity\Question;
 use App\Form\QuestionType;
 use App\Repository\QuestionRepository;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/question')]
 final class QuestionController extends AbstractController
 {
-    #[Route(name: 'app_question_index', methods: ['GET'])]
-    public function index(QuestionRepository $questionRepository, EntityManagerInterface $entityManager): Response
+    #[Route('/showquestions/{evaluationId}',name: 'app_question_index', methods: ['GET'])]
+    public function index($evaluationId,QuestionRepository $questionRepository, EntityManagerInterface $entityManager): Response
     {
         // Récupérer l'évaluation (si vous souhaitez l'afficher)
-        $evaluation = $entityManager->getRepository(Evaluation::class)->find(1); // Remplacez 1 par l'ID de l'évaluation, ou récupérez-la autrement
+        $evaluation = $entityManager->getRepository(Evaluation::class)->find($evaluationId); // Remplacez 1 par l'ID de l'évaluation, ou récupérez-la autrement
 
         // Si vous avez besoin de lier les questions à une évaluation spécifique
         $questions = $questionRepository->findBy(['evaluation' => $evaluation], ['id' => 'DESC']);
@@ -65,18 +66,16 @@ final class QuestionController extends AbstractController
             $entityManager->persist($question);
             $entityManager->flush();
     
-            // Rediriger vers la page d'index des questions après l'ajout
-            return $this->redirectToRoute('app_question_index', [], Response::HTTP_SEE_OTHER);
+            // Rediriger vers la page des questions de l'évaluation
+            return $this->redirectToRoute('app_question_index', ['evaluationId' => $evaluation->getId()], Response::HTTP_SEE_OTHER);
         }
     
-        // Renvoyer le formulaire à la vue si non soumis ou non valide
         return $this->render('question/new.html.twig', [
             'question' => $question,
             'form' => $form->createView(),
-            'evaluation' => $evaluation, // Passer l'évaluation à la vue
         ]);
     }
-    
+
     #[Route('/{id}', name: 'app_question_show', methods: ['GET'])]
     public function show(Question $question): Response
     {
@@ -99,14 +98,14 @@ final class QuestionController extends AbstractController
 
         return $this->render('question/edit.html.twig', [
             'question' => $question,
-            'form' => $form,
+            'form' => $form->createView(),
         ]);
     }
 
-    #[Route('/{id}/delete', name: 'app_question_delete', methods: ['POST'])]
+    #[Route('/{id}', name: 'app_question_delete', methods: ['POST'])]
     public function delete(Request $request, Question $question, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$question->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete' . $question->getId(), $request->get('token'))) {
             $entityManager->remove($question);
             $entityManager->flush();
         }
@@ -117,13 +116,11 @@ final class QuestionController extends AbstractController
     #[Route('/{id}/repondre', name: 'app_question_repondre', methods: ['GET'])]
     public function repondre(int $id, EntityManagerInterface $entityManager): Response
     {
-        // Vérifie si la question existe
         $question = $entityManager->getRepository(Question::class)->find($id);
         if (!$question) {
             throw $this->createNotFoundException('Question non trouvée');
         }
 
-        // Rediriger vers la page de réponse dans ReponseController
         return $this->redirectToRoute('app_reponse_new', ['questionId' => $id]);
     }
 }

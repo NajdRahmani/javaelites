@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Entity;
 
 use App\Repository\ReponseRepository;
@@ -19,14 +18,18 @@ class Reponse
     #[ORM\Column]
     private ?bool $is_correct = false; // Valeur par défaut false
 
-    #[ORM\ManyToOne(inversedBy: 'Reponses')]
+    #[ORM\ManyToOne(inversedBy: 'reponses')]
     private ?Question $question = null;
 
-    #[ORM\OneToOne(inversedBy: 'reponse', cascade: ['persist', 'remove'])]
+    #[ORM\ManyToOne(targetEntity: Resultat::class, inversedBy: 'reponses')]
+    #[ORM\JoinColumn(nullable: false)]
     private ?Resultat $resultat = null;
+
     #[ORM\Column(type: 'integer', nullable: true)]
     private ?int $userId = null;
 
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $note = null; // Ajout de la propriété note
 
     public function getId(): ?int
     {
@@ -83,7 +86,6 @@ class Reponse
         return $this;
     }
 
-    
     public function getUserId(): ?int
     {
         return $this->userId;
@@ -92,8 +94,17 @@ class Reponse
     public function setUserId(?int $userId): self
     {
         $this->userId = $userId;
-
         return $this;
     }
 
+    public function getNote(): ?int
+    {
+        return $this->note;
+    }
+
+    public function setNote(?int $note): static
+    {
+        $this->note = $note;
+        return $this;
+    }
 }

@@ -3,13 +3,14 @@
 namespace App\Controller;
 
 use App\Entity\Resultat;
+use App\Entity\Reponse;
 use App\Form\ResultatType;
 use App\Repository\ResultatRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/resultat')]
 final class ResultatController extends AbstractController
@@ -68,10 +69,36 @@ final class ResultatController extends AbstractController
         ]);
     }
 
+    #[Route('/{id}/validate', name: 'app_resultat_validate', methods: ['POST'])]
+    public function validate(Resultat $resultat, Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $reponses = $resultat->getReponses(); // Récupérer toutes les réponses associées au résultat
+        $totalScore = 0;
+
+        foreach ($reponses as $reponse) {
+            $note = $request->request->get('note_' . $reponse->getId()); // Accéder à la note
+
+            if ($note !== null) {
+                $reponse->setNote((int) $note); // Attribuer la note à la réponse
+                $totalScore += (int) $note; // Ajouter au total
+
+                // Lier la réponse au résultat
+                $reponse->setResultat($resultat);
+            }
+        }
+
+        // Mettre à jour le score du résultat
+        $resultat->setScore($totalScore);
+
+        $entityManager->flush();
+
+        return $this->redirectToRoute('app_resultat_show', ['id' => $resultat->getId()]);
+    }
+
     #[Route('/{id}', name: 'app_resultat_delete', methods: ['POST'])]
     public function delete(Request $request, Resultat $resultat, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$resultat->getId(), $request->getPayload()->getString('_token'))) {
+        if ($this->isCsrfTokenValid('delete'.$resultat->getId(), $request->request->get('_token'))) {
             $entityManager->remove($resultat);
             $entityManager->flush();
         }
