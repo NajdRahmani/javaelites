@@ -1,0 +1,48 @@
+
+{% block title %}Créer une nouvelle catégorie{% endblock %}
+
+{% block body %}
+    <div class="card card-primary">
+        <div class="card-header">
+            <h3 class="card-title">Créer une nouvelle catégorie</h3>
+        </div>
+        <!-- /.card-header -->
+        <!-- form start -->
+        {{ form_start(form) }}
+            <div class="card-body">
+                <div class="form-group">
+                    {{ form_label(form.name, 'Nom de la catégorie') }}
+                    {{ form_widget(form.name, {
+                        'attr': {
+                            'class': 'form-control',
+                            'placeholder': 'Entrez le nom de la catégorie'
+                        }
+                    }) }}
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.descrption, 'Description de la catégorie') }}
+                    {{ form_widget(form.descrption, {
+                        'attr': {
+                            'class': 'form-control',
+                            'placeholder': 'Entrez la description de la catégorie'
+                        }
+                    }) }}
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.brochure, 'Icône de la catégorie') }}
+                    {{ form_widget(form.brochure, {
+                        'attr': {
+                            'class': 'form-control',
+                            'placeholder': 'Entrez l\'icône de la catégorie'
+                        }
+                    }) }}
+                </div>
+            </div>
+            <!-- /.card-body -->
+
+            <div class="card-footer">
+                <button type="submit" name="save" class="btn btn-primary">{{ button_label|default('Enregistrer') }}</button>
+            </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}
