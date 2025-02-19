@@ -17,7 +17,7 @@ class QUIZQUESTIONType extends AbstractType
             ->add('type')
             ->add('points')
             ->add('texte')
-            ->add('ordre')
+            ->add('ordre')  // L'ordre sera validé au niveau de l'entité
             ->add('reponses', CollectionType::class, [
                 'entry_type' => QuizResponseType::class,
                 'entry_options' => ['label' => false],

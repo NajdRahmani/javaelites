@@ -7,11 +7,9 @@
     </div>
 
     {# Is Correct Checkbox #}
-    <div class="form-group">
-        <div class="form-check">
-            {{ form_widget(form.estCorrecte, {'attr': {'class': 'form-check-input'}}) }}
-            {{ form_label(form.estCorrecte, 'Is Correct', {'label_attr': {'class': 'form-check-label'}}) }}
-        </div>
+    <div class="form-group form-check">
+        {{ form_widget(form.estCorrecte, {'attr': {'class': 'form-check-input'}}) }}
+        {{ form_label(form.estCorrecte, 'Is Correct', {'label_attr': {'class': 'form-check-label'}}) }}
     </div>
 
     {# Submit Button #}

@@ -5,6 +5,8 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'quiz_question')]
@@ -16,15 +18,21 @@ class QUIZQUESTION
     private $id;
 
     #[ORM\Column(type: 'string', length: 50)]
+    #[Assert\NotBlank]
     private $type;
 
     #[ORM\Column(type: 'integer')]
+    #[Assert\NotBlank]
+    #[Assert\Positive]
     private $points;
 
     #[ORM\Column(type: 'text')]
+    #[Assert\NotBlank]
     private $texte;
 
     #[ORM\Column(type: 'integer')]
+    #[Assert\NotBlank]
+    #[Assert\LessThan(20)]
     private $ordre;
 
     #[ORM\ManyToOne(targetEntity: Quiz::class, inversedBy: 'questions')]
@@ -107,7 +115,7 @@ class QUIZQUESTION
     }
 
     /**
-     * @return Collection|QuizReponse[]
+     * @return Collection|QuizResponse[]
      */
     public function getReponses(): Collection
     {
@@ -124,15 +132,32 @@ class QUIZQUESTION
         return $this;
     }
 
-    public function removeReponse(QuizReponse $reponse): self
+    public function removeReponse(QuizResponse $reponse): self
     {
         if ($this->reponses->removeElement($reponse)) {
-            // set the owning side to null (unless already changed)
             if ($reponse->getQuestion() === $this) {
                 $reponse->setQuestion(null);
             }
         }
 
         return $this;
+    }
+
+    /**
+     * @Assert\Callback
+     */
+    public function validateOrder(ExecutionContextInterface $context): void
+    {
+        $existingQuestion = $this->quiz
+            ->getQuestions()
+            ->filter(function ($question) {
+                return $question->getOrdre() === $this->ordre && $question !== $this;
+            });
+
+        if (!$existingQuestion->isEmpty()) {
+            $context->buildViolation('Each question in a quiz must have a unique order.')
+                ->atPath('ordre')
+                ->addViolation();
+        }
     }
 }

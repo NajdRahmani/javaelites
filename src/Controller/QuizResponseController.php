@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\QUIZQUESTION;
+use App\Entity\Quiz;
 use App\Entity\QuizResponse;
 use App\Form\QuizResponseType;
 use Doctrine\ORM\EntityManagerInterface;
@@ -11,7 +12,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-#[Route('/quiz/response')]
+#[Route('/quizresponse')]
 final class QuizResponseController extends AbstractController
 {
     #[Route(name: 'app_quiz_response_index', methods: ['GET'])]

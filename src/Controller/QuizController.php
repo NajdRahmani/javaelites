@@ -59,13 +59,13 @@ final class QuizController extends AbstractController
     {
         $form = $this->createForm(QuizType::class, $quiz);
         $form->handleRequest($request);
-
+    
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
-
-            return $this->redirectToRoute('app_quiz_index', [], Response::HTTP_SEE_OTHER);
+    
+            return $this->redirectToRoute('app_q_u_i_z_q_u_e_s_t_i_o_n_edit', ['id'=> $quiz->getId()], Response::HTTP_SEE_OTHER);
         }
-
+    
         return $this->render('quiz/edit.html.twig', [
             'quiz' => $quiz,
             'form' => $form,

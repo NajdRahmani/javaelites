@@ -79,21 +79,33 @@ final class QUIZQUESTIONController extends AbstractController
     #[Route('/{id}/edit', name: 'app_q_u_i_z_q_u_e_s_t_i_o_n_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, QUIZQUESTION $qUIZQUESTION, EntityManagerInterface $entityManager): Response
     {
+        $quiz = $qUIZQUESTION->getQuiz();  // Get the related quiz for the question
+        
+        // Add empty responses if they don't exist
+        if ($qUIZQUESTION->getReponses()->count() < 4) {
+            for ($i = $qUIZQUESTION->getReponses()->count(); $i < 4; $i++) {
+                $response = new QuizResponse();
+                $response->setQuestion($qUIZQUESTION);
+                $qUIZQUESTION->addReponse($response);
+            }
+        }
+    
         $form = $this->createForm(QUIZQUESTIONType::class, $qUIZQUESTION);
         $form->handleRequest($request);
-
+    
         if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
-
+            $entityManager->flush();  // Save the updated question
+    
+            // Redirect to the quiz index page
             return $this->redirectToRoute('app_q_u_i_z_q_u_e_s_t_i_o_n_index', [], Response::HTTP_SEE_OTHER);
         }
-
+    
         return $this->render('quizquestion/edit.html.twig', [
-            'q_u_i_z_q_u_e_s_t_i_o_n' => $qUIZQUESTION,
-            'form' => $form,
+            'form' => $form->createView(),
+            'quiz' => $quiz,  // Pass the quiz to the template
         ]);
     }
-
+    
     #[Route('/{id}', name: 'app_q_u_i_z_q_u_e_s_t_i_o_n_delete', methods: ['POST'])]
     public function delete(Request $request, QUIZQUESTION $qUIZQUESTION, EntityManagerInterface $entityManager): Response
     {

@@ -1,47 +1,49 @@
-{{ form_start(form, {'attr': {'class': 'form-horizontal'}}) }}
+{% block content %}
+<div class="container mt-4">
     <div class="card card-primary">
-        <div class="card-header">
-            <h3 class="card-title">Quiz Details</h3>
+        <div class="card-header bg-primary text-white">
+            <h3 class="card-title">{{ button_label|default('Ajouter un Quiz') }}</h3>
         </div>
         <div class="card-body">
-            <!-- Input Fields -->
+            {{ form_start(form, {'attr': {'novalidate': 'novalidate', 'class': 'form-horizontal'}}) }}
+
+            {% for error in form.vars.errors %}
+                <div class="alert alert-danger">{{ error.message }}</div>
+            {% endfor %}
+
             <div class="form-group">
                 {{ form_label(form.titre, 'Titre', {'label_attr': {'class': 'control-label'}}) }}
-                {{ form_widget(form.titre, {'attr': {
-                    'class': 'form-control form-control-border',
-                    'placeholder': 'Enter the title'
-                }}) }}
+                {{ form_widget(form.titre, {'attr': {'class': 'form-control form-control-border', 'placeholder': 'Entrez le titre'}}) }}
+                {{ form_errors(form.titre) }}
             </div>
 
             <div class="form-group">
                 {{ form_label(form.description, 'Description', {'label_attr': {'class': 'control-label'}}) }}
-                {{ form_widget(form.description, {'attr': {
-                    'class': 'form-control form-control-border border-width-2',
-                    'placeholder': 'Enter the description',
-                    'rows': '4'
-                }}) }}
+                {{ form_widget(form.description, {'attr': {'class': 'form-control form-control-border border-width-2', 'placeholder': 'Entrez la description', 'rows': '4'}}) }}
+                {{ form_errors(form.description) }}
             </div>
 
             <div class="form-group">
                 {{ form_label(form.scoreMax, 'Score Max', {'label_attr': {'class': 'control-label'}}) }}
-                {{ form_widget(form.scoreMax, {'attr': {
-                    'class': 'form-control rounded-0',
-                    'placeholder': 'Enter the maximum score'
-                }}) }}
+                {{ form_widget(form.scoreMax, {'attr': {'class': 'form-control rounded-0', 'placeholder': 'Entrez le score maximum'}}) }}
+                {{ form_errors(form.scoreMax) }}
             </div>
 
-            <!-- Date Input -->
             <div class="form-group">
                 {{ form_label(form.dateLimite, 'Date Limite', {'label_attr': {'class': 'control-label'}}) }}
-                {{ form_widget(form.dateLimite, {'attr': {
-                    'class': 'form-control form-control-border',
-                    'placeholder': 'Select the deadline date'
-                }}) }}
+                {{ form_widget(form.dateLimite, {'attr': {'class': 'form-control form-control-border', 'placeholder': 'Sélectionnez la date limite'}}) }}
+                {{ form_errors(form.dateLimite) }}
             </div>
-        </div>
-        <!-- /.card-body -->
-        <div class="card-footer">
-            <button class="btn btn-primary">{{ button_label|default('Save') }}</button>
+
+            {{ form_row(form._token) }}
+
+            <div class="d-flex justify-content-between mt-3">
+                <button type="submit" class="btn btn-success">{{ button_label|default('Enregistrer') }}</button>
+                <a href="{{ path('app_quiz_index') }}" class="btn btn-secondary">Annuler</a>
+            </div>
+
+            {{ form_end(form) }}
         </div>
     </div>
-{{ form_end(form) }}
+</div>
+{% endblock %}

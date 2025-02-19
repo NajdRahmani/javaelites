@@ -1,13 +1,22 @@
-{% extends 'base.html.twig' %}
+{% extends 'base2.html.twig' %}
 
-{% block title %}Edit QuizResponse{% endblock %}
+{% block title %}New Quiz and QuizResponse{% endblock %}
 
 {% block body %}
-    <h1>Edit QuizResponse</h1>
+    <div class="container mt-4">
+        <h1 class="quiz-title">Create New Quiz and Quiz Response</h1>
 
-    {{ include('quiz_response/_form.html.twig', {'button_label': 'Update'}) }}
+        <!-- QuizResponse Form -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h2>Quiz Response Details</h2>
+            </div>
+            <div class="card-body">
+                {{ include('quiz_response/_form.html.twig') }}
+            </div>
+        </div>
 
-    <a href="{{ path('app_quiz_response_index') }}">back to list</a>
-
-    {{ include('quiz_response/_delete_form.html.twig') }}
+        <!-- Back to List Link -->
+        <a href="{{ path('app_quiz_index') }}" class="btn btn-secondary">Back to list</a>
+    </div>
 {% endblock %}

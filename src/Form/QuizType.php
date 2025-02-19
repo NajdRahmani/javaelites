@@ -1,28 +1,22 @@
 <?php
 
 namespace App\Form;
-
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
-use Symfony\Component\Form\Extension\Core\Type\TextareaType; // For the description
-use Symfony\Component\Form\Extension\Core\Type\IntegerType; // For Score Max
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Validator\Constraints\NotBlank;
-use Symfony\Component\Validator\Constraints\Positive;
 
 class QuizType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('titre', TextType::class, [  // <---- CHANGE THIS FROM 'title' TO 'titre'
+            ->add('titre', TextType::class, [
                 'label' => 'Titre',
                 'attr' => ['placeholder' => 'Enter the title'],
-                'constraints' => [
-                    new NotBlank(['message' => 'Please enter a title.']),
-                ],
             ])
             ->add('description', TextareaType::class, [
                 'label' => 'Description',
@@ -31,25 +25,21 @@ class QuizType extends AbstractType
             ->add('scoreMax', IntegerType::class, [
                 'label' => 'Score Max',
                 'attr' => ['placeholder' => 'Enter the maximum score'],
-                'constraints' => [
-                    new NotBlank(['message' => 'Please enter a maximum score.']),
-                    new Positive(['message' => 'The score must be positive.']),
-                ],
             ])
             ->add('dateLimite', DateType::class, [
                 'label' => 'Date Limite',
-                'widget' => 'single_text', // Use a single text input
-                'format' => 'yyyy-MM-dd', // Or the desired date format
+                'widget' => 'single_text',
+                'format' => 'yyyy-MM-dd',
                 'attr' => ['placeholder' => 'jj/mm/aaaa --:--'],
-            ])
-        ;
+                'required' => false, // Permettre la valeur null
+                'empty_data' => null, // Fournir null comme valeur par défaut
+            ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
-            // If you're mapping this to a Quiz entity, specify the class here:
-            //'data_class' => App\Entity\Quiz::class,
+            // 'data_class' => App\\Entity\\Quiz::class,
         ]);
     }
 }
