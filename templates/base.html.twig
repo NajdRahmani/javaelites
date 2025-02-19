@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="{{ asset('assets/css/templatemo-eduwell-style.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/owl.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/lightbox.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/events.css') }}">
 {% block stylesheets %}
     {% endblock %}
 </head>
@@ -34,9 +35,19 @@
                         <!-- ***** Logo End ***** -->
                         <!-- ***** Menu Start ***** -->
                         <ul class="nav">
-                            <li class="scroll-to-section"><a href="#top" class="active">Home</a></li>
-                            <li class="scroll-to-section"><a href="{{ path('app_events_index') }}">Events</a></li>
-                            <li class="scroll-to-section"><a href="#courses">Courses</a></li>
+                            <li ><a href="#top" class="active">Home</a></li>
+
+                            <li class="has-sub">
+                                <a href="javascript:void(0)">Events</a>
+                                <ul class="sub-menu">
+                                    <li><a href="{{ path('app_events_index') }}">Events</a></li>
+                                    <li><a href="{{ path('app_events_my_events') }}">My Events</a></li>
+                                    <li><a href="{{ path('app_events_my_registration') }}">My Reservation</a></li>
+                                </ul>
+                            </li>
+
+                            <li ><a href="#courses">Courses</a></li>
+
                             <li class="has-sub">
                                 <a href="javascript:void(0)">Pages</a>
                                 <ul class="sub-menu">
@@ -58,13 +69,11 @@
         </div>
     </header>
     <!-- ***** Header Area End ***** -->
-<div class="main-banner">
     {% block body %}
     
     
     
     {% endblock %}
-</div>
     <!-- ***** Footer Area Start ***** -->
     <!-- Footer -->
 <footer class="text-center text-lg-start bg-body-tertiary text-muted" style="background-color: rgba(197, 0, 167, 0.05);">

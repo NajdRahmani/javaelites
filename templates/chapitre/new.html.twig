@@ -1,0 +1,10 @@
+{% extends 'base2.html.twig' %}
+
+{% block title %}New Chapitre{% endblock %}
+
+{% block body %}
+    
+    {{ include('chapitre/_form.html.twig') }}
+
+    <a href="{{ path('app_chapitre_index') }}">back to list</a>
+{% endblock %}

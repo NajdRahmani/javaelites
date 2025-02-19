@@ -1,0 +1,43 @@
+<div class="card card-primary">
+    <div class="card-header">
+        <h3 class="card-title">Créer un nouveau cours</h3>
+    </div>
+    <!-- /.card-header -->
+    <!-- form start -->
+    {{ form_start(form) }}
+        <div class="card-body">
+            <div class="form-group">
+                {{ form_label(form.title, 'Titre du cours') }}
+                {{ form_widget(form.title, {
+                    'attr': {
+                        'class': 'form-control',
+                        'placeholder': 'Entrez le titre du cours'
+                    }
+                }) }}
+            </div>
+            <div class="form-group">
+                {{ form_label(form.description, 'Description du cours') }}
+                {{ form_widget(form.description, {
+                    'attr': {
+                        'class': 'form-control',
+                        'placeholder': 'Entrez la description du cours'
+                    }
+                }) }}
+            </div>
+            <div class="form-group">
+                {{ form_label(form.brochure, 'URL de l\'image') }}
+                {{ form_widget(form.brochure, {
+                    'attr': {
+                        'class': 'form-control',
+                        'placeholder': 'Entrez l\'URL de l\'image'
+                    }
+                }) }}
+            </div>
+        </div>
+        <!-- /.card-body -->
+
+        <div class="card-footer">
+         <button type="submit" name="save" class="btn btn-primary">{{ button_label|default('Enregistrer') }}</button>
+        </div>
+    {{ form_end(form) }}
+</div>

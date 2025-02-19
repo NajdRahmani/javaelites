@@ -1,12 +1,16 @@
 <?php
+
 namespace App\Entity;
 
 use App\Repository\EventsRepository;
+use App\Repository\UserRepository;
 use Doctrine\DBAL\Types\Types;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
 #[ORM\Entity(repositoryClass: EventsRepository::class)]
 class Events
@@ -19,13 +23,14 @@ class Events
     #[ORM\Column(length: 255)]
     private ?string $title = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 5000)]
     private ?string $description = null;
 
     #[ORM\Column(type: 'datetime', nullable: true)]
     private ?\DateTime $start_date = null;
 
     #[ORM\Column(type: 'datetime', nullable: true)]
+    #[Assert\GreaterThan(['propertyPath' => 'start_date'])]
     private ?\DateTime $end_date = null;
 
     #[ORM\Column(length: 255)]
@@ -33,6 +38,9 @@ class Events
 
     #[ORM\Column(nullable: true)]
     private ?int $max_participants = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $seats_available = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $location = null;
@@ -46,12 +54,19 @@ class Events
     #[ORM\Column(length: 255)]
     private ?array $category = null;
 
+    #[ORM\OneToMany(mappedBy: "events", targetEntity: EventRegistration::class, orphanRemoval: true)]
+    private Collection $registrations;
+
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
+    private ?User $organizer = null;
+
     public function __construct()
     {
-        // Ensure created_at is initialized with the current timestamp if not provided
         if ($this->created_at === null) {
             $this->created_at = new \DateTime();
         }
+        $this->registrations = new ArrayCollection();
     }
 
     public function getId(): ?int { return $this->id; }
@@ -67,6 +82,10 @@ class Events
     public function setType(string $type): static { $this->type = $type; return $this; }
     public function getMaxParticipants(): ?int { return $this->max_participants; }
     public function setMaxParticipants(?int $max_participants): static { $this->max_participants = $max_participants; return $this; }
+   
+    public function getSeatsAvailable(): ?int { return $this->seats_available; }
+    public function setSeatsAvailable(?int $seats_available): static { $this->seats_available = $seats_available; return $this; }
+   
     public function getLocation(): ?string { return $this->location; }
     public function setLocation(?string $location): static { $this->location = $location; return $this; }
     public function getCreatedAt(): ?\DateTime { return $this->created_at; }
@@ -75,4 +94,14 @@ class Events
     public function setImage(?string $image): static { $this->image = $image; return $this; }
     public function getCategory(): ?array { return $this->category; }
     public function setCategory(array $category): static { $this->category = $category; return $this; }
+
+    public function getOrganizer(): ?User { return $this->organizer; }
+    public function setOrganizer(?User $organizer): self { $this->organizer = $organizer; return $this; }
+
+    public function getRegistrations(): Collection
+    {
+        return $this->registrations;
+    }
+
+
 }

@@ -1,0 +1,45 @@
+
+    <div class="card card-primary">
+        <div class="card-header">
+            <h3 class="card-title">Créer un nouveau chapitre</h3>
+        </div>
+        <!-- /.card-header -->
+        <!-- form start -->
+        {{ form_start(form) }}
+            <div class="card-body">
+                <div class="form-group">
+                    {{ form_label(form.title, 'Titre') }}
+                    {{ form_widget(form.title, {
+                        'attr': {
+                            'class': 'form-control',
+                            'placeholder': 'Entrez le titre du chapitre'
+                        }
+                    }) }}
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.chapOrder, 'Ordre du chapitre') }}
+                    {{ form_widget(form.chapOrder, {
+                        'attr': {
+                            'class': 'form-control',
+                            'placeholder': 'Entrez l\'ordre du chapitre'
+                        }
+                    }) }}
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.brochure, 'Contenu') }}
+                    {{ form_widget(form.brochure, {
+                        'attr': {
+                            'class': 'form-control',
+                            'placeholder': 'Entrez le contenu du chapitre'
+                        }
+                    }) }}
+                </div>
+            </div>
+            <!-- /.card-body -->
+
+             <div class="card-footer">
+            <button type="submit" name="save" class="btn btn-primary">{{ button_label|default('Enregistrer') }}</button>
+            <button type="submit" name="add_another" class="btn btn-success ml-2">{{ button_label|default('+ chapitre') }}</button>
+        </div>
+        {{ form_end(form) }}
+    </div>

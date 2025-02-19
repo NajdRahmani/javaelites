@@ -1,0 +1,65 @@
+{% extends 'base2.html.twig' %}
+
+{% block title %}Cours index{% endblock %}
+{% block stylesheets %}
+        <link rel="stylesheet" href="{{ asset('assets/css/chapitre1.css') }}">
+
+{% endblock %}
+{% block body %}
+    <h1>Cours index</h1>
+    <div class="row">
+    {% for cour in cours %}
+ <div class="col-md-4">
+            <!-- Widget: user widget style 1 -->
+            <div class="card card-widget widget-user">
+              <!-- Add the bg color to the header using any of the bg-* classes -->
+<div class="widget-user-header text-white" style="background: url('{{ asset('uploads/brochures/' ~ cour.urlImage) }}') center center;">
+                <h3 class="widget-user-username text-right">{{ cour.matiere.titre }}</h3>
+                <h5 class="widget-user-desc text-right">{{ cour.title }}</h5>
+              </div>
+              <div class="widget-user-image">
+                <img class="img-circle elevation-2" src="{{ asset('img/1.jpg') }}" alt="User Avatar">
+              </div>
+              <div class="card-footer">
+                <div class="row">
+                  <div class="col-sm-4 border-right">
+                    <div class="description-block">
+                      <h5 class="description-header">actions</h5>
+                      <span class="description-text"><a href="{{ path('app_cours', {'id': cour.id}) }}" class="btn btn-propose2">show</a></span>
+                    </div>
+                    <!-- /.description-block -->
+                  </div>
+                  <!-- /.col -->
+                  <div class="col-sm-4 border-right">
+                    <div class="description-block">
+                      <h5 class="description-header"></h5>
+                      <span class="description-text">LEANERS</span>
+                    </div>
+                    <!-- /.description-block -->
+                  </div>
+                  <!-- /.col -->
+                  <div class="col-sm-4">
+                    <div class="description-block">
+                      <h5 class="description-header">{{ cour.nbChapitres }}</h5>
+                      <span class="description-text">Chapitres</span>
+                    </div>
+                    <!-- /.description-block -->
+                  </div>
+                  <!-- /.col -->
+                </div>
+   </div>
+            </div>
+            <!-- /.widget-user -->
+     <a href="{{ path('app_cours', {'id': cour.id}) }}" class="card card-widget widget-user btn btn-propose2">show</a>
+
+          </div>
+          {% else %}
+            <tr>
+                <td colspan="5">no records found</td>
+            </tr>
+        {% endfor %}
+    
+        </div>
+
+<a href="{{ path('app_cours_new', { 'id': 1 }) }}" class="btn btn-success">Create new</a>
+{% endblock %}

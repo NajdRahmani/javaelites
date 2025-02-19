@@ -1,0 +1,31 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Chapitre{% endblock %}
+
+{% block body %}
+    <h1>Chapitre</h1>
+
+    <table class="table">
+        <tbody>
+            
+            <tr>
+                <th>Title</th>
+                <td>{{ chapitre.title }}</td>
+            </tr>
+            <tr>
+                <th>ChapOrder</th>
+                <td>{{ chapitre.chapOrder }}</td>
+            </tr>
+            <tr>
+                <th>Contenu</th>
+                
+                <td><a href="{{ asset('uploads/brochures/' ~ chapitre.contenu) }}">View brochure (PDF)</a>{{ chapitre.contenu }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_cours_show', {'id': chapitre.cours.id}) }}">back to cours</a>
+
+
+    
+{% endblock %}
