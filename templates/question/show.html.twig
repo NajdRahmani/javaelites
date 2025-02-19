@@ -1,4 +1,4 @@
-{% extends 'base.html.twig' %}
+{% extends 'base2.html.twig' %}
 
 {% block title %}Détails de l'Énoncé de la Question{% endblock %}
 
@@ -22,13 +22,14 @@
                 <a href="{{ path('app_question_edit', {'id': question.id}) }}" class="btn btn-warning btn-lg">
                     <i class="fas fa-edit icon-btn"></i>Modifier
                 </a>
-<a href="{{ path('app_question_index', {'evaluationId': question.evaluation.id}) }}" class="btn btn-secondary btn-lg">
+                <a href="{{ path('app_question_index', {'evaluationId': question.evaluation.id}) }}" class="btn btn-secondary btn-lg">
                     <i class="fas fa-arrow-left icon-btn"></i>Retour à la liste
                 </a>
+            </div>
 
-                <!-- Nouveau bouton pour répondre à la question -->
-                <a href="{{ path('app_reponse_edit', {'id': question.id}) }}" class="btn btn-success btn-lg">
-                    <i class="fas fa-reply icon-btn"></i>Répondre
+            <div class="card-footer">
+                <a href="{{ path('app_reponse_etudiants', {'id': question.evaluation.id}) }}" class="btn btn-info btn-lg">
+                    <i class="fas fa-list icon-btn"></i> Voir les réponses des étudiants
                 </a>
             </div>
         </div>

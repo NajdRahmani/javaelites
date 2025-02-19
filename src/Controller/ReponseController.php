@@ -4,6 +4,8 @@ namespace App\Controller;
 
 use App\Entity\Reponse;
 use App\Form\ReponseType;
+use App\Repository\EvaluationRepository;
+
 use App\Repository\ReponseRepository;
 use App\Repository\QuestionRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -58,9 +60,7 @@ final class ReponseController extends AbstractController
         }
     
         if ($form->isSubmitted() && $form->isValid()) {
-            // Vérification de la réponse correcte
-            
-    
+            // Persist la réponse
             $entityManager->persist($reponse);
             $entityManager->flush();
     
@@ -87,9 +87,8 @@ final class ReponseController extends AbstractController
                     ]);
     
                     if ($nextQuestion) {
+                        // Rediriger vers la question suivante après soumission du formulaire
                         return $this->redirectToRoute('app_reponse_new', ['questionId' => $nextQuestion->getId()], Response::HTTP_SEE_OTHER);
-                    } else {
-                        return $this->redirectToRoute('app_evaluation_index', [], Response::HTTP_SEE_OTHER);
                     }
                 }
             }
@@ -103,15 +102,67 @@ final class ReponseController extends AbstractController
             'nextQuestionId' => $nextQuestionId,
         ]);
     }
-    
-    
-    #[Route('/{id}', name: 'app_reponse_show', methods: ['GET'])]
+        #[Route('/{id}', name: 'app_reponse_show', methods: ['GET'])]
     public function show(Reponse $reponse): Response
     {
         return $this->render('reponse/show.html.twig', [
             'reponse' => $reponse,
         ]);
     }
+
+    #[Route('/evaluation/{id}/etudiants', name: 'app_reponse_etudiants', methods: ['GET'])]
+    public function showStudentsByEvaluation(int $id, ReponseRepository $reponseRepository, EvaluationRepository $evaluationRepository): Response
+    {
+        $evaluation = $evaluationRepository->find($id);
+    
+        if (!$evaluation) {
+            throw $this->createNotFoundException('Évaluation non trouvée');
+        }
+    
+        // Récupérer les étudiants ayant répondu à cette évaluation
+        $etudiants = $reponseRepository->createQueryBuilder('r')
+            ->select('r.userId') // Sélectionner userId
+            ->innerJoin('r.question', 'q')
+            ->where('q.evaluation = :evaluationId')
+            ->setParameter('evaluationId', $id)
+            ->groupBy('r.userId')
+            ->getQuery()
+            ->getResult();
+    
+        return $this->render('reponse/etudiants.html.twig', [
+            'evaluation' => $evaluation,
+            'etudiants' => $etudiants,
+        ]);
+    }
+    
+
+
+#[Route('/evaluation/{evaluationId}/user/{userId}', name: 'app_reponse_user', methods: ['GET'])]
+public function showUserResponsesByEvaluation(int $evaluationId, int $userId, ReponseRepository $reponseRepository, EvaluationRepository $evaluationRepository): Response
+{
+    $evaluation = $evaluationRepository->find($evaluationId);
+
+    if (!$evaluation) {
+        throw $this->createNotFoundException('Évaluation non trouvée');
+    }
+
+    // Récupérer les réponses de cet étudiant pour cette évaluation
+    $reponses = $reponseRepository->createQueryBuilder('r')
+        ->innerJoin('r.question', 'q') // Jointure sur la question
+        ->where('q.evaluation = :evaluationId') // Filtrage par évaluation
+        ->andWhere('r.userId = :userId')  // Filtrage par userId (au lieu de r.user)
+        ->setParameter('evaluationId', $evaluationId)
+        ->setParameter('userId', $userId)
+        ->getQuery()
+        ->getResult();
+
+    return $this->render('reponse/user_responses.html.twig', [
+        'evaluation' => $evaluation,
+        'reponses' => $reponses,
+        'userId' => $userId,
+    ]);
+}
+
 
     #[Route('/{id}/edit', name: 'app_reponse_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Reponse $reponse, EntityManagerInterface $entityManager): Response

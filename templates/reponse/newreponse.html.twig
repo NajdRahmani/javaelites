@@ -68,9 +68,15 @@
             <!-- Bouton Passer à la question suivante -->
             {% if nextQuestionId is not null %}
                 <div class="text-center mt-4">
-                    <a href="{{ path('app_reponse_new', {'questionId': nextQuestionId}) }}" class="btn btn-next-question">
-                        Passer à la question suivante <i class="fas fa-arrow-right"></i>
-                    </a>
+                    <!-- Bouton Passer à la question suivante -->
+{% if nextQuestionId is not null %}
+    <div class="text-center mt-4">
+        <button type="submit" class="btn btn-next-question">
+            Passer à la question suivante <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+{% endif %}
+
                 </div>
             {% endif %}
 

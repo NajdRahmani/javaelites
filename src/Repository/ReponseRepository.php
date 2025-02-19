@@ -67,17 +67,6 @@ class ReponseRepository extends ServiceEntityRepository
     // Vous pouvez ajouter d'autres méthodes personnalisées pour effectuer des recherches spécifiques.
 // src/Repository/EvaluationRepository.php
 
-public function findQuestionsOrderedByOrderQuestion(Evaluation $evaluation)
-{
-    return $this->getEntityManager()
-        ->createQueryBuilder()
-        ->select('q')
-        ->from(Question::class, 'q')
-        ->where('q.evaluation = :evaluation')
-        ->setParameter('evaluation', $evaluation)
-        ->orderBy('q.orderQuestion', 'ASC')  // Trie par 'orderQuestion'
-        ->getQuery()
-        ->getResult();
-}
+
 
 }

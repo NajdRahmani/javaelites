@@ -93,7 +93,7 @@ final class QuestionController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
 
-            return $this->redirectToRoute('app_question_index', [], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_question_index', ['evaluationId' => $question->getEvaluation()->getId()], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('question/edit.html.twig', [
@@ -102,16 +102,19 @@ final class QuestionController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'app_question_delete', methods: ['POST'])]
-    public function delete(Request $request, Question $question, EntityManagerInterface $entityManager): Response
-    {
-        if ($this->isCsrfTokenValid('delete' . $question->getId(), $request->get('token'))) {
-            $entityManager->remove($question);
-            $entityManager->flush();
-        }
+   #[Route('/{id}', name: 'app_question_delete', methods: ['POST'])]
+public function delete(Request $request, Question $question, EntityManagerInterface $entityManager): Response
+{
+    $evaluationId = $question->getEvaluation()->getId(); // Récupération de l'évaluation associée
 
-        return $this->redirectToRoute('app_question_index', [], Response::HTTP_SEE_OTHER);
+    if ($this->isCsrfTokenValid('delete' . $question->getId(), $request->get('token'))) {
+        $entityManager->remove($question);
+        $entityManager->flush();
     }
+
+    return $this->redirectToRoute('app_question_index', ['evaluationId' => $evaluationId], Response::HTTP_SEE_OTHER);
+}
+
 
     #[Route('/{id}/repondre', name: 'app_question_repondre', methods: ['GET'])]
     public function repondre(int $id, EntityManagerInterface $entityManager): Response

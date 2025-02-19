@@ -55,7 +55,7 @@
                 <div class="mb-3">
                     {{ form_row(form.text) }} <!-- Assurez-vous que "text" est le bon champ dans votre formulaire -->
                 </div>
-                {{ form_end(form) }}
+               
             </div>
 
             <!-- Bouton Retour -->
@@ -65,23 +65,20 @@
                 </a>
             </div>
 
-            <!-- Bouton Passer à la question suivante -->
-            {% if nextQuestionId is not null %}
-                <div class="text-center mt-4">
-                    <a href="{{ path('app_reponse_new', {'questionId': nextQuestionId}) }}" class="btn btn-next-question">
-                        Passer à la question suivante <i class="fas fa-arrow-right"></i>
-                    </a>
-                </div>
-            {% else %}
+           
+            
+                
+            
                 <!-- Si aucune question suivante, afficher un message de fin -->
                 <div class="text-center mt-4">
                     <p class="text-muted">Vous avez répondu à toutes les questions de l'évaluation.</p>
                    
-                    <button type="submit" class="btn btn-success text-muted">
-                 Terminer l'évaluation
-            </button>
+                    <button type="submit" class="btn btn-success">
+    {% if nextQuestionId is not null %}  Passer à la question suivante <i class="fas fa-arrow-right"></i> {% else %}Terminer l'évaluation {% endif %}
+</button>
+ {{ form_end(form) }}
                 </div>
-            {% endif %}
+           
 
             <!-- Texte Motivationnel -->
             <p class="text-center text-muted mt-3">

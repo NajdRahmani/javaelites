@@ -25,7 +25,8 @@ class Reponse
     #[ORM\JoinColumn(nullable: false)]
     private ?Resultat $resultat = null;
 
-    #[ORM\Column(type: 'integer', nullable: true)]
+    // Garder userId comme un champ simple
+    #[ORM\Column(type: 'integer', nullable: false)]  // Vous pouvez choisir nullable: true si vous préférez que ce champ soit optionnel
     private ?int $userId = null;
 
     #[ORM\Column(type: 'integer', nullable: true)]
@@ -91,7 +92,7 @@ class Reponse
         return $this->userId;
     }
 
-    public function setUserId(?int $userId): self
+    public function setUserId(int $userId): static
     {
         $this->userId = $userId;
         return $this;

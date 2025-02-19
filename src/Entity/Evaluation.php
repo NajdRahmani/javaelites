@@ -27,9 +27,9 @@ class Evaluation
     #[Assert\GreaterThan(value: 1, message: "Le score maximum doit être supérieur à 1.")]
     private ?int $max_score = null;
 
-    #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $create_at = null;
+    
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Assert\GreaterThan("today", message: "La date limite doit être supérieure à la date actuelle.")]

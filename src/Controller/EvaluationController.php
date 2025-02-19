@@ -20,7 +20,8 @@ use Symfony\Component\Form\FormError;
 final class EvaluationController extends AbstractController
 {
     // Routes pour l'enseignant
-    #[Route('/enseignant', name: 'app_evaluation_indexenseignant', methods: ['GET'])]
+    #[Route('/enseignant', name: '
+    enseignant', methods: ['GET'])]
     public function indexEnseignant(EvaluationRepository $evaluationRepository): Response
     {
         return $this->render('evaluation/indexenseignant.html.twig', [
@@ -36,15 +37,11 @@ final class EvaluationController extends AbstractController
         $form->handleRequest($request);
     
         if ($form->isSubmitted() && $form->isValid()) {
-            $currentDate = new \DateTime();
-            if ($evaluation->getDeadline() <= $currentDate) {
-                $form->get('deadline')->addError(new FormError('La date limite doit être supérieure à la date actuelle.'));
-            } else {
-                $entityManager->persist($evaluation);
-                $entityManager->flush();
-                return $this->redirectToRoute('app_question_new', ['evaluationId' => $evaluation->getId()], Response::HTTP_SEE_OTHER);
-            }
+            $entityManager->persist($evaluation);
+            $entityManager->flush();
+            return $this->redirectToRoute('app_question_new', ['evaluationId' => $evaluation->getId()], Response::HTTP_SEE_OTHER);
         }
+        
     
         return $this->render('evaluation/new.html.twig', [
             'evaluation' => $evaluation,
@@ -52,15 +49,26 @@ final class EvaluationController extends AbstractController
         ]);
     }
 
-    #[Route('/enseignant/{id}', name: 'app_evaluation_showenseignant', methods: ['GET', 'POST'])]
-    public function showEnseignant(Request $request, Evaluation $evaluation, QuestionRepository $questionRepository, EntityManagerInterface $entityManager): Response
-    {
-        // Récupérer les questions existantes pour l'évaluation
+    #[Route('/enseignantremove/{id}', name: 'app_evaluation_showenseignant', methods: ['GET', 'POST'])]
+    public function showEnseignant(
+        Request $request, 
+        Evaluation $evaluation, 
+        QuestionRepository $questionRepository, 
+        EntityManagerInterface $entityManager
+    ): Response {
+        // Récupérer les questions associées à l'évaluation
         $questions = $questionRepository->findBy(['evaluation' => $evaluation]);
     
-        // Créer une nouvelle question si le formulaire a été soumis
+        // Récupérer les réponses des étudiants par question
+        $responsesByQuestion = [];
+        foreach ($questions as $question) {
+            $responsesByQuestion[$question->getId()] = $entityManager->getRepository(Reponse::class)
+                ->findBy(['question' => $question]);
+        }
+    
+        // Création d'une nouvelle question via un formulaire
         $newQuestion = new Question();
-        $newQuestion->setEvaluation($evaluation); // Associer la question à l'évaluation
+        $newQuestion->setEvaluation($evaluation);
         $form = $this->createForm(QuestionType::class, $newQuestion);
         $form->handleRequest($request);
     
@@ -77,18 +85,17 @@ final class EvaluationController extends AbstractController
     
             $this->addFlash('success', 'La question a été ajoutée avec succès.');
     
-            // Rediriger vers la page avec les questions mises à jour
             return $this->redirectToRoute('app_evaluation_showenseignant', ['id' => $evaluation->getId()]);
         }
     
         return $this->render('evaluation/showenseignant.html.twig', [
             'evaluation' => $evaluation,
             'questions' => $questions,
+            'responsesByQuestion' => $responsesByQuestion,
             'form' => $form->createView(),
         ]);
     }
     
-
     #[Route('/enseignant/{id}/edit', name: 'app_evaluation_edit', methods: ['GET', 'POST'])]
 
     public function editEnseignant(Request $request, Evaluation $evaluation, EntityManagerInterface $entityManager): Response
@@ -110,18 +117,16 @@ final class EvaluationController extends AbstractController
     }
 
     #[Route('/enseignant/{id}', name: 'app_evaluation_delete', methods: ['POST'])]
-public function deleteEnseignant(Request $request, Evaluation $evaluation, EntityManagerInterface $entityManager): Response
-{
-    if ($this->isCsrfTokenValid('delete' . $evaluation->getId(), $request->get('_token'))) {
-        $entityManager->remove($evaluation);
-        $entityManager->flush();
-        $entityManager->clear(); // Assurer que les données sont bien rafraîchies
-        $this->addFlash('success', 'L\'évaluation a été supprimée avec succès.');
+    public function deleteEnseignant(Request $request, Evaluation $evaluation, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('delete' . $evaluation->getId(), $request->get('_token'))) {
+            $entityManager->remove($evaluation);
+            $entityManager->flush();
+        }
+    
+        return $this->redirectToRoute('app_evaluation_indexenseignant', [], Response::HTTP_SEE_OTHER);
     }
-
-    return $this->redirectToRoute('app_evaluation_indexenseignant', [], Response::HTTP_SEE_OTHER);
-}
-
+    
     // Routes pour l'étudiant
     #[Route('/etudiant', name: 'etudiant_evaluation_index', methods: ['GET'])]
     public function indexEtudiant(EvaluationRepository $evaluationRepository): Response
