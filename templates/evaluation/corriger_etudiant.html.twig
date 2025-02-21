@@ -1,0 +1,87 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Correction des réponses{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">Correction de l'évaluation : {{ evaluation.title }}</h2>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% for question in questions %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Question {{ loop.index }} ({{ question.point }} points)</h3>
+                        </div>
+                        <div class="card-body">
+                            <h6>Question :</h6>
+                            <p>{{ question.text }}</p>
+
+                            <h6>Réponse de l'étudiant :</h6>
+                            {% set reponse = null %}
+                            {% for r in question.reponses %}
+                                {% if r.userId == userId %}
+                                    {% set reponse = r %}
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if reponse %}
+                                <div class="border p-3 rounded bg-light mb-3">
+                                    {{ reponse.text }}
+                                </div>
+                                <div class="form-group">
+                                    <label for="note{{ reponse.id }}" class="form-label">Note (max {{ question.point }} points) :</label>
+                                    <input type="number" 
+                                           id="note{{ reponse.id }}" 
+                                           name="notes[{{ reponse.id }}]" 
+                                           class="form-control" 
+                                           min="0" 
+                                           max="{{ question.point }}" 
+                                           step="0.5"
+                                           value="{{ reponse.note }}"
+                                           style="max-width: 150px;">
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    Pas de réponse fournie
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="{{ path('app_evaluation_corriger', {'id': evaluation.id}) }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Enregistrer les notes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const noteInputs = document.querySelectorAll('input[type="number"]');
+            noteInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    const max = parseFloat(this.getAttribute('max'));
+                    const value = parseFloat(this.value);
+                    if (value > max) {
+                        this.value = max;
+                    } else if (value < 0) {
+                        this.value = 0;
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

@@ -12,7 +12,7 @@ class Reponse
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(type: 'text')]
     private ?string $text = null;
 
     #[ORM\Column]
@@ -22,7 +22,7 @@ class Reponse
     private ?Question $question = null;
 
     #[ORM\ManyToOne(targetEntity: Resultat::class, inversedBy: 'reponses')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true)]
     private ?Resultat $resultat = null;
 
     // Garder userId comme un champ simple
@@ -31,6 +31,9 @@ class Reponse
 
     #[ORM\Column(type: 'integer', nullable: true)]
     private ?int $note = null; // Ajout de la propriété note
+
+    #[ORM\Column(nullable: true)]
+    private ?float $score = null;
 
     public function getId(): ?int
     {
@@ -48,7 +51,7 @@ class Reponse
         return $this->text;
     }
 
-    public function setText(string $text): static
+    public function setText(?string $text): self
     {
         $this->text = $text;
         return $this;
@@ -106,6 +109,17 @@ class Reponse
     public function setNote(?int $note): static
     {
         $this->note = $note;
+        return $this;
+    }
+
+    public function getScore(): ?float
+    {
+        return $this->score;
+    }
+
+    public function setScore(?float $score): self
+    {
+        $this->score = $score;
         return $this;
     }
 }

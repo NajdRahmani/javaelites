@@ -18,21 +18,39 @@ class Evaluation
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $title = null;
+    #[Assert\NotBlank(message: "⚠️ Le titre est obligatoire")]
+    #[Assert\Length(
+        min: 3,
+        max: 255,
+        minMessage: "⚠️ Le titre doit contenir au moins {{ limit }} caractères",
+        maxMessage: "⚠️ Le titre ne peut pas dépasser {{ limit }} caractères"
+    )]
+    private ?string $title = '';
 
     #[ORM\Column(length: 255)]
-    private ?string $description = null;
+    #[Assert\NotBlank(message: "⚠️ La description est obligatoire")]
+    #[Assert\Length(
+        min: 10,
+        minMessage: "⚠️ La description doit contenir au moins {{ limit }} caractères"
+    )]
+    private ?string $description = '';
 
     #[ORM\Column]
-    #[Assert\GreaterThan(value: 1, message: "Le score maximum doit être supérieur à 1.")]
+    #[Assert\NotBlank(message: "Le score maximum est obligatoire")]
+    #[Assert\Positive(message: "Le score maximum doit être un nombre positif. Exemple: 20")]
+    #[Assert\Range(
+        min: 1,
+        max: 100,
+        notInRangeMessage: "Le score doit être entre {{ min }} et {{ max }}"
+    )]
     private ?int $max_score = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $create_at = null;
-    
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    #[Assert\GreaterThan("today", message: "La date limite doit être supérieure à la date actuelle.")]
+    #[Assert\NotBlank(message: "La date limite est obligatoire")]
+    #[Assert\GreaterThan("today", message: "La date limite doit être une date future. Format: jj/mm/aaaa")]
     private ?\DateTimeInterface $deadline = null;
 
     /**
@@ -41,14 +59,21 @@ class Evaluation
     #[ORM\OneToMany(targetEntity: Question::class, mappedBy: 'evaluation', orphanRemoval: true)]
     private Collection $Questions;
 
-    #[ORM\Column(type: 'integer')]
-    #[Assert\PositiveOrZero(message: "Le nombre de cours ne peut pas être négatif.")]
+    #[ORM\Column(type: 'integer', nullable: true)]
+    #[Assert\NotBlank(message: "Le nombre de cours est obligatoire")]
+    #[Assert\Positive(message: "Le nombre de cours doit être positif. Exemple: 1, 2, 3...", groups: ['create', 'edit'])]
+    #[Assert\Range(
+        min: 1,
+        max: 100,
+        notInRangeMessage: "Le nombre de cours doit être compris entre {{ min }} et {{ max }}",
+        groups: ['create', 'edit']
+    )]
     private ?int $cours = null;
 
     public function __construct()
     {
         $this->Questions = new ArrayCollection();
-        $this->create_at = new \DateTime(); // Définit la date actuelle automatiquement
+        $this->create_at = new \DateTime();
     }
 
     public function getId(): ?int
@@ -149,7 +174,7 @@ class Evaluation
         return $this->cours;
     }
 
-    public function setCours(int $cours): static
+    public function setCours(?int $cours): static
     {
         $this->cours = $cours;
         return $this;

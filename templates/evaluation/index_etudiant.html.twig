@@ -1,0 +1,132 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des évaluations{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .evaluation-card {
+            height: 100%;
+            transition: transform 0.2s;
+        }
+        .evaluation-card:hover {
+            transform: translateY(-5px);
+        }
+        .deadline-badge {
+            font-size: 0.85rem;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-completed {
+            background-color: #28a745;
+        }
+        .status-pending {
+            background-color: #ffc107;
+        }
+        .status-expired {
+            background-color: #dc3545;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Liste des évaluations</h1>
+        </div>
+
+        <div class="row g-4">
+            {% for evaluation in evaluations %}
+                {% set hasResponded = false %}
+                {% set isCorrige = false %}
+                {% set userId = 12346 %}
+                {% for question in evaluation.questions %}
+                    {% for reponse in question.reponses %}
+                        {% if reponse.userId == userId %}
+                            {% set hasResponded = true %}
+                            {% if reponse.note is not null %}
+                                {% set isCorrige = true %}
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+
+                <div class="col-md-6 col-lg-4 evaluation-item">
+                    <div class="card evaluation-card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ evaluation.title }}</h5>
+                            <p class="card-text">{{ evaluation.description }}</p>
+                            
+                            <div class="mb-3">
+                                <span class="badge bg-primary">Score Max: {{ evaluation.maxScore }}</span>
+                                <span class="badge {% if evaluation.deadline|date('Y-m-d') < 'now'|date('Y-m-d') %}bg-danger{% else %}bg-info{% endif %} deadline-badge">
+                                    Date limite: {{ evaluation.deadline|date('d/m/Y H:i') }}
+                                </span>
+                                {% if evaluation.cours is not null %}
+                                    <span class="badge bg-secondary">
+                                        {{ evaluation.cours }}
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                {% if hasResponded %}
+                                    <div>
+                                        <span class="status-indicator status-completed"></span>
+                                        <span class="text-success">Déjà répondu</span>
+                                    </div>
+                                    <div class="btn-group">
+                                        <a href="{{ path('app_evaluation_mes_reponses', {'id': evaluation.id}) }}" 
+                                           class="btn btn-outline-primary">
+                                            <i class="fas fa-eye"></i> Voir réponses
+                                        </a>
+                                        {% if isCorrige %}
+                                            <a href="{{ path('app_evaluation_show_resultats', {'id': evaluation.id}) }}" 
+                                               class="btn btn-outline-success">
+                                                <i class="fas fa-chart-bar"></i> Résultats
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                {% elseif evaluation.deadline|date('Y-m-d') < 'now'|date('Y-m-d') %}
+                                    <div>
+                                        <span class="status-indicator status-expired"></span>
+                                        <span class="text-danger">Date limite dépassée</span>
+                                    </div>
+                                {% else %}
+                                    <div>
+                                        <span class="status-indicator status-pending"></span>
+                                        <span class="text-warning">En attente</span>
+                                    </div>
+                                    <a href="{{ path('app_evaluation_answer', {'id': evaluation.id}) }}" 
+                                       class="btn btn-primary">
+                                        <i class="fas fa-pen"></i> Répondre
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Aucune évaluation disponible pour le moment.
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

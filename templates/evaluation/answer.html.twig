@@ -5,19 +5,42 @@
 {% block title %}Répondre à l'évaluation{% endblock %}
 
 {% block body %}
-    <h1>Répondre à l'évaluation: {{ evaluation.title }}</h1>
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h1 class="h3 mb-0">{{ evaluation.title }}</h1>
+        </div>
+        <div class="card-body">
+            <p class="card-text">{{ evaluation.description }}</p>
+            <p class="text-muted">Score maximum : {{ evaluation.maxScore }} points</p>
+            
+            <form action="{{ path('app_reponse_submit', {'evaluation_id': evaluation.id}) }}" method="POST">
+                {% for question in evaluation.questions %}
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            Question {{ loop.index }} ({{ question.point }} points)
+                        </label>
+                        <p class="mb-2">{{ question.text }}</p>
+                        <textarea 
+                            name="reponses[{{ question.id }}]" 
+                            class="form-control" 
+                            rows="3" 
+                            required 
+                            placeholder="Votre réponse..."
+                        ></textarea>
+                    </div>
+                {% endfor %}
 
-    <form method="POST">
-        {% for question in questions %}
-            <div>
-                <h3>{{ question.title }}</h3>
-                <p>{{ question.description }}</p>
-                
-                {# Le champ de réponse, par exemple une zone de texte ou un champ à choix multiple #}
-                <input type="text" name="answer_{{ loop.index0 }}" placeholder="Répondez à la question...">
-            </div>
-        {% endfor %}
-        
-        <button type="submit">Soumettre vos réponses</button>
-    </form>
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{{ path('app_evaluation_index_etudiant') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Soumettre mes réponses
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
