@@ -1,0 +1,70 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Corriger les réponses - {{ evaluation.title }}{% endblock %}
+
+{% block body %}
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h1>{{ evaluation.title }}</h1>
+        </div>
+        <div class="card-body">
+            <p>{{ evaluation.description }}</p>
+            <p>Correction des réponses de l'étudiant ID: {{ userId }}</p>
+        </div>
+    </div>
+
+    <form method="post">
+        {% for question in questions %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Question {{ question.ordreQuestion }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">{{ question.text }}</p>
+                    <p class="text-muted mb-3">Points maximum : {{ question.point }}</p>
+
+                    {% set reponse = null %}
+                    {% for r in question.reponses %}
+                        {% if r.userId == userId %}
+                            {% set reponse = r %}
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if reponse %}
+                        <div class="mb-3">
+                            <label class="form-label">Réponse de l'étudiant :</label>
+                            <div class="border rounded p-3 bg-light">
+                                {{ reponse.text|nl2br }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="note_{{ reponse.id }}" class="form-label">Note :</label>
+                            <input type="number" 
+                                   id="note_{{ reponse.id }}" 
+                                   name="notes[{{ reponse.id }}]" 
+                                   class="form-control" 
+                                   value="{{ reponse.note }}"
+                                   min="0" 
+                                   max="{{ question.point }}" 
+                                   step="0.5">
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            Pas de réponse pour cette question
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{{ path('app_evaluation_corriger', {'id': evaluation.id}) }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Retour
+            </a>
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-save me-2"></i>Enregistrer les notes
+            </button>
+        </div>
+    </form>
+{% endblock %}

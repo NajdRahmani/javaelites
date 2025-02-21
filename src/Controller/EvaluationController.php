@@ -20,8 +20,7 @@ use Symfony\Component\Form\FormError;
 final class EvaluationController extends AbstractController
 {
     // Routes pour l'enseignant
-    #[Route('/enseignant', name: '
-    enseignant', methods: ['GET'])]
+    #[Route('/enseignant', name: 'enseignant', methods: ['GET'])]
     public function indexEnseignant(EvaluationRepository $evaluationRepository): Response
     {
         return $this->render('evaluation/indexenseignant.html.twig', [
@@ -96,6 +95,81 @@ final class EvaluationController extends AbstractController
         ]);
     }
     
+    #[Route('/enseignant/{id}/corriger', name: 'app_evaluation_corriger', methods: ['GET'])]
+    public function corriger(Evaluation $evaluation, EntityManagerInterface $entityManager): Response
+    {
+        // Récupérer toutes les réponses pour cette évaluation avec les notes
+        $query = $entityManager->createQuery(
+            'SELECT DISTINCT r.userId, SUM(COALESCE(r.note, 0)) as totalScore
+            FROM App\Entity\Reponse r
+            JOIN r.question q
+            WHERE q.evaluation = :evaluation
+            GROUP BY r.userId'
+        )
+        ->setParameter('evaluation', $evaluation);
+
+        $results = $query->getResult();
+
+        // Organiser les données par étudiant
+        $etudiants = [];
+        foreach ($results as $result) {
+            $etudiants[$result['userId']] = [
+                'id' => $result['userId'],
+                'score' => (int)$result['totalScore'],
+                'scoreMax' => $evaluation->getMaxScore()
+            ];
+        }
+
+        return $this->render('evaluation/corriger.html.twig', [
+            'evaluation' => $evaluation,
+            'etudiants' => $etudiants
+        ]);
+    }
+
+    #[Route('/enseignant/{id}/corriger/{userId}', name: 'app_evaluation_corriger_etudiant', methods: ['GET', 'POST'])]
+    public function corrigerEtudiant(Request $request, Evaluation $evaluation, int $userId, EntityManagerInterface $entityManager): Response
+    {
+        // Récupérer toutes les questions de l'évaluation avec leurs réponses pour cet étudiant
+        $questions = $entityManager->getRepository(Question::class)
+            ->createQueryBuilder('q')
+            ->addSelect('r')
+            ->leftJoin('q.reponses', 'r')
+            ->where('q.evaluation = :evaluation')
+            ->andWhere('r.userId = :userId OR r.userId IS NULL')
+            ->setParameter('evaluation', $evaluation)
+            ->setParameter('userId', $userId)
+            ->orderBy('q.ordreQuestion', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        // Traiter la soumission des notes
+        if ($request->isMethod('POST')) {
+            $notesData = $request->request->all();
+            $notes = isset($notesData['notes']) ? $notesData['notes'] : [];
+            
+            foreach ($notes as $reponseId => $note) {
+                $reponse = $entityManager->getRepository(Reponse::class)->find($reponseId);
+                if ($reponse && $note !== null) {
+                    // Vérifier que la note ne dépasse pas le maximum
+                    $noteValue = min((float)$note, $reponse->getQuestion()->getPoint());
+                    $reponse->setNote($noteValue);
+                    $entityManager->persist($reponse);
+                }
+            }
+            
+            $entityManager->flush();
+            
+            $this->addFlash('success', 'Les notes ont été enregistrées avec succès.');
+            return $this->redirectToRoute('app_evaluation_corriger', ['id' => $evaluation->getId()]);
+        }
+
+        return $this->render('evaluation/corriger_etudiant.html.twig', [
+            'evaluation' => $evaluation,
+            'questions' => $questions,
+            'userId' => $userId
+        ]);
+    }
+
     #[Route('/enseignant/{id}/edit', name: 'app_evaluation_edit', methods: ['GET', 'POST'])]
 
     public function editEnseignant(Request $request, Evaluation $evaluation, EntityManagerInterface $entityManager): Response
@@ -128,10 +202,10 @@ final class EvaluationController extends AbstractController
     }
     
     // Routes pour l'étudiant
-    #[Route('/etudiant', name: 'etudiant_evaluation_index', methods: ['GET'])]
+    #[Route('/etudiant', name: 'app_evaluation_etudiant', methods: ['GET'])]
     public function indexEtudiant(EvaluationRepository $evaluationRepository): Response
     {
-        return $this->render('evaluation/index.html.twig', [
+        return $this->render('evaluation/indexetudiant.html.twig', [
             'evaluations' => $evaluationRepository->findAll(),
         ]);
     }
@@ -204,5 +278,40 @@ final class EvaluationController extends AbstractController
             'form' => $form->createView(),
         ]);
     }
-}
 
+    #[Route('/mes-reponses/{id}', name: 'app_evaluation_mes_reponses_detail', methods: ['GET'])]
+    public function mesReponsesDetail(Evaluation $evaluation, EntityManagerInterface $entityManager): Response
+    {
+        $userId = 12346; // ID utilisateur temporaire
+
+        // Récupérer toutes les questions de l'évaluation avec les réponses de l'étudiant
+        $questions = $entityManager->getRepository(Question::class)
+            ->createQueryBuilder('q')
+            ->addSelect('r')
+            ->leftJoin('q.reponses', 'r')
+            ->where('q.evaluation = :evaluation')
+            ->andWhere('r.userId = :userId OR r.userId IS NULL')
+            ->setParameter('evaluation', $evaluation)
+            ->setParameter('userId', $userId)
+            ->orderBy('q.ordreQuestion', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        // Calculer le score total
+        $scoreTotal = 0;
+        foreach ($questions as $question) {
+            foreach ($question->getReponses() as $reponse) {
+                if ($reponse->getUserId() === $userId && $reponse->getNote() !== null) {
+                    $scoreTotal += $reponse->getNote();
+                }
+            }
+        }
+
+        return $this->render('evaluation/mes_reponses.html.twig', [
+            'evaluation' => $evaluation,
+            'questions' => $questions,
+            'userId' => $userId,
+            'scoreTotal' => $scoreTotal
+        ]);
+    }
+}

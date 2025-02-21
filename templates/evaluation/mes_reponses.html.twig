@@ -1,0 +1,67 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes réponses - {{ evaluation.title }}{% endblock %}
+
+{% block body %}
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h1>{{ evaluation.title }}</h1>
+        </div>
+        <div class="card-body">
+            <p>{{ evaluation.description }}</p>
+            {% if scoreTotal is not null %}
+                <div class="alert alert-{% if scoreTotal >= evaluation.maxScore * 0.7 %}success{% elseif scoreTotal >= evaluation.maxScore * 0.5 %}warning{% else %}danger{% endif %}">
+                    Score total : {{ scoreTotal }} / {{ evaluation.maxScore }} points
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% for question in questions %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Question {{ question.ordreQuestion }}</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">{{ question.text }}</p>
+                <p class="text-muted mb-3">Points maximum : {{ question.point }}</p>
+
+                {% set reponse = null %}
+                {% for r in question.reponses %}
+                    {% if r.userId == userId %}
+                        {% set reponse = r %}
+                    {% endif %}
+                {% endfor %}
+
+                {% if reponse %}
+                    <div class="mb-3">
+                        <label class="form-label">Votre réponse :</label>
+                        <div class="border rounded p-3 bg-light">
+                            {{ reponse.text|nl2br }}
+                        </div>
+                    </div>
+
+                    {% if reponse.note is not null %}
+                        <div class="alert alert-{% if reponse.note >= question.point * 0.7 %}success{% elseif reponse.note >= question.point * 0.5 %}warning{% else %}danger{% endif %}">
+                            Note obtenue : {{ reponse.note }} / {{ question.point }} points
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            Cette réponse n'a pas encore été corrigée
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="alert alert-warning">
+                        Vous n'avez pas encore répondu à cette question
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+
+    <div class="mt-4">
+        <a href="{{ path('app_evaluation_etudiant') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+        </a>
+    </div>
+{% endblock %}
