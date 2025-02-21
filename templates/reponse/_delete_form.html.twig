@@ -4,11 +4,11 @@
 <!-- Modal de confirmation -->
 <div id="delete-modal-{{ reponse.id }}" class="delete-modal" style="display: none;">
     <div class="modal-content">
-        <p>Are you sure you want to delete this response?</p>
+        <p>Êtes-vous sûr de vouloir supprimer cette réponse ?</p>
         <form method="post" action="{{ path('app_reponse_delete', {'id': reponse.id}) }}">
             <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ reponse.id) }}">
-            <button type="submit" class="btn btn-danger">Yes, delete</button>
-            <button type="button" class="btn btn-secondary" onclick="hideDeleteConfirmation({{ reponse.id }})">Cancel</button>
+            <button type="submit" class="btn btn-danger">Oui, supprimer</button>
+            <button type="button" class="btn btn-secondary" onclick="hideDeleteConfirmation({{ reponse.id }})">Annuler</button>
         </form>
     </div>
 </div>

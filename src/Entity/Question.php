@@ -9,7 +9,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: QuestionRepository::class)]
-#[ORM\HasLifecycleCallbacks]  // Ajouter cette annotation pour activer les événements du cycle de vie
+#[ORM\HasLifecycleCallbacks]  
 class Question
 {
     #[ORM\Id]
@@ -18,15 +18,31 @@ class Question
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(message: "Le texte de la question ne peut pas être vide.")]
+    #[Assert\NotBlank(message: "⚠️ L'énoncé de la question est obligatoire")]
+    #[Assert\Length(
+        min: 5,
+        max: 255,
+        minMessage: "⚠️ L'énoncé doit contenir au moins {{ limit }} caractères",
+        maxMessage: "⚠️ L'énoncé ne peut pas dépasser {{ limit }} caractères"
+    )]
     private ?string $text = null;
 
     #[ORM\Column]
-    #[Assert\Positive(message: "Le nombre de points doit être positif.")]
+    #[Assert\NotBlank(message: "⚠️ Le nombre de points est obligatoire")]
+    #[Assert\Range(
+        min: 0.5,
+        max: 20,
+        notInRangeMessage: "⚠️ Le nombre de points doit être compris entre {{ min }} et {{ max }}"
+    )]
     private ?int $point = null;
 
     #[ORM\Column]
-    #[Assert\PositiveOrZero(message: "L'ordre de la question doit être positif ou égal à zéro.")]
+    #[Assert\NotNull(message: "⚠️ L'ordre de la question est obligatoire")]
+    #[Assert\Range(
+        min: 1,
+        max: 100,
+        notInRangeMessage: "⚠️ L'ordre doit être compris entre {{ min }} et {{ max }}"
+    )]
     private ?int $ordreQuestion = 0;
 
     #[ORM\ManyToOne(inversedBy: 'questions')]
@@ -36,7 +52,7 @@ class Question
     #[ORM\OneToMany(targetEntity: Reponse::class, mappedBy: 'question', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $reponses;
 
-    #[ORM\Column(length: 255, nullable: true)]  // Marquer comme nullable
+    #[ORM\Column(length: 255, nullable: true)]  
     private ?string $title = null;
 
     public function __construct()
@@ -44,7 +60,6 @@ class Question
         $this->reponses = new ArrayCollection();
     }
 
-    // Getters and setters
     public function getId(): ?int
     {
         return $this->id;
@@ -118,7 +133,6 @@ class Question
         return $this;
     }
 
-    // Ajout de la méthode getTitle et setTitle
     public function getTitle(): ?string
     {
         return $this->title;
@@ -130,22 +144,17 @@ class Question
         return $this;
     }
 
-    // Méthode pour définir l'ordre des questions
-    #[ORM\PrePersist]  // Appelé avant la persistance de l'entité
+    #[ORM\PrePersist]  
     public function setDefaultOrdreQuestion(): void
     {
         if ($this->getOrdreQuestion() === null) {
-            // Récupérer l'évaluation associée à la question
             $evaluation = $this->getEvaluation();
 
-            // Trouver la dernière question existante dans la même évaluation
             $lastQuestion = $evaluation->getQuestions()->last();
 
-            // Si une question existe, l'ordre est incrémenté de 1
             if ($lastQuestion) {
                 $this->setOrdreQuestion($lastQuestion->getOrdreQuestion() + 1);
             } else {
-                // Sinon, commencer à 1
                 $this->setOrdreQuestion(1);
             }
         }

@@ -2,10 +2,11 @@
 
 namespace App\Controller;
 
+use App\Entity\Evaluation;
+use App\Entity\Question;
 use App\Entity\Reponse;
 use App\Form\ReponseType;
 use App\Repository\EvaluationRepository;
-
 use App\Repository\ReponseRepository;
 use App\Repository\QuestionRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -40,7 +41,7 @@ final class ReponseController extends AbstractController
         $reponse->setQuestion($question);
     
         // Récupérer l'ID utilisateur (remplacez cette ligne par l'authentification réelle plus tard)
-        $userId = 123; // Remplacer par l'ID réel de l'utilisateur connecté
+        $userId = 12346; // Remplacer par l'ID réel de l'utilisateur connecté
         $reponse->setUserId($userId);
     
         $form = $this->createForm(ReponseType::class, $reponse);
@@ -102,7 +103,43 @@ final class ReponseController extends AbstractController
             'nextQuestionId' => $nextQuestionId,
         ]);
     }
-        #[Route('/{id}', name: 'app_reponse_show', methods: ['GET'])]
+
+    #[Route('/submit/{evaluation_id}', name: 'app_reponse_submit', methods: ['POST'])]
+    public function submit(Request $request, int $evaluation_id, EntityManagerInterface $entityManager): Response
+    {
+        $evaluation = $entityManager->getRepository(Evaluation::class)->find($evaluation_id);
+        
+        if (!$evaluation) {
+            throw $this->createNotFoundException('Évaluation non trouvée');
+        }
+
+        // Utiliser all() pour obtenir tous les paramètres POST
+        $data = $request->request->all();
+        $reponses = $data['reponses'] ?? [];
+        $userId = 12346; // ID utilisateur temporaire
+
+        foreach ($reponses as $questionId => $texteReponse) {
+            $question = $entityManager->getRepository(Question::class)->find($questionId);
+            
+            if (!$question) {
+                continue;
+            }
+
+            $reponse = new Reponse();
+            $reponse->setQuestion($question);
+            $reponse->setUserId($userId);
+            $reponse->setText($texteReponse);
+            
+            $entityManager->persist($reponse);
+        }
+
+        $entityManager->flush();
+
+        $this->addFlash('success', 'Vos réponses ont été enregistrées avec succès.');
+        return $this->redirectToRoute('app_evaluation_index_etudiant');
+    }
+
+    #[Route('/{id}', name: 'app_reponse_show', methods: ['GET'])]
     public function show(Reponse $reponse): Response
     {
         return $this->render('reponse/show.html.twig', [

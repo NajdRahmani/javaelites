@@ -1,0 +1,110 @@
+{% extends 'base2.html.twig' %}
+
+{% block title %}Détails de l'évaluation{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .student-card {
+            margin-bottom: 1rem;
+        }
+        .status-badge {
+            font-size: 0.9rem;
+            padding: 0.25rem 0.5rem;
+        }
+        .score-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h2 class="card-title mb-0">{{ evaluation.title }}</h2>
+                <div>
+                    <a href="{{ path('app_evaluation_edit', {'id': evaluation.id}) }}" class="btn btn-light me-2">
+                        <i class="fas fa-edit"></i> Modifier
+                    </a>
+                    <a href="{{ path('app_evaluation_index_enseignant') }}" class="btn btn-light">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="card-text">{{ evaluation.description }}</p>
+                <p class="text-muted">Score maximum total : {{ evaluation.maxScore }} points</p>
+            </div>
+        </div>
+
+        <h3 class="mb-4">Liste des étudiants</h3>
+
+        {% if reponsesParEtudiant|length > 0 %}
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for etudiantId, data in reponsesParEtudiant %}
+                    <div class="col">
+                        <div class="card student-card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Étudiant ID: {{ etudiantId }}</h5>
+                                <div class="mb-3">
+                                    <div class="score-display">
+                                        {{ data.total_note }}/{{ data.total_possible }} points
+                                    </div>
+                                </div>
+                                <div class="progress mb-3">
+                                    <div class="progress-bar" role="progressbar" 
+                                         style="width: {{ (data.total_note / data.total_possible * 100)|round }}%"
+                                         aria-valuenow="{{ (data.total_note / data.total_possible * 100)|round }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                        {{ (data.total_note / data.total_possible * 100)|round }}%
+                                    </div>
+                                </div>
+                                {% set toutCorrige = true %}
+                                {% for reponse in data.reponses %}
+                                    {% if reponse.note is null %}
+                                        {% set toutCorrige = false %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if toutCorrige %}
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-circle"></i> Corrigé
+                                        </span>
+                                    </div>
+                                {% else %}
+                                    <a href="{{ path('app_evaluation_corriger_etudiant', {'id': evaluation.id, 'userId': etudiantId}) }}" 
+                                       class="btn btn-primary w-100">
+                                        <i class="fas fa-check"></i> Corriger
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> Aucun étudiant n'a encore répondu à cette évaluation.
+            </div>
+        {% endif %}
+
+        <div class="text-center mt-4">
+            <a href="{{ path('app_evaluation_index_enseignant') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Retour à la liste des évaluations
+            </a>
+        </div>
+    </div>
+{% endblock %}

@@ -1,53 +1,83 @@
-{% extends 'base.html.twig' %}
+{% extends 'base2.html.twig' %}
 
-{% block title %}Tableau des Résultats{% endblock %}
+{% block title %}Liste des Résultats{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
 
 {% block body %}
-<div class="container mt-5">
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-primary text-white text-center">
-            <h2 class="fw-bold">🏆 Tableau des Résultats</h2>
-            <p class="mb-0">Suivez vos performances et progressez chaque jour ! 🚀</p>
+    <div class="container mt-4">
+        <h1 class="mb-4">Liste des Résultats</h1>
+
+        <div class="text-end mb-3">
+            <a href="{{ path('app_resultat_new') }}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Nouveau Résultat
+            </a>
         </div>
-        <div class="card-body">
-            <table class="table table-striped">
-                <thead class="table-light">
+
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead class="table-dark">
                     <tr>
-                        <th>ID</th>
                         <th>Score</th>
                         <th>Date</th>
-                        <th>Feedback</th>
+                        <th>Évaluation</th>
+                        <th>Étudiant</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                 {% for resultat in resultats %}
                     <tr>
-                        <td>{{ resultat.id }}</td>
-                        <td class="fw-bold {% if resultat.score >= 80 %}text-success{% elseif resultat.score >= 50 %}text-warning{% else %}text-danger{% endif %}">
-                            {{ resultat.score }} / 100
-                        </td>
-                        <td>{{ resultat.submittedAt ? resultat.submittedAt|date('d/m/Y H:i:s') : 'Non disponible' }}</td>
-                        <td class="fst-italic">"{{ resultat.feedback }}"</td>
                         <td>
-                            <a href="{{ path('app_resultat_show', {'id': resultat.id}) }}" class="btn btn-sm btn-info text-white">👁 Voir</a>
-                            <a href="{{ path('app_resultat_edit', {'id': resultat.id}) }}" class="btn btn-sm btn-warning">✏ Modifier</a>
+                            <div class="progress" style="height: 20px;">
+                                {% set percentage = (resultat.score / resultat.evaluation.maxScore) * 100 %}
+                                <div class="progress-bar {% if percentage < 50 %}bg-danger{% elseif percentage < 70 %}bg-warning{% else %}bg-success{% endif %}" 
+                                     role="progressbar" 
+                                     style="width: {{ percentage }}%"
+                                     aria-valuenow="{{ percentage }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    {{ resultat.score }}/{{ resultat.evaluation.maxScore }}
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ resultat.date ? resultat.date|date('Y-m-d H:i:s') : '' }}</td>
+                        <td>{{ resultat.evaluation.title }}</td>
+                        <td>{{ resultat.userId }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ path('app_resultat_show', {'id': resultat.id}) }}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-eye"></i> Voir
+                                </a>
+                                <a href="{{ path('app_resultat_edit', {'id': resultat.id}) }}" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-edit"></i> Modifier
+                                </a>
+                                <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ resultat.id }}">
+                                    <i class="fas fa-trash"></i> Supprimer
+                                </button>
+                            </div>
+
+                            {% include 'partials/_delete_confirmation_modal.html.twig' with {
+                                'id': resultat.id,
+                                'path': path('app_resultat_delete', {'id': resultat.id}),
+                                'csrf_token': csrf_token('delete' ~ resultat.id)
+                            } %}
                         </td>
                     </tr>
                 {% else %}
                     <tr>
-                        <td colspan="5" class="text-center text-muted">
-                            🤷‍♂️ Aucun résultat trouvé. Lancez-vous et testez vos compétences !
-                        </td>
+                        <td colspan="5" class="text-center">Aucun résultat trouvé</td>
                     </tr>
                 {% endfor %}
                 </tbody>
             </table>
-
-            <div class="text-center mt-4">
-                <a href="{{ path('app_resultat_new') }}" class="btn btn-success">➕ Ajouter un nouveau Résultat</a>
-            </div>
         </div>
     </div>
-</div>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}

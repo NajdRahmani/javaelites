@@ -1,47 +1,83 @@
-   
-   
-  {% extends 'base2.html.twig' %}
+   {% extends 'base.html.twig' %}
+
+{% block title %}Modifier l'évaluation{% endblock %}
 
 {% block body %}
-    <form method="post">
-        {{ form_start(form) }}
-
-        <div class="form-group">
-            {{ form_label(form.title, 'Title') }}
-            {{ form_widget(form.title, {'attr': {'class': 'form-control'}}) }}
-            {{ form_errors(form.title) }}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h1 class="h3 mb-0">Modifier l'évaluation</h1>
         </div>
+        <div class="card-body">
+            {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': 'novalidate'}}) }}
+                <div class="form-group mb-3">
+                    {{ form_label(form.title, 'Titre *') }}
+                    {{ form_widget(form.title, {
+                        'attr': {
+                            'class': 'form-control',
+                            'placeholder': 'Entrez le titre de l\'évaluation'
+                        }
+                    }) }}
+                    {{ form_errors(form.title) }}
+                </div>
 
-        <div class="form-group">
-            {{ form_label(form.description, 'Description') }}
-            {{ form_widget(form.description, {'attr': {'class': 'form-control'}}) }}
-            {{ form_errors(form.description) }}
+                <div class="form-group mb-3">
+                    {{ form_label(form.description, 'Description *') }}
+                    {{ form_widget(form.description, {
+                        'attr': {
+                            'class': 'form-control',
+                            'rows': 4,
+                            'placeholder': 'Décrivez l\'évaluation'
+                        }
+                    }) }}
+                    {{ form_errors(form.description) }}
+                </div>
+
+                <div class="form-group mb-3">
+                    {{ form_label(form.max_score, 'Score Maximum *') }}
+                    {{ form_widget(form.max_score, {
+                        'attr': {
+                            'class': 'form-control',
+                            'min': 0,
+                            'placeholder': 'Entrez le score maximum'
+                        }
+                    }) }}
+                    {{ form_errors(form.max_score) }}
+                </div>
+
+                <div class="form-group mb-3">
+                    {{ form_label(form.deadline, 'Date Limite *') }}
+                    {{ form_widget(form.deadline, {
+                        'attr': {
+                            'class': 'form-control',
+                            'type': 'date'
+                        }
+                    }) }}
+                    {{ form_errors(form.deadline) }}
+                </div>
+
+                <div class="form-group mb-3">
+                    {{ form_label(form.cours, 'Numéro du Cours') }}
+                    {{ form_widget(form.cours, {
+                        'attr': {
+                            'class': 'form-control',
+                            'min': 1,
+                            'placeholder': 'Entrez le numéro du cours'
+                        }
+                    }) }}
+                    {{ form_errors(form.cours) }}
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{{ path('app_evaluation_index_enseignant') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Enregistrer les modifications
+                    </button>
+                </div>
+            {{ form_end(form) }}
         </div>
-
-        <div class="form-group">
-            {{ form_label(form.max_score, 'Max Score') }}
-            {{ form_widget(form.max_score, {'attr': {'class': 'form-control'}}) }}
-            {{ form_errors(form.max_score) }}
-        </div>
-
-        <div class="form-group">
-            {{ form_label(form.deadline, 'Deadline') }}
-            {{ form_widget(form.deadline, {'attr': {'class': 'form-control', 'type': 'date'}}) }}
-            {{ form_errors(form.deadline) }}
-        </div>
-
-        <div class="form-group">
-            {{ form_label(form.cours, 'Number of Courses') }}
-            {{ form_widget(form.cours, {'attr': {'class': 'form-control'}}) }}
-            {{ form_errors(form.cours) }}
-        </div>
-
-        <div class="form-group text-center mt-4">
-            <button class="btn btn-primary btn-lg" type="submit">
-                {{ button_label|default('Submit') }}
-            </button>
-        </div>
-
-        {{ form_end(form) }}
-    </form>
+    </div>
+</div>
 {% endblock %}

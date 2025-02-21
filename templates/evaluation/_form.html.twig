@@ -1,4 +1,33 @@
-{{ form_start(form) }}
-    {{ form_widget(form) }}
-    <button class="btn">{{ button_label|default('Save') }}</button>
+{{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': 'novalidate'}}) }}
+    <div class="mb-3">
+        {{ form_label(form.title) }}
+        {{ form_widget(form.title) }}
+        {{ form_errors(form.title) }}
+    </div>
+
+    <div class="mb-3">
+        {{ form_label(form.description) }}
+        {{ form_widget(form.description) }}
+        {{ form_errors(form.description) }}
+    </div>
+
+    <div class="mb-3">
+        {{ form_label(form.max_score) }}
+        {{ form_widget(form.max_score) }}
+        {{ form_errors(form.max_score) }}
+    </div>
+
+    <div class="mb-3">
+        {{ form_label(form.deadline) }}
+        {{ form_widget(form.deadline) }}
+        {{ form_errors(form.deadline) }}
+    </div>
+
+    <div class="mb-3">
+        {{ form_label(form.cours) }}
+        {{ form_widget(form.cours) }}
+        {{ form_errors(form.cours) }}
+    </div>
+
+    <button class="btn btn-primary">{{ button_label|default('Enregistrer') }}</button>
 {{ form_end(form) }}

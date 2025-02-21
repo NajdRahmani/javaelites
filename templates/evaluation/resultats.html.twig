@@ -1,0 +1,72 @@
+{% extends 'base2.html.twig' %}
+
+{% block title %}Résultats de l'évaluation{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">Résultats : {{ evaluation.title }}</h2>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <span class="badge bg-primary">Score Max: {{ evaluation.maxScore }}</span>
+                    <span class="badge bg-info">
+                        Date limite: {{ evaluation.deadline|date('d/m/Y H:i') }}
+                    </span>
+                </div>
+
+                {% set totalPoints = 0 %}
+                {% set totalObtenu = 0 %}
+
+                {% for question in evaluation.questions %}
+                    {% set totalPoints = totalPoints + question.point %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Question {{ question.ordreQuestion }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Question :</strong> {{ question.text }}</p>
+                            {% set reponse = null %}
+                            {% for r in question.reponses %}
+                                {% if r.userId == userId %}
+                                    {% set reponse = r %}
+                                    {% if r.note is not null %}
+                                        {% set totalObtenu = totalObtenu + r.note %}
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if reponse %}
+                                <div class="alert alert-info">
+                                    <p><strong>Votre réponse :</strong></p>
+                                    <p>{{ reponse.texte }}</p>
+                                    {% if reponse.note is not null %}
+                                        <p><strong>Note :</strong> {{ reponse.note }}/{{ question.point }}</p>
+                                    {% else %}
+                                        <p class="text-muted">En attente de correction</p>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    Vous n'avez pas répondu à cette question.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <div class="alert alert-primary">
+                    <h4 class="alert-heading">Score Final</h4>
+                    <p class="mb-0">Vous avez obtenu {{ totalObtenu }}/{{ totalPoints }} points</p>
+                </div>
+
+                <div class="text-center mt-4">
+                    <a href="{{ path('app_evaluation_index_etudiant') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Retour aux évaluations
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

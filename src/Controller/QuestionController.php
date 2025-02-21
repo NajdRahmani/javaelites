@@ -102,19 +102,25 @@ final class QuestionController extends AbstractController
         ]);
     }
 
-   #[Route('/{id}', name: 'app_question_delete', methods: ['POST'])]
-public function delete(Request $request, Question $question, EntityManagerInterface $entityManager): Response
-{
-    $evaluationId = $question->getEvaluation()->getId(); // Récupération de l'évaluation associée
+    #[Route('/{id}', name: 'app_question_delete', methods: ['POST'])]
+    public function delete(Request $request, Question $question, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('delete'.$question->getId(), $request->request->get('_token'))) {
+            // Récupérer l'ID de l'évaluation avant de supprimer la question
+            $evaluationId = $question->getEvaluation()->getId();
+            
+            $entityManager->remove($question);
+            $entityManager->flush();
 
-    if ($this->isCsrfTokenValid('delete' . $question->getId(), $request->get('token'))) {
-        $entityManager->remove($question);
-        $entityManager->flush();
+            $this->addFlash('success', 'La question a été supprimée avec succès.');
+            
+            // Rediriger vers la liste des questions de l'évaluation
+            return $this->redirectToRoute('app_question_index', ['evaluationId' => $evaluationId]);
+        }
+
+        $this->addFlash('error', 'Erreur lors de la suppression de la question.');
+        return $this->redirectToRoute('app_question_index', ['evaluationId' => $question->getEvaluation()->getId()]);
     }
-
-    return $this->redirectToRoute('app_question_index', ['evaluationId' => $evaluationId], Response::HTTP_SEE_OTHER);
-}
-
 
     #[Route('/{id}/repondre', name: 'app_question_repondre', methods: ['GET'])]
     public function repondre(int $id, EntityManagerInterface $entityManager): Response

@@ -16,13 +16,13 @@ class ReponseType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            // Champ pour le texte de la réponse
-            ->add('text');
-            
-           
+            // Champ pour le texte de la réponse, avec l'option 'required' à false
+            ->add('text', null, [
+                'required' => false, // Rend le champ non obligatoire
+            ]);
     }
 
-    public function configureOptions(SymfonyOptionsResolver $resolver): void // Utiliser l'alias ici
+    public function configureOptions(SymfonyOptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => Reponse::class,
