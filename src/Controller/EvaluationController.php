@@ -209,18 +209,19 @@ final class EvaluationController extends AbstractController
     }
 
     // Routes pour l'étudiant
-    #[Route('/etudiant', name: 'app_evaluation_index_etudiant', methods: ['GET'])]
-    public function indexEtudiant(EntityManagerInterface $entityManager): Response
+    #[Route('/etudiant', name: 'app_evaluation_etudiant', methods: ['GET'])]
+    public function indexEtudiant(EvaluationRepository $evaluationRepository, EntityManagerInterface $entityManager): Response
     {
-        // ID utilisateur fixe pour le moment
-        $userId = 12346;
-
-        $evaluations = $entityManager->getRepository(Evaluation::class)
-            ->findBy([], ['deadline' => 'DESC']);
+        // Récupérer toutes les évaluations avec leurs questions et réponses
+        $evaluations = $entityManager->createQuery(
+            'SELECT e, q, r
+            FROM App\Entity\Evaluation e
+            LEFT JOIN e.Questions q
+            LEFT JOIN q.reponses r'
+        )->getResult();
 
         return $this->render('evaluation/index_etudiant.html.twig', [
-            'evaluations' => $evaluations,
-            'userId' => $userId
+            'evaluations' => $evaluations
         ]);
     }
 
