@@ -102,9 +102,40 @@ final class EvaluationController extends AbstractController
         return $this->redirectToRoute('app_evaluation_index_enseignant');
     }
     
-    #[Route('/enseignant/{id}/corriger', name: 'app_evaluation_corriger', methods: ['GET'])]
-    public function corriger(Evaluation $evaluation, EntityManagerInterface $entityManager): Response
+    #[Route('/enseignant/{id}/edit', name: 'app_evaluation_edit', methods: ['GET', 'POST'])]
+    public function edit(Request $request, int $id, EntityManagerInterface $entityManager): Response
     {
+        $evaluation = $entityManager->getRepository(Evaluation::class)->find($id);
+        
+        if (!$evaluation) {
+            throw $this->createNotFoundException('L\'évaluation demandée n\'existe pas.');
+        }
+
+        $form = $this->createForm(EvaluationType::class, $evaluation);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush();
+
+            $this->addFlash('success', 'L\'évaluation a été modifiée avec succès.');
+            return $this->redirectToRoute('app_evaluation_index_enseignant');
+        }
+
+        return $this->render('evaluation/edit.html.twig', [
+            'evaluation' => $evaluation,
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/enseignant/{id}/corriger', name: 'app_evaluation_corriger', methods: ['GET'])]
+    public function corriger(int $id, EntityManagerInterface $entityManager): Response
+    {
+        $evaluation = $entityManager->getRepository(Evaluation::class)->find($id);
+        
+        if (!$evaluation) {
+            throw $this->createNotFoundException('L\'évaluation demandée n\'existe pas.');
+        }
+
         // Récupérer toutes les réponses pour cette évaluation avec les notes
         $query = $entityManager->createQuery(
             'SELECT DISTINCT r.userId, SUM(COALESCE(r.note, 0)) as totalScore
@@ -177,82 +208,19 @@ final class EvaluationController extends AbstractController
         ]);
     }
 
-    #[Route('/enseignant/{id}/edit', name: 'app_evaluation_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, int $id, EntityManagerInterface $entityManager): Response
-    {
-        $evaluation = $entityManager->getRepository(Evaluation::class)->find($id);
-        
-        if (!$evaluation) {
-            throw $this->createNotFoundException('L\'évaluation demandée n\'existe pas.');
-        }
-
-        $form = $this->createForm(EvaluationType::class, $evaluation);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
-
-            $this->addFlash('success', 'L\'évaluation a été modifiée avec succès.');
-            return $this->redirectToRoute('app_evaluation_index_enseignant');
-        }
-
-        return $this->render('evaluation/edit.html.twig', [
-            'evaluation' => $evaluation,
-            'form' => $form->createView(),
-        ]);
-    }
-
-    #[Route('/enseignant/{id}/corriger', name: 'app_evaluation_corriger', methods: ['GET'])]
-    public function corriger(int $id, EntityManagerInterface $entityManager): Response
-    {
-        $evaluation = $entityManager->getRepository(Evaluation::class)->find($id);
-        
-        if (!$evaluation) {
-            throw $this->createNotFoundException('L\'évaluation demandée n\'existe pas.');
-        }
-
-        // Récupérer toutes les réponses pour cette évaluation avec les notes
-        $query = $entityManager->createQuery(
-            'SELECT DISTINCT r.userId, SUM(COALESCE(r.note, 0)) as totalScore
-            FROM App\Entity\Reponse r
-            JOIN r.question q
-            WHERE q.evaluation = :evaluation
-            GROUP BY r.userId'
-        )
-        ->setParameter('evaluation', $evaluation);
-
-        $results = $query->getResult();
-
-        // Organiser les données par étudiant
-        $etudiants = [];
-        foreach ($results as $result) {
-            $etudiants[$result['userId']] = [
-                'id' => $result['userId'],
-                'score' => (int)$result['totalScore'],
-                'scoreMax' => $evaluation->getMaxScore()
-            ];
-        }
-
-        return $this->render('evaluation/corriger.html.twig', [
-            'evaluation' => $evaluation,
-            'etudiants' => $etudiants
-        ]);
-    }
-
     // Routes pour l'étudiant
-    #[Route('/etudiant', name: 'app_evaluation_etudiant', methods: ['GET'])]
-    public function indexEtudiant(EvaluationRepository $evaluationRepository, EntityManagerInterface $entityManager): Response
+    #[Route('/etudiant', name: 'app_evaluation_index_etudiant', methods: ['GET'])]
+    public function indexEtudiant(EntityManagerInterface $entityManager): Response
     {
-        // Récupérer toutes les évaluations avec leurs questions et réponses
-        $evaluations = $entityManager->createQuery(
-            'SELECT e, q, r
-            FROM App\Entity\Evaluation e
-            LEFT JOIN e.Questions q
-            LEFT JOIN q.reponses r'
-        )->getResult();
+        // ID utilisateur fixe pour le moment
+        $userId = 12346;
+
+        $evaluations = $entityManager->getRepository(Evaluation::class)
+            ->findBy([], ['deadline' => 'DESC']);
 
         return $this->render('evaluation/index_etudiant.html.twig', [
-            'evaluations' => $evaluations
+            'evaluations' => $evaluations,
+            'userId' => $userId
         ]);
     }
 
@@ -442,6 +410,7 @@ final class EvaluationController extends AbstractController
     {
         $userId = 12346; // ID utilisateur temporaire
 
+        // Récupérer toutes les questions de l'évaluation avec les réponses de l'étudiant
         $questions = $entityManager->getRepository(Question::class)
             ->createQueryBuilder('q')
             ->addSelect('r')
@@ -454,48 +423,21 @@ final class EvaluationController extends AbstractController
             ->getQuery()
             ->getResult();
 
-        return $this->render('evaluation/mes_reponses_detail.html.twig', [
-            'evaluation' => $evaluation,
-            'questions' => $questions,
-            'userId' => $userId
-        ]);
-    }
-
-    #[Route('/repondre/{id}', name: 'app_evaluation_repondre', methods: ['GET', 'POST'])]
-    public function repondre(Request $request, Evaluation $evaluation, EntityManagerInterface $entityManager): Response
-    {
-        $userId = 12346; // ID utilisateur temporaire
-
-        if ($request->isMethod('POST')) {
-            $reponses = $request->request->get('reponses', []);
-            
-            foreach ($reponses as $questionId => $texteReponse) {
-                if (!empty($texteReponse)) {
-                    $question = $entityManager->getRepository(Question::class)->find($questionId);
-                    
-                    if ($question) {
-                        $reponse = new Reponse();
-                        $reponse->setQuestion($question);
-                        $reponse->setText($texteReponse);
-                        $reponse->setUserId($userId);
-                        
-                        $entityManager->persist($reponse);
-                    }
+        // Calculer le score total
+        $scoreTotal = 0;
+        foreach ($questions as $question) {
+            foreach ($question->getReponses() as $reponse) {
+                if ($reponse->getUserId() === $userId && $reponse->getNote() !== null) {
+                    $scoreTotal += $reponse->getNote();
                 }
             }
-            
-            $entityManager->flush();
-            
-            $this->addFlash('success', 'Vos réponses ont été enregistrées avec succès.');
-            return $this->redirectToRoute('app_evaluation_mes_reponses_detail', ['id' => $evaluation->getId()]);
         }
 
-        $questions = $entityManager->getRepository(Question::class)
-            ->findBy(['evaluation' => $evaluation], ['ordreQuestion' => 'ASC']);
-
-        return $this->render('evaluation/repondre.html.twig', [
+        return $this->render('evaluation/mes_reponses.html.twig', [
             'evaluation' => $evaluation,
-            'questions' => $questions
+            'questions' => $questions,
+            'userId' => $userId,
+            'scoreTotal' => $scoreTotal
         ]);
     }
 }

@@ -54,7 +54,7 @@
                 {% set hasResponded = false %}
                 {% set isCorrige = false %}
                 {% set userId = 12346 %}
-                {% for question in evaluation.Questions %}
+                {% for question in evaluation.questions %}
                     {% for reponse in question.reponses %}
                         {% if reponse.userId == userId %}
                             {% set hasResponded = true %}
@@ -90,23 +90,40 @@
                                         <span class="text-success">Déjà répondu</span>
                                     </div>
                                     <div class="btn-group">
-                                        <a href="{{ path('app_evaluation_mes_reponses_detail', {'id': evaluation.id}) }}" 
+                                        <a href="{{ path('app_evaluation_mes_reponses', {'id': evaluation.id}) }}" 
                                            class="btn btn-outline-primary">
                                             <i class="fas fa-eye"></i> Voir réponses
                                         </a>
+                                        {% if isCorrige %}
+                                            <a href="{{ path('app_evaluation_show_resultats', {'id': evaluation.id}) }}" 
+                                               class="btn btn-outline-success">
+                                                <i class="fas fa-chart-bar"></i> Résultats
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                {% elseif evaluation.deadline|date('Y-m-d') < 'now'|date('Y-m-d') %}
+                                    <div>
+                                        <span class="status-indicator status-expired"></span>
+                                        <span class="text-danger">Date limite dépassée</span>
                                     </div>
                                 {% else %}
                                     <div>
                                         <span class="status-indicator status-pending"></span>
                                         <span class="text-warning">En attente</span>
                                     </div>
-                                    <a href="{{ path('app_evaluation_repondre', {'id': evaluation.id}) }}" 
+                                    <a href="{{ path('app_evaluation_answer', {'id': evaluation.id}) }}" 
                                        class="btn btn-primary">
                                         <i class="fas fa-pen"></i> Répondre
                                     </a>
                                 {% endif %}
                             </div>
                         </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Aucune évaluation disponible pour le moment.
                     </div>
                 </div>
             {% endfor %}
