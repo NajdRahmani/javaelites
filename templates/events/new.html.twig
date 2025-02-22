@@ -2,11 +2,31 @@
 
 {% block title %}New Event{% endblock %}
 {% block stylesheets %}
-    <link rel="stylesheet" href="{{ asset('assets/css/form.css') }}">
+
+
+{% if app.session.get('roles') is not same as('Enseignant') %}
+    <script type="text/javascript">
+        window.location.href = "{{ path('app_login') }}";
+    </script>
+{% endif %}
+
+{% if app.session.get('deleted') == 1 %}
+    <script type="text/javascript">
+        window.location.href = "{{ path('logout') }}";
+    </script>
+{% endif %}
+
+
+
+    <link rel="stylesheet" href="{{ asset('assets/css/event_form.css') }}">
 {% endblock %}
 {% block body %}
-<div class="card card-primary">
+<br>
+<br>
+<br>
+<br>
     {{ include('events/_form.html.twig') }}
-</div>
-    <a href="{{ path('app_events_index') }}">back to list</a>
+    <div class="main-button-gradient">
+        <a href="{{ path('app_events_index') }}" >back to list</a>
+    </div>
 {% endblock %}

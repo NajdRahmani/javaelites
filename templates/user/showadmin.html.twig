@@ -1,0 +1,60 @@
+{% extends 'base2.html.twig' %}
+{% block body%}
+<h2 class="text-center ">Liste des Admins</h2>
+
+<div class="mb-3">
+        <a href="{{ path('creatadmin1') }}" class="btn btn-success">Nouveau Admin</a>
+    </div>
+
+  <br>
+        <table class="table table-dark table-hover">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Prenom</th>
+                    <th>Numero Telephone</th>
+                    <th>Localisation</th>
+                    <th>Email</th>
+                    <th>Image</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+             {% for us in user %}
+                <tr>
+<td>{{ us.nom }}</td>
+<td>{{ us.prenom }}</td>
+<td>{{ us.getNumTelephone() }}</td>
+<td>{{ us.localisation }}</td>
+<td>{{ us.email }}</td>
+<td>   <img class="rounded-circle me-lg-2" src="{{ asset('uploads/' ~ us.getImage()) }}" alt="Image"></td>
+<td> 
+  <a class="" href="/user/back/{{us.id}}/corbeille/admin">   <span class="action-btn trash"><i class="bi bi-trash-fill"></i></span> </a>
+   &nbsp;&nbsp;&nbsp;<a href="/user/back/{{us.id}}/one_admin"> 
+                        <span class="action-btn eye"><i class="bi bi-eye-fill"></i></span> </a>
+</td>
+{%endfor%}
+
+</table>
+
+<br>
+<br>
+<br>
+ <a href="/user/back/deletedadmin" class="" style="color: red; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+
+    <i class="bi bi-trash" style="font-size: 60px; color: red;"></i>
+    
+    Corbeille
+</a>
+<style>
+.rounded-circle {
+    width: 60px;
+    height: 6%;
+    border-radius: 50%; /* Cela rend l'image circulaire */
+    object-fit: cover;  /* Cela permet à l'image de garder une bonne proportion sans déformer l'image */
+}
+
+
+
+</style>
+{% endblock%}

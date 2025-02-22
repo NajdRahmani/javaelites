@@ -27,7 +27,7 @@ class EventsType extends AbstractType
                     new Assert\Length(['max' => 255])
                 ]
             ])
-            ->add('description', null, [
+            ->add('description',TextType::class, [
                 'required' => false,
                 'constraints' => [
                     new Assert\NotBlank()
@@ -48,7 +48,7 @@ class EventsType extends AbstractType
                 'constraints' => [
                     new Assert\NotNull([
                         'message' => 'Start date cannot be null.',
-                    ])
+                    ]),
                 ],
             ])
             

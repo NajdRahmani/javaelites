@@ -1,0 +1,103 @@
+{% extends 'base2.html.twig' %}
+
+{% block title %}Cours{% endblock %}
+{% block stylesheets %}
+        <link rel="stylesheet" href="{{ asset('assets/css/chapitre1.css') }}">
+{% endblock %}
+{% block page %}Cours{% endblock %}
+{% block body %}
+    
+<section class="content">
+
+
+       <a class="btn btn-primary" href="{{ path('coursEnseignant', {'id': 1}) }}">Back to list</a>
+<a class="btn btn-warning" href="{{ path('app_cours_edit', {'id': cour.id}) }}">Edit</a>
+      <!-- Default box -->
+      <div class="card card-solid">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-12 col-sm-6">
+              <h3 class="d-inline-block d-sm-none">{{ cour.title }}</h3>
+              <div class="col-12 imageCours">
+                <img src='{{ asset('uploads/brochures/' ~ cour.urlImage) }}' class="product-image" alt="Product Image">
+              </div>
+              <div class="col-12 product-image-thumbs">
+                 </div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <h3 class="my-3">{{ cour.title }}</h3>
+               <div class="mt-4 product-share">
+               {{ cour.matiere.titre }}
+              </div>
+              <p>{{ cour.matiere.categorie.name }}</p>
+
+              <hr>
+              <h4><strong>Number of chapter :</strong>{{ cour.nbChapitres }} chapitres</h4>
+              
+
+              
+              <div class="bg-gray py-2 px-3 mt-4">
+                <h2 class="mb-0">
+                  80.00 DT
+                </h2>
+                <h4 class="mt-0">
+                  
+                </h4>
+              </div>
+
+              
+
+                
+              </div>
+
+             
+
+            </div>
+          </div>
+          <div class="row mt-4 mt1">
+            <nav class="w-100">
+              <div class="nav nav-tabs" id="product-tab" role="tablist">
+                <a class="nav-item nav-link active" id="product-desc-tab" data-toggle="tab" href="#product-desc" role="tab" aria-controls="product-desc" aria-selected="true">Description</a>
+               </div>
+            </nav>
+            <div class="tab-content p-3" id="nav-tabContent">
+              <div class="tab-pane fade show active" id="product-desc" role="tabpanel" aria-labelledby="product-desc-tab">{{ cour.description }} </div>
+          </div>
+          </div>
+          </div>
+        </div>
+        <!-- /.card-body -->
+      </div>
+      <!-- /.card -->
+
+    </section>
+
+    
+    <h1>Liste des chapitres</h1>
+
+    <div class="demandes-container">
+        {% for chapitre in cour.chapitres %}
+            <div class="demande-card">
+                <div class="demande-info">
+                    <p> </p>
+                    <p><strong>Id:</strong> {{ chapitre.id }}</p>
+                    <p><strong>Title:</strong> {{ chapitre.title }}</p>
+                    <p><strong>ChapOrder:</strong> {{ chapitre.chapOrder }}</p>
+                    <p><strong>actions:</strong></p>
+
+                </div>
+                <div class="demande-actions">
+                 <a href="{{ path('app_chapitre_show', {'id': chapitre.id}) }}" class="btn btn-propose">show</a>
+                    <a href="{{ path('app_chapitre_edit', {'id': chapitre.id}) }}" class="btn1 btn-warning">edit</a>
+                    
+                </div>
+            </div>
+        {% else %}
+            <div class="no-records">
+                Aucune demande trouvée.
+            </div>
+        {% endfor %}
+    </div>
+
+ 
+{% endblock %}

@@ -1,0 +1,217 @@
+{% extends 'base2.html.twig' %}
+
+
+{% block stylesheet %}
+    <head>
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="{{ asset('assets/plugins/fontawesome-free/css/all.min.css') }}">
+  <!-- DataTables -->
+  <link rel="stylesheet" href="{{ asset('plugins/datatables-bs4/css/dataTables.bootstrap4.min.css') }}">
+  <link rel="stylesheet" href="{{ asset('plugins/datatables-responsive/css/responsive.bootstrap4.min.css') }}">
+  <link rel="stylesheet" href="{{ asset('plugins/datatables-buttons/css/buttons.bootstrap4.min.css') }}">
+  <link rel="stylesheet" href="{{ asset('plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css') }}">
+  <link rel="stylesheet" href="{{ asset('plugins/toastr/toastr.min.css') }}">
+  <link rel="stylesheet" href="{{ asset('dist/css/adminlte.min.css') }}">
+    </head>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Events List</h3>
+    </div>
+    <!-- /.card-header -->
+    <div class="card-body">
+        <div id="example1_wrapper" class="dataTables_wrapper dt-bootstrap4">
+            <div class="row">
+                <div class="col-sm-12">
+                    <table id="example1" class="table table-bordered table-striped dataTable dtr-inline" aria-describedby="example1_info">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Image</th>
+                                <th>Description</th>
+                                <th>Max Participants</th>
+                                <th>Type</th>
+                                <th>Category</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Created At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for event in event %}
+                                <tr>
+                                    <td>{{ event.id }}</td>
+                                    <td>{{ event.title }}</td>
+                                    <td><img src="{{ asset('uploads/events/' ~ event.image) }}" alt="{{ event.title }}" style="width: 2cm; height: auto;"></td>
+                                    <td>{{ event.description }}</td>
+                                    <td>{{ event.maxParticipants }}</td>
+                                    <td>{{ event.type }}</td>
+                                    <td>{% for category in event.category %}
+                                        {% if category != 'type' and category != 'free' %}
+                                            <li>{{ category }}</li>
+                                        {% endif %}
+                                        {% endfor %}</td>
+                                    <td>{{ event.startDate|date('Y-m-d H:i') }}</td>
+                                    <td>{{ event.endDate|date('Y-m-d H:i') }}</td>
+                                    <td>{{ event.createdAt|date('Y-m-d H:i') }}</td>
+                                    <td>
+                                        <button type="button" class="btn btn-block btn-info">
+                                            <a href="{{ path('app_admin_events_edit', {'id': event.id}) }}" style="color: inherit; text-decoration: none;">Edit</a>
+                                        </button>
+
+                                        <br>
+                                        <!-- Delete Button -->
+                                        <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal-danger-{{ event.id }}">
+                                            Delete
+                                        </button>
+
+                                        <!-- Modal -->
+                                        <div class="modal fade" id="modal-danger-{{ event.id }}">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content bg-danger">
+                                                    <div class="modal-header">
+                                                        <h4 class="modal-title">Danger Modal</h4>
+                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                            <span aria-hidden="true">&times;</span>
+                                                        </button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>You are about to delete event with the ID : {{ event.id }}</p>
+                                                    </div>
+                                                    <div class="modal-footer justify-content-between">
+                                                        <button type="button" class="btn btn-outline-light" data-dismiss="modal">Close</button>
+                                                        <button type="button" class="btn btn-outline-light">
+                                                            <a href="#" onclick="event.preventDefault(); document.getElementById('delete-form-{{ event.id }}').submit();">Confirm</a>
+                                                        </button>
+                                                        <form id="delete-form-{{ event.id }}" action="{{ path('app_admin_events_delete', {'id': event.id}) }}" method="post" style="display: none;">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ event.id) }}">
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="6">No events found.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Image</th>
+                                <th>Description</th>
+                                <th>Max Participants</th>
+                                <th>Type</th>
+                                <th>Category</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Created At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /.card-body -->
+    </div>
+
+
+
+      <div class="modal fade" id="modal-overlay">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="overlay">
+                <i class="fas fa-2x fa-sync fa-spin"></i>
+            </div>
+            <div class="modal-header">
+              <h4 class="modal-title">Default Modal</h4>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <p>One fine body&hellip;</p>
+            </div>
+            <div class="modal-footer justify-content-between">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+          </div>
+          <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+      </div>
+      <!-- /.modal -->
+
+{% endblock %}
+
+{% block script %}
+   <script src="{{ asset('plugins/jquery/jquery.min.js') }}"></script>
+    <script src="{{ asset('plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ asset('plugins/datatables/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('plugins/datatables-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
+    <script src="{{ asset('plugins/datatables-responsive/js/dataTables.responsive.min.js') }}"></script>
+    <script src="{{ asset('plugins/datatables-responsive/js/responsive.bootstrap4.min.js') }}"></script>
+    <script src="{{ asset('plugins/datatables-buttons/js/dataTables.buttons.min.js') }}"></script>
+    <script src="{{ asset('plugins/datatables-buttons/js/buttons.bootstrap4.min.js') }}"></script>
+    <script src="{{ asset('plugins/jszip/jszip.min.js') }}"></script>
+    <script src="{{ asset('plugins/pdfmake/pdfmake.min.js') }}"></script>
+    <script src="{{ asset('plugins/pdfmake/vfs_fonts.js') }}"></script>
+    <script src="{{ asset('plugins/datatables-buttons/js/buttons.html5.min.js') }}"></script>
+    <script src="{{ asset('plugins/datatables-buttons/js/buttons.print.min.js') }}"></script>
+    <script src="{{ asset('plugins/datatables-buttons/js/buttons.colVis.min.js') }}"></script>
+    <script src="{{ asset('dist/js/adminlte.min.js') }}"></script>
+    <script src="{{ asset('dist/js/demo.js') }}"></script>
+    <script src="{{ asset('plugins/sweetalert2/sweetalert2.min.js') }}"></script>
+    <script src="{{ asset('plugins/toastr/toastr.min.js') }}"></script>
+    <script>
+    $(function () {
+        $("#example1").DataTable({
+        "responsive": true, "lengthChange": true, "autoWidth": true,
+        "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+        }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
+        $('#example2').DataTable({
+        "paging": true,
+        "lengthChange": true,
+        "searching": true,
+        "ordering": true,
+        "info": true,
+        "autoWidth": true,
+        "responsive": true,
+        });
+    });
+    </script>
+
+    <script>
+        $(function() {
+        var Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000
+        });
+        $('.toastsDefaultDanger').click(function() {
+        $(document).Toasts('create', {
+            class: 'bg-danger',
+            title: 'Toast Title',
+            subtitle: 'Subtitle',
+            body: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr.'
+        })
+        });
+    </script>
+{% endblock %}
+
+    
