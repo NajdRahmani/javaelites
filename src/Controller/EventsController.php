@@ -37,7 +37,9 @@ final class EventsController extends AbstractController{
     #[Route("/my_events",name: 'app_events_my_events', methods: ['GET'])]
     public function my_events(EventsRepository $eventsRepository, UserRepository $userRepository,EventRegistrationRepository $eventRegistrationRepository): Response
     {
-        $registrations=$eventRegistrationRepository->findByUserId(1);
+        $session = $this->requestStack->getSession();
+        $user_id = $session->get('id');
+        $registrations=$eventRegistrationRepository->findByUserId($user_id);
         $events = [];
         foreach($registrations as $registration){
             $events[]=$registration->getEvent();
@@ -51,7 +53,9 @@ final class EventsController extends AbstractController{
     #[Route("/my_registration",name: 'app_events_my_registration', methods: ['GET'])]
     public function my_registration(EventsRepository $eventsRepository, UserRepository $userRepository,EventRegistrationRepository $eventRegistrationRepository): Response
     {
-        $registrations=$eventRegistrationRepository->findByUserId(1);
+        $session = $this->requestStack->getSession();
+        $user_id = $session->get('id');
+        $registrations=$eventRegistrationRepository->findByUserId($user_id);
         $events = [];
         foreach($registrations as $registration){
             $events[]=$registration->getEvent();
