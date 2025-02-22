@@ -1,0 +1,3 @@
+<?php //9b163481f6769d959664f1f553257f5f
+
+return [PHP_INT_MAX, 'assets/css/adminlte.min.css'];
