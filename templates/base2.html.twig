@@ -28,7 +28,7 @@
        {% if app.session.get('roles') is null %}
     <script type="text/javascript">
         window.location.href = "{{ path('app_login') }}";
-    </script>
+    </script>   
 {% endif %}
  {% if app.session.get('roles') =="Etudiant"%}
     <script type="text/javascript">
