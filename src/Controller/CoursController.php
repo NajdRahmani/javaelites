@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Cours;
 use App\Entity\Matiere;
+use App\Entity\User;
 use App\Form\CoursType;
 use App\Repository\MatiereRepository;
 use App\Repository\CoursRepository;
@@ -16,6 +17,7 @@ use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Security\Core\Security;
 
 #[Route('/cours')]
 final class CoursController extends AbstractController
@@ -50,23 +52,40 @@ final class CoursController extends AbstractController
           ]);
       }
       // enseignant
-    #[Route('/coursenseignant/{id}',name: 'coursEnseignant', methods: ['GET'])]
-    public function index1(CoursRepository $coursRepository,$id): Response
-    {
+    #[Route('/coursenseignant',name: 'coursEnseignant', methods: ['GET'])]
+    public function index1(CoursRepository $coursRepository,Request $request, EntityManagerInterface $entityManager): Response
+    { $session = $request->getSession();
+        $userId = $session->get('id');
+        $enseignant = $entityManager->getRepository(User::class)->find($userId);
+
         return $this->render('cours/coursenseignant.html.twig', [
-            'cours' => $coursRepository->findAll(),
+            'cours' => $coursRepository->findByEnseignant($enseignant),
             
         ]);
     }
      // enseignant
-    #[Route('/enseignant/{id}', name: 'app_cours', methods: ['GET'])]
-    public function show1(Cours $cour): Response
-    {
-
-        return $this->render('cours/showPourEnseignant.html.twig', [
-            'cour' => $cour,
-        ]);
-    }
+     #[Route('/enseignant/{id}', name: 'app_cours', methods: ['GET'])]     
+     public function show1(int $id, Request $request, EntityManagerInterface $entityManager): Response
+     {
+         $cour = $entityManager->getRepository(Cours::class)->find($id);
+     
+         if (!$cour) {
+             throw $this->createNotFoundException('Le cours demandé n\'existe pas.');
+         }
+     
+         $session = $request->getSession();
+         $userId = $session->get('id');
+     
+         if ($cour->getEnseignant()->getId() === $userId) {
+             return $this->render('cours/showPourEnseignant.html.twig', [
+                 'cour' => $cour,
+             ]);
+         } else {
+             return $this->redirectToRoute('coursEnseignant');
+         }
+     }
+     
+     
     // enseignant
     #[Route('/{id}', name: 'app_cours_show', methods: ['GET'])]
     public function show(Cours $cour): Response
@@ -82,11 +101,14 @@ final class CoursController extends AbstractController
     public function new($id,Request $request, EntityManagerInterface $entityManager, SluggerInterface $slugger,
     #[Autowire('%kernel.project_dir%/public/uploads/brochures')] string $brochuresDirectory
 ): Response
-    {
+    {   $session = $request->getSession();
+        $userId = $session->get('id');
         $matiere = $entityManager->getRepository(Matiere::class)->find($id);
-
+    
+        $enseignant = $entityManager->getRepository(User::class)->find($userId);
         $cour = new Cours();
         $cour->setMatiere($matiere);
+        $cour->setEnseignant($enseignant);
         $form = $this->createForm(CoursType::class, $cour);
         $form->handleRequest($request);
 

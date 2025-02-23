@@ -44,10 +44,44 @@ class Cours
     #[Assert\NotNull(message: "La matière ne peut pas être vide.")]
     private ?Matiere $matiere = null;
 
+    #[ORM\Column(length: 255)]
+#[Assert\NotBlank(message: "La langue est obligatoire")]
+#[Assert\Length(
+    min: 2,
+    max: 255,
+    minMessage: "La langue doit contenir au moins {{ limit }} caractères",
+    maxMessage: "La langue ne peut pas dépasser {{ limit }} caractères"
+)]
+#[Assert\Choice(
+    choices: ['fr', 'en', 'es', 'de', 'ar'],
+    message: "Langue non valide. Choix possibles: fr, en, es, de, ar"
+)]
+private ?string $langue = null;
+
+#[ORM\Column]
+#[Assert\NotBlank(message: "Le prix est obligatoire")]
+#[Assert\Type(
+    type: 'integer',
+    message: "Le prix doit être un nombre entier"
+)]
+#[Assert\PositiveOrZero(message: "Le prix ne peut pas être négatif")]
+private ?int $prix = null;
+
+    #[ORM\ManyToOne(inversedBy: 'cours')]
+    #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(message: "L'enseignant doit être spécifié")]
+    private ?User $enseignant = null;
+    /**
+     * @var Collection<int, User>
+     */
+    #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'cours')]
+    private Collection $etudiants;
+
     
     public function __construct()
     {
         $this->chapitres = new ArrayCollection();
+        $this->etudiants = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -134,6 +168,66 @@ class Cours
     public function setMatiere(?Matiere $matiere): static
     {
         $this->matiere = $matiere;
+
+        return $this;
+    }
+
+    public function getLangue(): ?string
+    {
+        return $this->langue;
+    }
+
+    public function setLangue(string $langue): static
+    {
+        $this->langue = $langue;
+
+        return $this;
+    }
+
+    public function getPrix(): ?int
+    {
+        return $this->prix;
+    }
+
+    public function setPrix(int $prix): static
+    {
+        $this->prix = $prix;
+
+        return $this;
+    }
+
+    public function getEnseignant(): ?User
+    {
+        return $this->enseignant;
+    }
+
+    public function setEnseignant(?User $enseignant): static
+    {
+        $this->enseignant = $enseignant;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, User>
+     */
+    public function getEtudiants(): Collection
+    {
+        return $this->etudiants;
+    }
+
+    public function addEtudiant(User $etudiant): static
+    {
+        if (!$this->etudiants->contains($etudiant)) {
+            $this->etudiants->add($etudiant);
+        }
+
+        return $this;
+    }
+
+    public function removeEtudiant(User $etudiant): static
+    {
+        $this->etudiants->removeElement($etudiant);
 
         return $this;
     }
