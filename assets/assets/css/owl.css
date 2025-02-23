@@ -183,3 +183,67 @@
   z-index: 1;
   height: 100%;
   width: 100%; }
+  .contenu{
+    margin-top: 100px;
+    padding-left: 100px;
+    padding-right: 100px;
+  }
+  .btn-success{
+    margin-left: 1465px !important;;
+  }
+  .imageCours{
+    width: 586px;
+    height: 391px;
+  }
+  .product-image {  
+      max-width: 100%;
+    height: auto;
+    width: 100%;
+    border-width: 2px;
+    border-style: solid;
+    border-image-source: linear-gradient(92.52deg, #3566f1 4.22%, #af67f6 95.78%);
+    border-image-slice: 58;
+    border-radius: 4px;
+    -webkit-mask-image: radial-gradient(circle, white 99%, transparent 100%);
+    mask-image: radial-gradient(circle, white 99%, transparent 100%);
+  }
+  .btn-primary1 {
+    margin-bottom: 10px;
+    border-width: 1px;
+    border-radius: 9999px; /* Bordures entièrement arrondies */
+    background-image: linear-gradient(0deg, rgb(0 0 0 / 7%), rgb(0 0 0 / 7%)), 
+                      linear-gradient(81.93deg, #1ea7f5, #29ddff); /* Couleur de fond en dégradé */
+    color: rgb(255 255 255 / 1); /* Texte blanc avec opacité complète */
+    display: inline-flex; /* Disposition en ligne et flexbox */
+    align-items: center; /* Centrer verticalement */
+    justify-content: center; /* Centrer horizontalement */
+    font-weight: 600; /* Texte en gras */
+    padding: 0.75rem; /* Espacement interne */
+    width: 100%; /* Bouton en pleine largeur */
+    margin-top: 1.5rem; /* Espacement supérieur */
+    transition-duration: 0.15s; /* Durée de la transition */
+    transition-property: color, background-color, border-color, 
+                          text-decoration-color, fill, stroke, opacity, 
+                          box-shadow, transform, filter, -webkit-backdrop-filter;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); /* Fonction de transition fluide */
+}
+
+.btn-lg {
+    font-size: 1.125rem; /* Taille du texte plus grande */
+    line-height: 1.625rem; /* Hauteur de ligne adaptée */
+}
+
+.btn-flat {
+    box-shadow: none; /* Supprimer les ombres si applicable */
+}
+.imageCours {
+  width: 100%;
+  height: 100%;
+}
+.mt1{
+  margin-left:17.5px !important;
+}
+.bg-gray {
+
+width: 200px;
+    border-radius: 4%;}

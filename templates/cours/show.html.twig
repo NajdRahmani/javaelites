@@ -1,103 +1,149 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Cours{% endblock %}
+{% block title %}Cours - {{ cour.title }}{% endblock %}
+
 {% block stylesheets %}
-        <link rel="stylesheet" href="{{ asset('assets/css/chapitre1.css') }}">
-
+    {{ parent() }}
+    {% if app.session.get('roles') is null or app.session.get('deleted') == 1 %}
+        <script>
+            window.location.href = "{{ app.session.get('deleted') == 1 ? path('logout') : path('app_login') }}";
+        </script>
+    {% endif %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('assets/css/chapitre1.css') }}">
 {% endblock %}
+
 {% block body %}
-    
-<section class="content">
-<a href="{{ path('app_cours_index') }}">back to list</a>
-<h1>Cours</h1>
-      <!-- Default box -->
-      <div class="card card-solid">
-        <div class="card-body">
-          <div class="row">
-            <div class="col-12 col-sm-6">
-              <h3 class="d-inline-block d-sm-none">{{ cour.title }}</h3>
-              <div class="col-12 imageCours">
-                <img src='{{ asset('uploads/brochures/' ~ cour.urlImage) }}' class="product-image" alt="Product Image">
-              </div>
-              <div class="col-12 product-image-thumbs">
-                 </div>
+<div class="container py-5">
+    <a href="{{ path('app_cours_index2') }}" class="btn btn-outline-secondary mb-4">
+        <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+    </a>
+
+    <!-- Section Cours -->
+    <div class="card shadow-lg mb-5">
+        <div class="row g-0">
+            <!-- Image -->
+            <div class="col-md-6">
+                <img src="{{ asset('uploads/brochures/' ~ cour.urlImage) }}" 
+                     class="img-fluid rounded-start object-fit-cover"
+                     alt="{{ cour.title }}">
             </div>
-            <div class="col-12 col-sm-6">
-              <h3 class="my-3">{{ cour.title }}</h3>
-               <div class="mt-4 product-share">
-               {{ cour.matiere.titre }}
-              </div>
-              <p>{{ cour.description }}</p>
+            
+            <!-- Contenu -->
+            <div class="col-md-6">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <h1 class="card-title display-6 mb-2">{{ cour.title }}</h1>
+                            
+                        </div>
+                        <span class="text-muted"><span class="badge bg-primary fs-6">{{ cour.matiere.titre }}</span></span>
+                    </div>
 
-              <hr>
-              <h4>{{ cour.nbChapitres }} chapitres</h4>
-              
+                    <p class="card-text lead mb-4">{{ cour.matiere.categorie.name }}</p>
 
-              
-              <div class="bg-gray py-2 px-3 mt-4">
-                <h2 class="mb-0">
-                  80.00 DT
-                </h2>
-                <h4 class="mt-0">
-                  
-                </h4>
-              </div>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h5 class="mb-0">
+                                <i class="fas fa-book-open me-2"></i>{{ cour.nbChapitres }} Chapitres
+                            </h5>
+                        </div>
+                        <div class="bg-light p-3 rounded">
+                            <h2 class="text-primary mb-0">80.00 DT</h2>
+                        </div>
+                    </div>
 
-              <div class="mt-4">
-               <div class="btn btn-primary btn-lg">
-    S'inscrire
-</div>
-
-
-                
-              </div>
-
-             
-
-            </div>
-          </div>
-          <div class="row mt-4">
-            <nav class="w-100">
-              <div class="nav nav-tabs" id="product-tab" role="tablist">
-                <a class="nav-item nav-link active" id="product-desc-tab" data-toggle="tab" href="#product-desc" role="tab" aria-controls="product-desc" aria-selected="true">Description</a>
-               </div>
-            </nav>
-            <div class="tab-content p-3" id="nav-tabContent">
-              <div class="tab-pane fade show active" id="product-desc" role="tabpanel" aria-labelledby="product-desc-tab">{{ cour.urlImage }} </div>
-          </div>
-          </div>
-        </div>
-        <!-- /.card-body -->
-      </div>
-      <!-- /.card -->
-
-    </section>
-    <h1>Liste des chapitres</h1>
-
-    <div class="demandes-container">
-        {% for chapitre in cour.chapitres %}
-            <div class="demande-card">
-                <div class="demande-info">
-                    <p> </p>
-                    <p><strong></strong></p>
-                    <p><strong>Title:</strong> {{ chapitre.title }}</p>
-                    <p><strong>ChapOrder:</strong> {{ chapitre.chapOrder }}</p>
-                    <p><strong>actions:</strong></p>
-
+                    <button class="btn btn-primary btn-lg w-100 py-3">
+                        <i class="fas fa-user-plus me-2"></i>S'inscrire maintenant
+                    </button>
                 </div>
-                <div class="demande-actions">
-                 <a href="{{ path('app_etudiant', {'id': chapitre.id}) }}" class="btn btn-propose">show</a>
-                    
+            </div>
+        </div>
+    </div>
+
+    <!-- Description -->
+    <div class="card shadow-lg mb-5">
+        <div class="card-header bg-light">
+            <h3 class="card-title mb-0">
+                <i class="fas fa-info-circle me-2"></i>Description détaillée
+            </h3>
+        </div>
+        <div class="card-body p-4">
+            <p class="mb-0 text-muted">{{ cour.description }}</p>
+        </div>
+    </div>
+
+    <!-- Liste des chapitres -->
+    <h2 class="mb-4">
+        <i class="fas fa-list-ol me-2"></i>Liste des chapitres
+    </h2>
+    
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for chapitre in cour.chapitres %}
+            <div class="col">
+                <div class="card h-100 shadow-sm chapter-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="badge bg-secondary">Chapitre </span>
+                            <small class="text-muted">ordre: {{ chapitre.chapOrder }}</small>
+                        </div>
+                        <h5 class="card-title mb-3">{{ chapitre.title }}</h5>
+                        <div class="d-flex justify-content-end">
+                            <a href="{{ path('app_etudiant', {'id': chapitre.id}) }}" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye me-2"></i>Voir
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         {% else %}
-            <div class="no-records">
-                Aucune demande trouvée.
+            <div class="col-12">
+                <div class="alert alert-info text-center py-4">
+                    <i class="fas fa-exclamation-circle fa-2x mb-3"></i>
+                    <h4 class="alert-heading">Aucun chapitre disponible</h4>
+                    <p class="mb-0">Ce cours ne contient pas encore de chapitres</p>
+                </div>
             </div>
         {% endfor %}
     </div>
+</div>
 
-    
+<style>
+    .object-fit-cover {
+        object-fit: cover;
+            height: 342px;
+    width: 568px;
+    }
+    .btn-outline-secondary{
+      color:black;
+  background-color:rgb(173, 186, 224);
+    }
+.btn-outline-primary{
+  color:black;
+  background-color:rgb(51, 104, 252);
+}
+    .chapter-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
 
-  
+    .chapter-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
+    }
+
+    .card-header {
+        background: linear-gradient(120deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+
+    .btn-outline-primary {
+        border-width: 2px;
+    }
+
+    .lead {
+        font-size: 1.1rem;
+        line-height: 1.7;
+        color: #495057;
+    }
+</style>
 {% endblock %}
