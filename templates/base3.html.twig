@@ -25,7 +25,6 @@
   <link rel="stylesheet" href="{{ asset('plugins/daterangepicker/daterangepicker.css') }}">
   <!-- summernote -->
   <link rel="stylesheet" href="{{ asset('plugins/summernote/summernote-bs4.min.css') }}">
-  {% block stylesheet %}
       {% if app.session.get('roles') is null %}
     <script type="text/javascript">
         window.location.href = "{{ path('app_login') }}";
@@ -36,6 +35,9 @@
         window.location.href = "{{ path('app_login') }}";
     </script>
 {% endif %}
+
+  {% block stylesheet %}
+
  
   {% endblock %}
 </head>
@@ -228,6 +230,7 @@
                 Information  Enseignant
               </p>
             </a>
+            
           </li>
             <li class="nav-item">
             <a href="" class="nav-link">
@@ -237,7 +240,29 @@
               </p>
             </a>
           </li>
-       
+          <li class="nav-item">
+            <a href="#" class="nav-link">
+              <i class="nav-icon fas fa-edit"></i>
+              <p>
+                Events
+                <i class="fas fa-angle-left right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview" style="display: none;">
+              <li class="nav-item">
+                <a href="{{ path('app_admin_event') }}" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Manage your Events</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{{ path('app_events_new') }}" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Create Event</p>
+                </a>
+              </li>
+            </ul>
+          </li>
            <li class="nav-item">
             <a href="/user/logout" class="nav-link">
               <i class="nav-icon fas fa-columns"></i>
