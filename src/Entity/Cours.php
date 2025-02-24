@@ -77,6 +77,9 @@ private ?int $prix = null;
     #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'cours')]
     private Collection $etudiants;
 
+    #[ORM\Column(length: 255)]
+    private ?string $lienDePaiment = null;
+
     
     public function __construct()
     {
@@ -241,6 +244,18 @@ private ?int $prix = null;
     public function removeEtudiant(User $etudiant): static
     {
         $this->etudiants->removeElement($etudiant);
+
+        return $this;
+    }
+
+    public function getLienDePaiment(): ?string
+    {
+        return $this->lienDePaiment;
+    }
+
+    public function setLienDePaiment(string $lienDePaiment): static
+    {
+        $this->lienDePaiment = $lienDePaiment;
 
         return $this;
     }

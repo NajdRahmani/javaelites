@@ -132,7 +132,10 @@
 
         <div class="d-flex gap-2 justify-content-end mt-4">
             <button class="btn btn-secondary" onclick="hideVerification()">Annuler</button>
-            <a href="{{ path('route2',{'id': cour.id}) }}" class="btn btn-primary">Confirmer</a>
+           <a href="{% if cour.lienDePaiment =="" %}{{ path('route2', {'id': cour.id}) }}{% else %}{{ cour.lienDePaiment }}{% endif %}" 
+   class="btn btn-primary">
+   Confirmer
+</a>
         </div>
     </div>
 </div>
