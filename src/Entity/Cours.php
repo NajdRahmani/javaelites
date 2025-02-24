@@ -159,6 +159,10 @@ private ?int $prix = null;
     {
         return $this->chapitres->count();
     }
+    public function getNbEtudiants(): int
+    {
+        return $this->etudiants->count();
+    }
 
     public function getMatiere(): ?Matiere
     {
@@ -215,6 +219,15 @@ private ?int $prix = null;
     {
         return $this->etudiants;
     }
+    public function isUserEnrolled(int $id): bool
+{
+    foreach ($this->etudiants as $etudiant) {
+        if ($etudiant->getId() === $id) {
+            return true;
+        }
+    }
+    return false;
+}
 
     public function addEtudiant(User $etudiant): static
     {

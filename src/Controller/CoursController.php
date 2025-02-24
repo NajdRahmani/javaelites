@@ -63,6 +63,43 @@ final class CoursController extends AbstractController
             
         ]);
     }
+    #[Route('/votre-route-confirmation/{id}', name: 'route2')]
+public function confirmationAction(int $id, Request $request, EntityManagerInterface $entityManager): Response
+{
+    // Récupération de l'utilisateur
+    $userId = $request->getSession()->get('id');
+    $user = $entityManager->getRepository(User::class)->find($userId);
+    
+    if (!$user) {
+        $this->addFlash('error', 'Utilisateur non trouvé');
+        return $this->redirectToRoute('login_route');
+    }
+
+    // Récupération du cours
+    $cour = $entityManager->getRepository(Cours::class)->find($id);
+    
+    if (!$cour) {
+        $this->addFlash('error', 'Cours non trouvé');
+        return $this->redirectToRoute('cours_list_route');
+    }
+
+    try {
+        // Ajout de l'étudiant
+        $cour->addEtudiant($user);
+        
+        // Pas besoin de persist() pour les entités existantes
+        $entityManager->flush();
+
+        $this->addFlash('success', 'Inscription réussie !');
+        
+    } catch (\Exception $e) {
+        $this->addFlash('error', 'Erreur lors de l\'inscription : '.$e->getMessage());
+    }
+
+    return $this->redirectToRoute('app_cours_show', [
+        'id' => $cour->getId()
+    ], Response::HTTP_SEE_OTHER);
+}
      // enseignant
      #[Route('/enseignant/{id}', name: 'app_cours', methods: ['GET'])]     
      public function show1(int $id, Request $request, EntityManagerInterface $entityManager): Response
@@ -86,7 +123,7 @@ final class CoursController extends AbstractController
      }
      
      
-    // enseignant
+    // etudiant
     #[Route('/{id}', name: 'app_cours_show', methods: ['GET'])]
     public function show(Cours $cour): Response
     {

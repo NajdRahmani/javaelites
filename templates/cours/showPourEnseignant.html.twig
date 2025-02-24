@@ -1,103 +1,144 @@
 {% extends 'base3.html.twig' %}
 
-{% block title %}Cours{% endblock %}
+{% block title %}Cours - {{ cour.title }}{% endblock %}
+
 {% block stylesheets %}
-        <link rel="stylesheet" href="{{ asset('assets/css/chapitre1.css') }}">
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('assets/css/chapitre1.css') }}">
 {% endblock %}
+
 {% block page %}Cours{% endblock %}
+
 {% block body %}
-    
-<section class="content">
+<div class="container py-5">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a href="{{ path('coursEnseignant', {'id': 1}) }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Retour
+        </a>
+        <a href="{{ path('app_cours_edit', {'id': cour.id}) }}" class="btn btn-warning">
+            <i class="fas fa-edit me-2"></i>Modifier
+        </a>
+    </div>
 
-
-       <a class="btn btn-primary" href="{{ path('coursEnseignant', {'id': 1}) }}">Back to list</a>
-<a class="btn btn-warning" href="{{ path('app_cours_edit', {'id': cour.id}) }}">Edit</a>
-      <!-- Default box -->
-      <div class="card card-solid">
-        <div class="card-body">
-          <div class="row">
-            <div class="col-12 col-sm-6">
-              <h3 class="d-inline-block d-sm-none">{{ cour.title }}</h3>
-              <div class="col-12 imageCours">
-                <img src='{{ asset('uploads/brochures/' ~ cour.urlImage) }}' class="product-image" alt="Product Image">
-              </div>
-              <div class="col-12 product-image-thumbs">
-                 </div>
+    <!-- Main Course Card -->
+    <div class="card shadow-lg mb-5">
+        <div class="row g-0">
+            <!-- Image Section -->
+            <div class="col-md-6">
+                <img src="{{ asset('uploads/brochures/' ~ cour.urlImage) }}" 
+                     class="img-fluid rounded-start object-fit-cover"
+                     alt="{{ cour.title }}">
             </div>
-            <div class="col-12 col-sm-6">
-              <h3 class="my-3">{{ cour.title }}</h3>
-               <div class="mt-4 product-share">
-               {{ cour.matiere.titre }}
-              </div>
-              <p>{{ cour.matiere.categorie.name }}</p>
 
-              <hr>
-              <h4><strong>Number of chapter :</strong>{{ cour.nbChapitres }} chapitres</h4>
-              
+            <!-- Content Section -->
+            <div class="col-md-6">
+                <div class="card-body p-4">
+                    <div class="mb-4">
+                        <h1 class="display-6 mb-3">{{ cour.title }}</h1>
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="badge bg-primary">{{ cour.matiere.titre }}</span>
+                            <span class="badge bg-secondary">{{ cour.matiere.categorie.name }}</span>
+                        </div>
+                    </div>
 
-              
-              <div class="bg-gray py-2 px-3 mt-4">
-                <h2 class="mb-0">
-                  80.00 DT
-                </h2>
-                <h4 class="mt-0">
-                  
-                </h4>
-              </div>
-
-              
-
-                
-              </div>
-
-             
-
-            </div>
-          </div>
-          <div class="row mt-4 mt1">
-            <nav class="w-100">
-              <div class="nav nav-tabs" id="product-tab" role="tablist">
-                <a class="nav-item nav-link active" id="product-desc-tab" data-toggle="tab" href="#product-desc" role="tab" aria-controls="product-desc" aria-selected="true">Description</a>
-               </div>
-            </nav>
-            <div class="tab-content p-3" id="nav-tabContent">
-              <div class="tab-pane fade show active" id="product-desc" role="tabpanel" aria-labelledby="product-desc-tab">{{ cour.description }} </div>
-          </div>
-          </div>
-          </div>
-        </div>
-        <!-- /.card-body -->
-      </div>
-      <!-- /.card -->
-
-    </section>
-
+                    <!-- Stats Section -->
+                    <div class="bg-light p-4 rounded-3 mb-4">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="h2 text-primary">{{ cour.nbChapitres }}</div>
+                                <small class="text-muted">Chapitres</small>
+                            </div>
+                            <div class="col-6">
+                                <div class="h2 text-success">    
+        {% if cour.prix == 0 %}
+            Gratuit
+        {% else %}
+            {{ cour.prix }} DT
+        {% endif %}
     
-    <h1>Liste des chapitres</h1>
+</div>
+                                <small class="text-muted">Prix</small>
+                            </div>
+                        </div>
+                    </div>
 
-    <div class="demandes-container">
-        {% for chapitre in cour.chapitres %}
-            <div class="demande-card">
-                <div class="demande-info">
-                    <p> </p>
-                    <p><strong>Id:</strong> {{ chapitre.id }}</p>
-                    <p><strong>Title:</strong> {{ chapitre.title }}</p>
-                    <p><strong>ChapOrder:</strong> {{ chapitre.chapOrder }}</p>
-                    <p><strong>actions:</strong></p>
-
+                    <!-- Description Section -->
+                    <div class="mb-4">
+                        <h5 class="mb-3"><i class="fas fa-file-alt me-2"></i>Description</h5>
+                        <p class="text-muted">{{ cour.description }}</p>
+                    </div>
                 </div>
-                <div class="demande-actions">
-                 <a href="{{ path('app_chapitre_show', {'id': chapitre.id}) }}" class="btn btn-propose">show</a>
-                    <a href="{{ path('app_chapitre_edit', {'id': chapitre.id}) }}" class="btn1 btn-warning">edit</a>
-                    
+            </div>
+        </div>
+    </div>
+
+    <!-- Chapters List -->
+    <h2 class="mb-4">
+        <i class="fas fa-list-ol me-2"></i>Liste des Chapitres
+    </h2>
+    
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for chapitre in cour.chapitres %}
+            <div class="col">
+                <div class="card h-100 shadow-sm chapter-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="badge bg-primary">#{{ chapitre.chapOrder }}</span>
+                            <small class="text-muted">ID: {{ chapitre.id }}</small>
+                        </div>
+                        <h5 class="card-title mb-3">{{ chapitre.title }}</h5>
+                        <div class="d-flex gap-2 justify-content-end">
+                            <a href="{{ path('app_chapitre_show', {'id': chapitre.id}) }}" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i>Voir
+                            </a>
+                            <a href="{{ path('app_chapitre_edit', {'id': chapitre.id}) }}" 
+                               class="btn btn-outline-warning btn-sm">
+                                <i class="fas fa-edit me-1"></i>Modifier
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         {% else %}
-            <div class="no-records">
-                Aucune demande trouvée.
+            <div class="col-12">
+                <div class="alert alert-info text-center py-4">
+                    <i class="fas fa-exclamation-circle fa-2x mb-3"></i>
+                    <h4 class="alert-heading">Aucun chapitre trouvé</h4>
+                    <p class="mb-0">Commencez par ajouter un nouveau chapitre</p>
+                </div>
             </div>
         {% endfor %}
     </div>
+</div>
 
- 
+<style>
+    .object-fit-cover {
+        object-fit: cover;
+            height: 342px;
+    width: 568px;
+    }
+
+    .chapter-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .chapter-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
+    }
+
+    .badge {
+      margin-right: 10px;
+        font-size: 0.9em;
+        padding: 0.5em 0.8em;
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 500;
+    }
+</style>
 {% endblock %}
