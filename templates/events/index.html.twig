@@ -123,12 +123,6 @@
         </div>
     </div>
 
-    {% if app.session.get('roles') == 'Enseignant' %}
-    <div class="main-button-gradient">
-        <a href="{{ path('app_events_new') }}">Create new</a>
-    </div>
-{% endif %}
-
 </section>
 {% endblock %}
 
