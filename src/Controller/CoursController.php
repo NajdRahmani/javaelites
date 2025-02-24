@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Form\CoursType;
 use App\Repository\MatiereRepository;
 use App\Repository\CoursRepository;
+use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -39,6 +40,40 @@ final class CoursController extends AbstractController
             'matieres' => $matiereRepository->findAll(),
         ]);
     }
+    #[Route('/cours3', name: 'app_cours_index3', methods: ['GET'])]
+    public function index3(
+        Request $request,
+        CoursRepository $coursRepository,
+        MatiereRepository $matiereRepository,
+        UserRepository $userRepository
+    ): Response {
+        $session = $request->getSession();
+        $userId = $session->get('id'); // Récupère l'ID de l'utilisateur depuis la session
+    
+        if (!$userId) {
+            throw $this->createAccessDeniedException('Utilisateur non connecté.');
+        }
+    
+        $user = $userRepository->find($userId);
+    
+        if (!$user) {
+            throw $this->createNotFoundException('Utilisateur introuvable.');
+        }
+    
+        // Récupère les cours où l'utilisateur est inscrit
+        $cours = $coursRepository->createQueryBuilder('c')
+            ->innerJoin('c.etudiants', 'e') // Joindre la relation "etudiants"
+            ->where('e.id = :userId') // Filtrer par l'ID de l'utilisateur
+            ->setParameter('userId', $userId)
+            ->getQuery()
+            ->getResult();
+    
+        return $this->render('cours/index3.html.twig', [
+            'cours' => $cours,
+            'matieres' => $matiereRepository->findAll(),
+        ]);
+    }
+    
       // etudiant
       #[Route('/filter', name: 'app_cours_filter', methods: ['GET'])]
       public function filter(Request $request, CoursRepository $coursRepository, MatiereRepository $matiereRepository): Response
@@ -51,6 +86,48 @@ final class CoursController extends AbstractController
               'matieres' => $matiereRepository->findAll(),
           ]);
       }
+      #[Route('/filter1', name: 'app_cours_filter1', methods: ['GET'])]
+public function filter1(
+    Request $request,
+    CoursRepository $coursRepository,
+    MatiereRepository $matiereRepository,
+    UserRepository $userRepository
+): Response {
+    $session = $request->getSession();
+    $userId = $session->get('id'); // Récupère l'ID de l'utilisateur connecté
+
+    if (!$userId) {
+        throw $this->createAccessDeniedException('Utilisateur non connecté.');
+    }
+
+    $user = $userRepository->find($userId);
+
+    if (!$user) {
+        throw $this->createNotFoundException('Utilisateur introuvable.');
+    }
+
+    // Filtre pour la matière
+    $matiereId = $request->query->get('matiere');
+
+    // Récupération des cours auxquels l'utilisateur est inscrit, avec un filtre par matière (si fourni)
+    $queryBuilder = $coursRepository->createQueryBuilder('c')
+        ->innerJoin('c.etudiants', 'e') // Joindre la relation "etudiants"
+        ->where('e.id = :userId') // Filtrer par l'utilisateur connecté
+        ->setParameter('userId', $userId);
+
+    if ($matiereId) {
+        $queryBuilder->andWhere('c.matiere = :matiereId') // Ajouter le filtre par matière
+            ->setParameter('matiereId', $matiereId);
+    }
+
+    $cours = $queryBuilder->getQuery()->getResult();
+
+    return $this->render('cours/index.html.twig', [
+        'cours' => $cours,
+        'matieres' => $matiereRepository->findAll(),
+    ]);
+}
+
       // enseignant
     #[Route('/coursenseignant',name: 'coursEnseignant', methods: ['GET'])]
     public function index1(CoursRepository $coursRepository,Request $request, EntityManagerInterface $entityManager): Response
