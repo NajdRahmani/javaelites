@@ -1,0 +1,27 @@
+{{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': 'novalidate'}}) }}
+    <div class="mb-3">
+        {{ form_label(form.text, 'Énoncé de la question', {'class': 'form-label'}) }}
+        {{ form_widget(form.text, {'attr': {'class': 'form-control'}}) }}
+        {{ form_errors(form.text) }}
+    </div>
+
+    <div class="mb-3">
+        {{ form_label(form.type, 'Type de question', {'class': 'form-label'}) }}
+        {{ form_widget(form.type, {'attr': {'class': 'form-control'}}) }}
+        {{ form_errors(form.type) }}
+    </div>
+
+    <div class="mb-3">
+        {{ form_label(form.point, 'Points', {'class': 'form-label'}) }}
+        {{ form_widget(form.point, {'attr': {'class': 'form-control'}}) }}
+        {{ form_errors(form.point) }}
+    </div>
+
+    <div class="mb-3">
+        {{ form_label(form.ordreQuestion, 'Ordre', {'class': 'form-label'}) }}
+        {{ form_widget(form.ordreQuestion, {'attr': {'class': 'form-control'}}) }}
+        {{ form_errors(form.ordreQuestion) }}
+    </div>
+
+    <button type="submit" class="btn btn-primary">{{ button_label|default('Save') }}</button>
+{{ form_end(form) }}

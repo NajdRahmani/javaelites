@@ -77,11 +77,18 @@ private ?int $prix = null;
     #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'cours')]
     private Collection $etudiants;
 
+    /**
+     * @var Collection<int, Evaluation>
+     */
+    #[ORM\OneToMany(targetEntity: Evaluation::class, mappedBy: 'cours_id')]
+    private Collection $evaluations;
+
     
     public function __construct()
     {
         $this->chapitres = new ArrayCollection();
         $this->etudiants = new ArrayCollection();
+        $this->evaluations = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -241,6 +248,36 @@ private ?int $prix = null;
     public function removeEtudiant(User $etudiant): static
     {
         $this->etudiants->removeElement($etudiant);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Evaluation>
+     */
+    public function getEvaluations(): Collection
+    {
+        return $this->evaluations;
+    }
+
+    public function addEvaluation(Evaluation $evaluation): static
+    {
+        if (!$this->evaluations->contains($evaluation)) {
+            $this->evaluations->add($evaluation);
+            $evaluation->setCoursId($this);
+        }
+
+        return $this;
+    }
+
+    public function removeEvaluation(Evaluation $evaluation): static
+    {
+        if ($this->evaluations->removeElement($evaluation)) {
+            // set the owning side to null (unless already changed)
+            if ($evaluation->getCoursId() === $this) {
+                $evaluation->setCoursId(null);
+            }
+        }
 
         return $this;
     }

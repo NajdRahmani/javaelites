@@ -1,0 +1,57 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistiques de l'évaluation{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <h1>Statistiques de l'évaluation : {{ evaluation.title }}</h1>
+        
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Statistiques générales</h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <th>Nombre de participants</th>
+                                    <td>{{ statistics.nombre_participants }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Score moyen</th>
+                                    <td>{{ statistics.moyenne }} / {{ evaluation.maxScore }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Score médian</th>
+                                    <td>{{ statistics.mediane }} / {{ evaluation.maxScore }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Écart-type</th>
+                                    <td>{{ statistics.ecart_type }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Score minimum</th>
+                                    <td>{{ statistics.min }} / {{ evaluation.maxScore }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Score maximum</th>
+                                    <td>{{ statistics.max }} / {{ evaluation.maxScore }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Taux de réussite</th>
+                                    <td>{{ statistics.taux_reussite }}%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a href="{{ path('app_evaluation_showenseignant', {'id': evaluation.id}) }}" class="btn btn-secondary">Retour aux détails</a>
+        </div>
+    </div>
+{% endblock %}
