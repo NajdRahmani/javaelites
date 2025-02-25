@@ -61,12 +61,7 @@ class Evaluation
     #[ORM\ManyToOne(inversedBy: 'evaluations')]
     private ?Cours $cours_id = null;
 
-    #[ORM\Column(nullable: true)]
-    private ?int $lastAccessUserId = null;
-
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $lastAccessDate = null;
-
+  
     public function __construct()
     {
         $this->questions = new ArrayCollection();
@@ -216,26 +211,5 @@ class Evaluation
         return $this;
     }
 
-    public function getLastAccessUserId(): ?int
-    {
-        return $this->lastAccessUserId;
-    }
-
-    public function setLastAccessUserId(?int $userId): self
-    {
-        $this->lastAccessUserId = $userId;
-        $this->lastAccessDate = new \DateTime();
-        return $this;
-    }
-
-    public function getLastAccessDate(): ?\DateTimeInterface
-    {
-        return $this->lastAccessDate;
-    }
-
-    public function setLastAccessDate(?\DateTimeInterface $date): self
-    {
-        $this->lastAccessDate = $date;
-        return $this;
-    }
+    
 }
