@@ -3,10 +3,10 @@ namespace App\Controller;
 
 use App\Entity\Reponse;
 use App\Form\ReponseType;
-use App\Form\QuestionType;
 use App\Entity\Evaluation;
 use App\Form\EvaluationType;
 use App\Entity\Question;
+use App\Form\QuestionType;
 use App\Repository\QuestionRepository;
 use App\Repository\EvaluationRepository;
 use App\Repository\ReponseRepository;
@@ -399,6 +399,7 @@ final class EvaluationController extends AbstractController
         $this->mailService->sendEvaluationSubmissionNotification($this->getUser(), $evaluation);
         
         $this->addFlash('success', 'L\'évaluation a été soumise avec succès.');
+        $mailService->sendEvaluationSubmissionNotification($this->getUse(), $evaluation);
         return $this->redirectToRoute('app_evaluation_show', ['id' => $evaluation->getId()]);
     }
 

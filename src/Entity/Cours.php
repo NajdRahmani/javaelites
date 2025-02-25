@@ -87,11 +87,13 @@ class Cours
     #[ORM\OneToMany(targetEntity: Evaluation::class, mappedBy: 'cours_id')]
     private Collection $evaluations;
 
+   
     public function __construct()
     {
         $this->chapitres = new ArrayCollection();
         $this->etudiants = new ArrayCollection();
         $this->evaluations = new ArrayCollection();
+        
     }
 
     public function getId(): ?int
@@ -296,8 +298,7 @@ class Cours
 
         return $this;
     }
-<<<<<<< HEAD
+
+   
 }
-=======
-}
->>>>>>> 67142fd8834198403e070f1b3b37598b476408c0
+

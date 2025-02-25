@@ -111,9 +111,69 @@
                 </div>
             </div>
         {% endfor %}
+         <div class="col">
+         <div class="card h-100 shadow-sm chapter-card">
+    <div class="card-body">
+        <a href="{{ path('app_chapitre_new', {'id': cour.id}) }}" 
+           class="btn btn-outline-success btn-sm but1">
+                   <i class="fas fa-plus me-1"></i> Ajouter un chapitre
+        </a>
     </div>
 </div>
-
+        
+    </div>
+   
+    
+</div>
+ <h2 class="mb-4">
+        <i class="fas fa-list-ol me-2"></i>Liste des evaluations
+    </h2>
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for evaluation in cour.evaluations %}
+        <div class="col">
+            <div class="card h-100 shadow-sm chapter-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <span class="badge bg-primary">#{{ evaluation.id }}</span>
+                        <small class="text-muted">Date limite: {{ evaluation.deadline|date('d/m/Y H:i') }}</small>
+                    </div>
+                    <h5 class="card-title mb-3">{{ evaluation.title }}</h5>
+                    <p class="card-text">{{ evaluation.description }}</p>
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a href="{{ path('app_evaluation_show', {'id': evaluation.id}) }}" 
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-eye me-1"></i>Voir
+                        </a>
+                        <a href="{{ path('app_evaluation_edit', {'id': evaluation.id}) }}" 
+                           class="btn btn-outline-warning btn-sm">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center py-4">
+                <i class="fas fa-exclamation-circle fa-2x mb-3"></i>
+                <h4 class="alert-heading">Aucune évaluation trouvée</h4>
+                <p class="mb-0">Commencez par ajouter une nouvelle évaluation.</p>
+            </div>
+        </div>
+    {% endfor %}
+    
+    <!-- Carte pour ajouter une nouvelle évaluation -->
+    <div class="col">
+        <div class="card h-100 shadow-sm chapter-card">
+            <div class="card-body d-flex justify-content-center align-items-center">
+                <a href="{{ path('app_evaluation_newenseignant') }}" 
+                   class="btn btn-outline-success btn-sm but1">
+                   <i class="fas fa-plus me-1"></i>Ajouter une évaluation
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 <style>
     .object-fit-cover {
         object-fit: cover;
@@ -129,7 +189,14 @@
         transform: translateY(-5px);
         box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
     }
-
+.col{
+        margin-bottom: 10px;
+}
+.but1{
+        height: 100%;
+    width: 100%;
+    text-align: center;
+}
     .badge {
       margin-right: 10px;
         font-size: 0.9em;

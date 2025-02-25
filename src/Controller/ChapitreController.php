@@ -82,7 +82,7 @@ public function new(Request $request, EntityManagerInterface $entityManager, $id
         // Vérifier quel bouton a été cliqué
         if ($request->request->has('save')) {
             // Rediriger vers la liste des chapitres
-            return $this->redirectToRoute('app_cours_show', ['id' => $id], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_cours', ['id' => $id], Response::HTTP_SEE_OTHER);
         } elseif ($request->request->has('add_another')) {
             // Rediriger vers la page de création d'un nouveau chapitre
             return $this->redirectToRoute('app_chapitre_new', ['id' => $id], Response::HTTP_SEE_OTHER);
