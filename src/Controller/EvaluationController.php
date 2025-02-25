@@ -2,6 +2,8 @@
 namespace App\Controller;
 
 use App\Entity\Reponse;
+use App\Entity\User;
+use App\Entity\Cours;
 use App\Form\ReponseType;
 use App\Entity\Evaluation;
 use App\Form\EvaluationType;
@@ -40,32 +42,51 @@ final class EvaluationController extends AbstractController
         ]);
     }
 
-    #[Route('/enseignant/new', name: 'app_evaluation_newenseignant', methods: ['GET', 'POST'])]
-    public function newEnseignant(Request $request, EntityManagerInterface $entityManager): Response
-    {
-        $user = $this->getUser(); // Récupérer l'utilisateur connecté
-        if (!$user) {
-            throw $this->createAccessDeniedException("Vous devez être connecté pour créer une évaluation.");
-        }
-    
-        $evaluation = new Evaluation();
-        $evaluation->setCreatedBy($user); // Associer l'utilisateur à l'évaluation
-    
-        $form = $this->createForm(EvaluationType::class, $evaluation);
-        $form->handleRequest($request);
-    
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->persist($evaluation);
-            $entityManager->flush();
-            return $this->redirectToRoute('app_question_new', ['evaluationId' => $evaluation->getId()], Response::HTTP_SEE_OTHER);
-        }
-    
-        return $this->render('evaluation/new.html.twig', [
-            'evaluation' => $evaluation,
-            'form' => $form->createView(),
-        ]);
+    #[Route('/enseignant/new/{id}', name: 'app_evaluation_newenseignant', methods: ['GET', 'POST'])]
+public function newEnseignant($id, Request $request, EntityManagerInterface $entityManager): Response
+{
+    // Récupérer la session et l'ID de l'utilisateur connecté
+    $session = $request->getSession();
+    $userId = $session->get('id');
+
+    // Récupérer l'utilisateur et le cours associé
+    $user = $entityManager->getRepository(User::class)->find($userId);
+    $cour = $entityManager->getRepository(Cours::class)->find($id);
+
+    // Vérifier si l'utilisateur est connecté
+    if (!$user) {
+        throw $this->createAccessDeniedException("Vous devez être connecté pour créer une évaluation.");
     }
-    
+
+    // Vérifier si le cours existe
+    if (!$cour) {
+        throw $this->createNotFoundException("Le cours spécifié n'existe pas.");
+    }
+
+    // Créer une nouvelle évaluation
+    $evaluation = new Evaluation();
+    $evaluation->setCours($cour); // Associer le cours à l'évaluation
+    $evaluation->setCreateAt(new \DateTime()); // Définir la date de création
+
+    // Créer et gérer le formulaire
+    $form = $this->createForm(EvaluationType::class, $evaluation);
+    $form->handleRequest($request);
+
+    // Vérifier si le formulaire est soumis et valide
+    if ($form->isSubmitted() && $form->isValid()) {
+        $entityManager->persist($evaluation);
+        $entityManager->flush();
+
+        // Rediriger vers la création de questions pour cette évaluation
+        return $this->redirectToRoute('app_question_new', ['evaluationId' => $evaluation->getId()], Response::HTTP_SEE_OTHER);
+    }
+
+    // Afficher le formulaire de création d'évaluation
+    return $this->render('evaluation/new.html.twig', [
+        'evaluation' => $evaluation,
+        'form' => $form->createView(),
+    ]);
+}
 
     #[Route('/enseignant/{id}', name: 'app_evaluation_showenseignant', methods: ['GET'])]
     public function showEnseignant(Evaluation $evaluation, EntityManagerInterface $entityManager): Response

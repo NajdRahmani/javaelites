@@ -84,7 +84,7 @@ class Cours
     /**
      * @var Collection<int, Evaluation>
      */
-    #[ORM\OneToMany(targetEntity: Evaluation::class, mappedBy: 'cours_id')]
+    #[ORM\OneToMany(targetEntity: Evaluation::class, mappedBy: 'cours')]
     private Collection $evaluations;
 
    
@@ -144,6 +144,7 @@ class Cours
     {
         return $this->chapitres;
     }
+    
 
     public function addChapitre(Chapitre $chapitre): static
     {
@@ -270,7 +271,7 @@ class Cours
     {
         if (!$this->evaluations->contains($evaluation)) {
             $this->evaluations->add($evaluation);
-            $evaluation->setCoursId($this);
+            $evaluation->setCours($this);
         }
 
         return $this;
@@ -279,8 +280,8 @@ class Cours
     public function removeEvaluation(Evaluation $evaluation): static
     {
         if ($this->evaluations->removeElement($evaluation)) {
-            if ($evaluation->getCoursId() === $this) {
-                $evaluation->setCoursId(null);
+            if ($evaluation->getCours() === $this) {
+                $evaluation->setCours(null);
             }
         }
 

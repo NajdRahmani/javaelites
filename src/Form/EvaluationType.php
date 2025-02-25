@@ -42,16 +42,7 @@ class EvaluationType extends AbstractType
                     'min' => (new \DateTime())->format('Y-m-d')
                 ]
             ])
-            ->add('cours', IntegerType::class, [
-                'required' => true,
-                'label' => 'Nombre de Cours',
-                'attr' => [
-                    'placeholder' => 'Entrez un nombre entre 1 et 20',
-                    'class' => 'form-control',
-                    'min' => 1,
-                    'max' => 20
-                ]
-            ]);
+           ;
     }
 
     public function configureOptions(OptionsResolver $resolver): void

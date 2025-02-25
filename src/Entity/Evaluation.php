@@ -58,8 +58,9 @@ class Evaluation
     #[ORM\OneToMany(mappedBy: 'evaluation', targetEntity: Reponse::class, orphanRemoval: true)]
     private Collection $reponses;
 
-    #[ORM\ManyToOne(inversedBy: 'evaluations')]
-    private ?Cours $cours_id = null;
+    #[ORM\ManyToOne(targetEntity: Cours::class, inversedBy: 'evaluations')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Cours $cours = null;
 
   
     public function __construct()
@@ -199,14 +200,14 @@ class Evaluation
         return $this;
     }
 
-    public function getCoursId(): ?Cours
+    public function getCours(): ?Cours
     {
-        return $this->cours_id;
+        return $this->cours;
     }
 
-    public function setCoursId(?Cours $cours_id): static
+    public function setCours(?Cours $cours): static
     {
-        $this->cours_id = $cours_id;
+        $this->cours = $cours;
 
         return $this;
     }
