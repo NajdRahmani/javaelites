@@ -7,6 +7,7 @@ use App\Form\QuestionType;
 use App\Entity\Evaluation;
 use App\Form\EvaluationType;
 use App\Entity\Question;
+use App\Form\QuestionType;
 use App\Repository\QuestionRepository;
 use App\Repository\EvaluationRepository;
 use App\Repository\ReponseRepository;
@@ -386,6 +387,10 @@ final class EvaluationController extends AbstractController
         EntityManagerInterface $entityManager
     ): Response {
         $this->addFlash('success', 'L\'évaluation a été soumise avec succès.');
+<<<<<<< Updated upstream
+=======
+        $mailService->sendEvaluationSubmissionNotification($this->getUse(), $evaluation);
+>>>>>>> Stashed changes
         return $this->redirectToRoute('app_evaluation_show', ['id' => $evaluation->getId()]);
     }
 

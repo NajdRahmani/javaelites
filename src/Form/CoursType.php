@@ -28,6 +28,14 @@ class CoursType extends AbstractType
                     'placeholder' => 'Entrez le titre du cours'
                 ],
             ])
+            ->add('lienDePaiment', TextType::class, [
+                'label' => 'lien de paiement du cours',
+                'required' => false,
+                'attr' => [
+                    'class' => 'form-control',
+                    'placeholder' => 'Entrez le lien de paiement du cours'
+                ],
+            ])
             ->add('langue', ChoiceType::class, [
                 'label' => 'Langue du cours',
                 'choices' => [

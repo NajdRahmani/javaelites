@@ -126,12 +126,15 @@ class User  implements PasswordAuthenticatedUserInterface
      */
     #[ORM\OneToMany(targetEntity: Reponse::class, mappedBy: 'user_id')]
     private Collection $reponses;
+
+    
     public function __construct()
     {
         $this->date_naissance = new \DateTime();
         $this->eventRegistrations = new ArrayCollection();
         $this->cours = new ArrayCollection();
-        $this->reponses = new ArrayCollection(); 
+        $this->reponses = new ArrayCollection();
+       
        
     }
 
@@ -416,7 +419,7 @@ class User  implements PasswordAuthenticatedUserInterface
     {
         if (!$this->reponses->contains($reponse)) {
             $this->reponses->add($reponse);
-            $reponse->setUserId($this);
+            $reponse->setUserId($this->getId());
         }
 
         return $this;
@@ -433,4 +436,5 @@ class User  implements PasswordAuthenticatedUserInterface
 
         return $this;
     }
+
 }
