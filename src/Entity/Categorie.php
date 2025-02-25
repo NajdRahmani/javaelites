@@ -5,7 +5,9 @@ namespace App\Entity;
 use App\Repository\CategorieRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CategorieRepository::class)]
 class Categorie
@@ -16,19 +18,46 @@ class Categorie
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le nom de la catégorie est obligatoire")]
+    #[Assert\Length(
+        min: 3,
+        max: 255,
+        minMessage: "Le nom doit contenir au moins {{ limit }} caractères",
+        maxMessage: "Le nom ne peut pas dépasser {{ limit }} caractères"
+    )]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "La description est obligatoire")]
+    #[Assert\Length(
+        min: 10,
+        max: 255,
+        minMessage: "La description doit contenir au moins {{ limit }} caractères",
+        maxMessage: "La description ne peut pas dépasser {{ limit }} caractères"
+    )]
     private ?string $descrption = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "L'icône est obligatoire")]
+    #[Assert\Length(max: 255)]
     private ?string $icone = null;
 
-    /**
-     * @var Collection<int, Matiere>
-     */
     #[ORM\OneToMany(targetEntity: Matiere::class, mappedBy: 'categorie')]
     private Collection $matieres;
+
+    #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Les mots-clés sont obligatoires")]
+    #[Assert\Length(max: 255)]
+    private ?string $mots_cles = null;
+
+    #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le public cible est obligatoire")]
+    #[Assert\Choice(
+        choices: ['élèves', 'étudiants', 'adultes', 'professionnels'],
+        message: "Choix invalide pour le public cible"
+    )]
+    private ?string $public_cible = null;
+
 
     public function __construct()
     {
@@ -102,6 +131,32 @@ class Categorie
                 $matiere->setCategorie(null);
             }
         }
+
+        return $this;
+    }
+
+    
+
+    public function getMotsCles(): ?string
+    {
+        return $this->mots_cles;
+    }
+
+    public function setMotsCles(string $mots_cles): static
+    {
+        $this->mots_cles = $mots_cles;
+
+        return $this;
+    }
+
+    public function getPublicCible(): ?string
+    {
+        return $this->public_cible;
+    }
+
+    public function setPublicCible(string $public_cible): static
+    {
+        $this->public_cible = $public_cible;
 
         return $this;
     }

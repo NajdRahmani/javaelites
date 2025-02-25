@@ -62,7 +62,31 @@
                     </div>
 
                   {% if cour.isUserEnrolled(app.session.get('id')) %}
+       <div class="text-center mt-3">
+    <form action="{{ path('app_cours_toggle_favorite', { id: cour.id }) }}" method="POST">
+        {% if cour.isUserFavorite(app.session.get('id')) %}
+            <!-- Étoile pleine (jaune) si le cours est un favori -->
+            <button type="submit" class="btn btn-link p-0">
+                <i class="fas fa-star text-warning" style="
+    position: relative;
+    right: -235px;
+    top: -187px;"></i>
+            </button>
+        {% else %}
+            <!-- Étoile vide (transparente) si le cours n'est pas un favori -->
+            <button type="submit" class="btn btn-link p-0">
+                <i class="far fa-star text-muted" style="
+    position: relative;
+    right: -235px;
+    top: -187px;"></i>
+            </button>
+        {% endif %}
+    </form>
+</div>
+
+
     <div class="alert alert-success w-100 text-center py-3">
+    
         <i class="fas fa-check-circle me-2"></i>Vous êtes déjà inscrit à ce cours
     </div>
 {% else %}

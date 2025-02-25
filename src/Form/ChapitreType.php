@@ -5,9 +5,10 @@ use App\Entity\Chapitre;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Validator\Constraints\File;
 
 class ChapitreType extends AbstractType
@@ -16,41 +17,47 @@ class ChapitreType extends AbstractType
     {
         $builder
             ->add('title', TextType::class, [
-                'label' => 'Titre',
+                'label' => 'Titre du chapitre',
+                'required' => false,
                 'attr' => [
                     'class' => 'form-control',
-                    'placeholder' => 'Entrez le titre du chapitre',
-                ],
+                    'placeholder' => 'Entrez le titre du chapitre'
+                ]
+            ])
+            ->add('duree_estimee', IntegerType::class, [
+                'label' => 'Durée estimée (en minutes)',
+                'required' => false,
+                'attr' => [
+                    'class' => 'form-control',
+                    'placeholder' => 'Ex: 45'
+                ]
             ])
             ->add('chapOrder', IntegerType::class, [
                 'label' => 'Ordre du chapitre',
+                'required' => false,
                 'attr' => [
                     'class' => 'form-control',
-                    'placeholder' => 'Entrez l\'ordre du chapitre',
-                ],
+                    'placeholder' => 'Ex: 1'
+                ]
             ])
+        
             ->add('brochure', FileType::class, [
-                'label' => 'Brochure (PDF file)',
-
-                // unmapped means that this field is not associated to any entity property
+                'label' => 'Fichier PDF',
                 'mapped' => false,
-
-                // make it optional so you don't have to re-upload the PDF file
-                // every time you edit the Product details
                 'required' => false,
-
-                // unmapped fields can't define their validation using attributes
-                // in the associated entity, so you can use the PHP constraint classes
+                'attr' => [
+                    'class' => 'form-control'
+                ],
                 'constraints' => [
                     new File([
-                        'maxSize' => '81024k',
+                        'maxSize' => '10M', // 10 Mo
                         'mimeTypes' => [
                             'application/pdf',
-                            'application/x-pdf',
+                            'application/x-pdf'
                         ],
-                        'mimeTypesMessage' => 'Please upload a valid PDF document',
+                        'mimeTypesMessage' => 'Veuillez uploader un fichier PDF valide'
                     ])
-                ],
+                ]
             ]);
     }
 
