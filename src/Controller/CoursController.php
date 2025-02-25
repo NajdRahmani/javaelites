@@ -218,11 +218,9 @@ public function confirmationAction(int $id, Request $request, EntityManagerInter
 ): Response
     {   $session = $request->getSession();
         $userId = $session->get('id');
-        $matiere = $entityManager->getRepository(Matiere::class)->find($id);
-    
+       
         $enseignant = $entityManager->getRepository(User::class)->find($userId);
         $cour = new Cours();
-        $cour->setMatiere($matiere);
         $cour->setEnseignant($enseignant);
         $form = $this->createForm(CoursType::class, $cour);
         $form->handleRequest($request);

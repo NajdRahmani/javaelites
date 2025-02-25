@@ -1,6 +1,6 @@
 <div class="card shadow-lg border-0">
     <div class="card-header bg-primary text-white py-3">
-        <h3 class="card-title mb-0"><i class="fas fa-book-open me-2"></i>Créer un nouveau cours</h3>
+        <h3 class="card-title mb-0"><i class="fas fa-book-open me-2"></i>Cours</h3>
     </div>
     
     {{ form_start(form) }}
@@ -100,18 +100,28 @@
             </div>
         </div>
         <div class="mb-4">
+            {{ form_label(form.matiere, 'choisir un matiere', {'label_attr': {'class': 'form-label fw-bold'}}) }}
+            <div class="input-group">
+                {{ form_widget(form.matiere, {
+                    'attr': {
+                        'class': 'form-control' ~ (form.matiere.vars.errors|length ? ' is-invalid'),
+                        'placeholder': ''
+                    }
+                }) }}
+            </div>
+        <div class="mb-4">
             {{ form_label(form.lienDePaiment, 'Lien de paiement du cours', {'label_attr': {'class': 'form-label fw-bold'}}) }}
             <div class="input-group">
                 {{ form_widget(form.lienDePaiment, {
                     'attr': {
                         'class': 'form-control' ~ (form.lienDePaiment.vars.errors|length ? ' is-invalid'),
-                        'placeholder': 'Ex: Apprendre Symfony 6'
+                        'placeholder': 'Ex: https://sandbox.knct.me/CSxuTSEaT'
                     }
                 }) }}
-                <span class="input-group-text"><i class="fas fa-heading"></i></span>
             </div>
             <div class="invalid-feedback">
-                {{ form_errors(form.title) }}
+               {{ form_errors(form.lienDePaiment) }}
+
             </div>
         </div>
     </div>

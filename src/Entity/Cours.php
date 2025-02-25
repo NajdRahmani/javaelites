@@ -6,7 +6,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
-
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 #[ORM\Entity(repositoryClass: CoursRepository::class)]
 class Cours
 {
@@ -37,8 +37,7 @@ class Cours
     /**
      * @var Collection<int, Chapitre>
      */
-    #[ORM\OneToMany(targetEntity: Chapitre::class, mappedBy: 'cours')]
-    private Collection $chapitres;
+    #[ORM\OneToMany(mappedBy: 'cours', targetEntity: Chapitre::class, cascade: ['remove'], orphanRemoval: true)]    private Collection $chapitres;
 
     #[ORM\ManyToOne(inversedBy: 'cours')]
     #[Assert\NotNull(message: "La matière ne peut pas être vide.")]
@@ -84,10 +83,18 @@ class Cours
     /**
      * @var Collection<int, Evaluation>
      */
-    #[ORM\OneToMany(targetEntity: Evaluation::class, mappedBy: 'cours')]
+    #[ORM\OneToMany(mappedBy: 'cours', targetEntity: Evaluation::class, cascade: ['remove'], orphanRemoval: true)]
     private Collection $evaluations;
 
-   
+    #[Assert\Callback]
+    public function validateLienDePaiment(ExecutionContextInterface $context): void
+    {
+        if ($this->prix !== 0 && empty($this->lienDePaiment)) {
+            $context->buildViolation('Le lien de paiement est obligatoire lorsque le prix est différent de zéro.')
+                ->atPath('lienDePaiment')
+                ->addViolation();
+        }
+    }
     public function __construct()
     {
         $this->chapitres = new ArrayCollection();

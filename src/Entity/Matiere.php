@@ -41,6 +41,30 @@ class Matiere
     #[ORM\OneToMany(targetEntity: Cours::class, mappedBy: 'matiere')]
     private Collection $cours;
 
+    #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Les prérequis ne peuvent pas être vides.")]
+    #[Assert\Length(
+        max: 255,
+        maxMessage: "Les prérequis ne peuvent pas dépasser {{ limit }} caractères."
+    )]
+    private ?string $prerequis = null;
+
+    #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "La description ne peut pas être vide.")]
+    #[Assert\Length(
+        max: 255,
+        maxMessage: "La description ne peut pas dépasser {{ limit }} caractères."
+    )]
+    private ?string $description = null;
+
+    #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "La couleur du thème ne peut pas être vide.")]
+    #[Assert\Regex(
+        pattern: '/^#[0-9A-Fa-f]{6}$/',
+        message: "La couleur du thème doit être un code hexadécimal valide (par ex. #FF5733)."
+    )]
+    private ?string $couleur_theme = null;
+    
     public function __construct()
     {
         $this->cours = new ArrayCollection();
@@ -127,6 +151,42 @@ class Matiere
                 $cour->setMatiere(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getPrerequis(): ?string
+    {
+        return $this->prerequis;
+    }
+
+    public function setPrerequis(string $prerequis): static
+    {
+        $this->prerequis = $prerequis;
+
+        return $this;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(string $description): static
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
+    public function getCouleurTheme(): ?string
+    {
+        return $this->couleur_theme;
+    }
+
+    public function setCouleurTheme(string $couleur_theme): static
+    {
+        $this->couleur_theme = $couleur_theme;
 
         return $this;
     }

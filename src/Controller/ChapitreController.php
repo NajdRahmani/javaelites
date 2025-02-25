@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Controller;
+use App\Entity\User;
 
 use App\Entity\Chapitre;
 use App\Entity\Cours;
@@ -46,8 +47,9 @@ public function new(Request $request, EntityManagerInterface $entityManager, $id
 
     // Créer un nouveau chapitre
     $chapitre = new Chapitre();
-    $chapitre->setCours($cours); // Associer le cours au chapitre
-
+    $chapitre->setCours($cours);
+     // Associer le cours au chapitre
+     $chapitre->setNbrVues(0);
     // Créer le formulaire
     $form = $this->createForm(ChapitreType::class, $chapitre);
     $form->handleRequest($request);
@@ -87,7 +89,11 @@ public function new(Request $request, EntityManagerInterface $entityManager, $id
             // Rediriger vers la page de création d'un nouveau chapitre
             return $this->redirectToRoute('app_chapitre_new', ['id' => $id], Response::HTTP_SEE_OTHER);
         }
+    } elseif ($request->request->has('add_another_evaluation')) {
+        // Rediriger vers la page de création d'un nouveau chapitre
+        return $this->redirectToRoute('app_evaluation_newenseignant', ['id' => $id], Response::HTTP_SEE_OTHER);
     }
+    
 
     // Afficher le formulaire
     return $this->render('chapitre/new.html.twig', [
@@ -97,12 +103,19 @@ public function new(Request $request, EntityManagerInterface $entityManager, $id
 }
 //etudiant
 #[Route('/etudiant/{id}', name: 'app_etudiant', methods: ['GET'])]
-    public function showEtu(Chapitre $chapitre): Response
-    {
-        return $this->render('chapitre/show.html.twig', [
-            'chapitre' => $chapitre,
-        ]);
-    }
+public function showEtu(Chapitre $chapitre, EntityManagerInterface $entityManager): Response
+{
+    // Incrémenter le nombre de vues
+    $chapitre->setNbrVues($chapitre->getNbrVues() + 1);
+
+    // Sauvegarder les modifications
+    $entityManager->persist($chapitre);
+    $entityManager->flush(); // Ne pas oublier de flusher pour appliquer les changements
+
+    return $this->render('chapitre/show.html.twig', [
+        'chapitre' => $chapitre,
+    ]);
+}
 //enseignant
     #[Route('/{id}', name: 'app_chapitre_show', methods: ['GET'])]
     public function show(Chapitre $chapitre): Response
@@ -112,56 +125,72 @@ public function new(Request $request, EntityManagerInterface $entityManager, $id
         ]);
     }
 //enseignant
-    #[Route('/{id}/edit', name: 'app_chapitre_edit', methods: ['GET', 'POST'])]
-    public function edit(
-        Request $request,
-        Chapitre $chapitre,
-        EntityManagerInterface $entityManager,
-        SluggerInterface $slugger,
-        #[Autowire('%kernel.project_dir%/public/uploads/brochures')] string $brochuresDirectory
-    ): Response {
-        $form = $this->createForm(ChapitreType::class, $chapitre);
-        $form->handleRequest($request);
-    
-        if ($form->isSubmitted() && $form->isValid()) {
-            // Gérer l'upload du fichier
-            $brochureFile = $form->get('brochure')->getData();
-    
-            if ($brochureFile) {
-                $originalFilename = pathinfo($brochureFile->getClientOriginalName(), PATHINFO_FILENAME);
-                $safeFilename = $slugger->slug($originalFilename);
-                $newFilename = $safeFilename . '-' . uniqid() . '.' . $brochureFile->guessExtension();
-    
-                // Déplacer le fichier dans le répertoire de stockage
-                try {
-                    $brochureFile->move($brochuresDirectory, $newFilename);
-                } catch (FileException $e) {
-                    // Gérer l'exception en cas d'erreur lors de l'upload
-                    $this->addFlash('error', 'Une erreur s\'est produite lors de l\'upload du fichier.');
-                    return $this->redirectToRoute('app_chapitre_edit', ['id' => $chapitre->getId()]);
-                }
-    
+#[Route('/{id}/edit', name: 'app_chapitre_edit', methods: ['GET', 'POST'])]
+public function edit(
+    Request $request,
+    Chapitre $chapitre,
+    EntityManagerInterface $entityManager,
+    SluggerInterface $slugger,
+    #[Autowire('%kernel.project_dir%/public/uploads/brochures')] string $brochuresDirectory
+): Response {
+    $userId = $request->getSession()->get('id');
+    $user = $entityManager->getRepository(User::class)->find($userId);
+
+    if (!$user) {
+        $this->addFlash('error', 'Utilisateur non trouvé.');
+        return $this->redirectToRoute('app_login');
+    }
+
+    $enseignant = $chapitre->getCours()->getEnseignant();
+
+    if ($user->getId() !== $enseignant->getId() && $user->getRoles()!=="Admin") {
+        $this->addFlash('error', 'Vous n\'avez pas l\'autorisation de modifier ce chapitre.');
+        return $this->redirectToRoute('app_login');
+    }
+
+    $form = $this->createForm(ChapitreType::class, $chapitre);
+    $form->handleRequest($request);
+
+    if ($form->isSubmitted() && $form->isValid()) {
+        // Gérer l'upload du fichier
+        $brochureFile = $form->get('brochure')->getData();
+
+        if ($brochureFile) {
+            $originalFilename = pathinfo($brochureFile->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeFilename = $slugger->slug($originalFilename);
+            $newFilename = $safeFilename . '-' . uniqid() . '.' . $brochureFile->guessExtension();
+
+            // Déplacer le fichier dans le répertoire de stockage
+            try {
+                $brochureFile->move($brochuresDirectory, $newFilename);
+
                 // Supprimer l'ancien fichier s'il existe
                 $oldFilename = $chapitre->getContenu();
                 if ($oldFilename && file_exists($brochuresDirectory . '/' . $oldFilename)) {
                     unlink($brochuresDirectory . '/' . $oldFilename);
                 }
-    
+
                 // Mettre à jour le nom du fichier dans l'entité
                 $chapitre->setContenu($newFilename);
+            } catch (FileException $e) {
+                $this->addFlash('error', 'Une erreur s\'est produite lors de l\'upload du fichier.');
+                return $this->redirectToRoute('app_chapitre_edit', ['id' => $chapitre->getId()]);
             }
-    
-            // Enregistrer les modifications en base de données
-            $entityManager->flush();
-    
-            return $this->redirectToRoute('app_cours', ['id' => 1], Response::HTTP_SEE_OTHER);
         }
-    
-        return $this->render('chapitre/edit.html.twig', [
-            'chapitre' => $chapitre,
-            'form' => $form,
-        ]);
+
+        // Enregistrer les modifications en base de données
+        $entityManager->flush();
+
+        $this->addFlash('success', 'Le chapitre a été modifié avec succès.');
+        return $this->redirectToRoute('app_cours', ['id' => 1], Response::HTTP_SEE_OTHER);
     }
+
+    return $this->render('chapitre/edit.html.twig', [
+        'chapitre' => $chapitre,
+        'form' => $form->createView(),
+    ]);
+}
+
     //enseignant
     #[Route('/{id}', name: 'app_chapitre_delete', methods: ['POST'])]
     public function delete(Request $request, Chapitre $chapitre, EntityManagerInterface $entityManager): Response

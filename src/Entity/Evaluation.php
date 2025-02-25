@@ -59,7 +59,7 @@ class Evaluation
     private Collection $reponses;
 
     #[ORM\ManyToOne(targetEntity: Cours::class, inversedBy: 'evaluations')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?Cours $cours = null;
 
   

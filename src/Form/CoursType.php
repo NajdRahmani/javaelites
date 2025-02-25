@@ -2,6 +2,8 @@
 namespace App\Form;
 
 use App\Entity\Cours;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
+use App\Entity\Matiere;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
@@ -27,6 +29,11 @@ class CoursType extends AbstractType
                     'class' => 'form-control',
                     'placeholder' => 'Entrez le titre du cours'
                 ],
+            ])
+            ->add('matiere', EntityType::class, [
+                'class' => Matiere::class,
+                'choice_label' => 'titre',
+                'required' => false,
             ])
             ->add('lienDePaiment', TextType::class, [
                 'label' => 'lien de paiement du cours',
