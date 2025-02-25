@@ -81,6 +81,13 @@ class Cours
     private Collection $etudiants;
 
     /**
+     * @var Collection<int, User>
+     */
+    #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'cours')]   
+    #[ORM\JoinTable(name: 'cours_etudiants_favoris')]
+    private Collection $etudiantsfavoris;
+
+    /**
      * @var Collection<int, Evaluation>
      */
     #[ORM\OneToMany(mappedBy: 'cours', targetEntity: Evaluation::class, cascade: ['remove'], orphanRemoval: true)]
@@ -99,9 +106,21 @@ class Cours
     {
         $this->chapitres = new ArrayCollection();
         $this->etudiants = new ArrayCollection();
+        $this->etudiantsfavoris = new ArrayCollection();
         $this->evaluations = new ArrayCollection();
         
     }
+    public function isUserFavorite(int $userId): bool
+{
+    foreach ($this->etudiantsfavoris as $etudiant) {
+        if ($etudiant->getId() === $userId) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 
     public function getId(): ?int
     {
@@ -262,6 +281,40 @@ class Cours
     public function removeEtudiant(User $etudiant): static
     {
         $this->etudiants->removeElement($etudiant);
+
+        return $this;
+    }
+
+     /**
+     * @return Collection<int, User>
+     */
+    public function getEtudiantsfavoris(): Collection
+    {
+        return $this->etudiants;
+    }
+
+    public function isUserEnrolled1(int $id): bool
+    {
+        foreach ($this->etudiantsfavoris as $etudiant) {
+            if ($etudiant->getId() === $id) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function addEtudiantfavoris(User $etudiant): static
+    {
+        if (!$this->etudiantsfavoris->contains($etudiant)) {
+            $this->etudiantsfavoris->add($etudiant);
+        }
+
+        return $this;
+    }
+
+    public function removeEtudiantFavoris(User $etudiant): static
+    {
+        $this->etudiantsfavoris->removeElement($etudiant);
 
         return $this;
     }

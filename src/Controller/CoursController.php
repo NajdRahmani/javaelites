@@ -73,6 +73,39 @@ final class CoursController extends AbstractController
             'matieres' => $matiereRepository->findAll(),
         ]);
     }
+    #[Route('/cours4', name: 'app_cours_index4', methods: ['GET'])]
+    public function index4(
+        Request $request,
+        CoursRepository $coursRepository,
+        MatiereRepository $matiereRepository,
+        UserRepository $userRepository
+    ): Response {
+        $session = $request->getSession();
+        $userId = $session->get('id'); // Récupère l'ID de l'utilisateur depuis la session
+    
+        if (!$userId) {
+            throw $this->createAccessDeniedException('Utilisateur non connecté.');
+        }
+    
+        $user = $userRepository->find($userId);
+    
+        if (!$user) {
+            throw $this->createNotFoundException('Utilisateur introuvable.');
+        }
+    
+        // Récupère les cours où l'utilisateur est inscrit
+        $cours = $coursRepository->createQueryBuilder('c')
+            ->innerJoin('c.etudiantsfavoris', 'e') // Joindre la relation "etudiants"
+            ->where('e.id = :userId') // Filtrer par l'ID de l'utilisateur
+            ->setParameter('userId', $userId)
+            ->getQuery()
+            ->getResult();
+    
+        return $this->render('cours/index1.html.twig', [
+            'cours' => $cours,
+            'matieres' => $matiereRepository->findAll(),
+        ]);
+    }
     
       // etudiant
       #[Route('/filter', name: 'app_cours_filter', methods: ['GET'])]
@@ -123,6 +156,47 @@ public function filter1(
     $cours = $queryBuilder->getQuery()->getResult();
 
     return $this->render('cours/index.html.twig', [
+        'cours' => $cours,
+        'matieres' => $matiereRepository->findAll(),
+    ]);
+}
+#[Route('/filter2', name: 'app_cours_filter2', methods: ['GET'])]
+public function filter2(
+    Request $request,
+    CoursRepository $coursRepository,
+    MatiereRepository $matiereRepository,
+    UserRepository $userRepository
+): Response {
+    $session = $request->getSession();
+    $userId = $session->get('id'); // Récupère l'ID de l'utilisateur connecté
+
+    if (!$userId) {
+        throw $this->createAccessDeniedException('Utilisateur non connecté.');
+    }
+
+    $user = $userRepository->find($userId);
+
+    if (!$user) {
+        throw $this->createNotFoundException('Utilisateur introuvable.');
+    }
+
+    // Filtre pour la matière
+    $matiereId = $request->query->get('matiere');
+
+    // Récupération des cours auxquels l'utilisateur est inscrit, avec un filtre par matière (si fourni)
+    $queryBuilder = $coursRepository->createQueryBuilder('c')
+        ->innerJoin('c.etudiantsfavoris', 'e') // Joindre la relation "etudiants"
+        ->where('e.id = :userId') // Filtrer par l'utilisateur connecté
+        ->setParameter('userId', $userId);
+
+    if ($matiereId) {
+        $queryBuilder->andWhere('c.matiere = :matiereId') // Ajouter le filtre par matière
+            ->setParameter('matiereId', $matiereId);
+    }
+
+    $cours = $queryBuilder->getQuery()->getResult();
+
+    return $this->render('cours/index1.html.twig', [
         'cours' => $cours,
         'matieres' => $matiereRepository->findAll(),
     ]);
@@ -318,6 +392,27 @@ public function confirmationAction(int $id, Request $request, EntityManagerInter
         ]);
     }
 // enseignant
+#[Route('/{id}/favorite', name: 'app_cours_toggle_favorite', methods: ['POST'])]
+public function toggleFavorite(Request $request, Cours $cour, EntityManagerInterface $entityManager): Response
+{
+    $userId = $request->getSession()->get('id');
+    $user = $entityManager->getRepository(User::class)->find($userId);
+
+    if (!$user) {
+        return $this->redirectToRoute('app_login');
+    }
+
+    if ($cour->isUserFavorite($userId)) {
+        $cour->removeEtudiantfavoris($user);
+    } else {
+        $cour->addEtudiantfavoris($user);
+    }
+
+    $entityManager->flush();
+
+    return $this->redirectToRoute('app_cours_show', ['id' => $cour->getId()]);
+}
+
     #[Route('/{id}', name: 'app_cours_delete', methods: ['POST'])]
     public function delete(Request $request, Cours $cour, EntityManagerInterface $entityManager): Response
     {
