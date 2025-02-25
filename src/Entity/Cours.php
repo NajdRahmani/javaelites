@@ -77,11 +77,16 @@ private ?int $prix = null;
     #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'cours')]
     private Collection $etudiants;
 
+<<<<<<< HEAD
     /**
      * @var Collection<int, Evaluation>
      */
     #[ORM\OneToMany(targetEntity: Evaluation::class, mappedBy: 'cours_id')]
     private Collection $evaluations;
+=======
+    #[ORM\Column(length: 255)]
+    private ?string $lienDePaiment = null;
+>>>>>>> a6cc750300bcfaf7a1f02eda110629a828733fdd
 
     
     public function __construct()
@@ -252,6 +257,7 @@ private ?int $prix = null;
         return $this;
     }
 
+<<<<<<< HEAD
     /**
      * @return Collection<int, Evaluation>
      */
@@ -278,6 +284,16 @@ private ?int $prix = null;
                 $evaluation->setCoursId(null);
             }
         }
+=======
+    public function getLienDePaiment(): ?string
+    {
+        return $this->lienDePaiment;
+    }
+
+    public function setLienDePaiment(string $lienDePaiment): static
+    {
+        $this->lienDePaiment = $lienDePaiment;
+>>>>>>> a6cc750300bcfaf7a1f02eda110629a828733fdd
 
         return $this;
     }

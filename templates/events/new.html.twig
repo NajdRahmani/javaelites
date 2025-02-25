@@ -1,7 +1,7 @@
-{% extends 'base.html.twig' %}
+{% extends 'base3.html.twig' %}
 
 {% block title %}New Event{% endblock %}
-{% block stylesheets %}
+{% block stylesheet %}
 
 
 {% if app.session.get('roles') is not same as('Enseignant') %}
@@ -9,6 +9,7 @@
         window.location.href = "{{ path('app_login') }}";
     </script>
 {% endif %}
+
 
 {% if app.session.get('deleted') == 1 %}
     <script type="text/javascript">
@@ -21,12 +22,6 @@
     <link rel="stylesheet" href="{{ asset('assets/css/event_form.css') }}">
 {% endblock %}
 {% block body %}
-<br>
-<br>
-<br>
-<br>
+
     {{ include('events/_form.html.twig') }}
-    <div class="main-button-gradient">
-        <a href="{{ path('app_events_index') }}" >back to list</a>
-    </div>
 {% endblock %}
