@@ -276,6 +276,13 @@ final class EvaluationController extends AbstractController
 
         $entityManager->flush();
 
+        // Récupérer l'étudiant et envoyer la notification
+        $student = $entityManager->getRepository(User::class)->find($studentId);
+        if ($student) {
+            $evaluation = $entityManager->getRepository(Evaluation::class)->find($evaluationId);
+            $this->mailService->sendEvaluationGradedNotification($student, $evaluation);
+        }
+
         $this->addFlash('success', 'La correction a été enregistrée avec succès.');
         return $this->redirectToRoute('evaluation_correctenseignant', ['id' => $evaluationId]);
     }
@@ -334,6 +341,9 @@ final class EvaluationController extends AbstractController
 
             $entityManager->flush();
 
+            // Envoyer l'email de confirmation de soumission
+            $this->mailService->sendEvaluationSubmissionNotification($this->getUser(), $evaluation);
+
             $this->addFlash('success', 'Vos réponses ont été enregistrées avec succès.');
             return $this->redirectToRoute('app_evaluation_indexetudiant');
         }
@@ -385,6 +395,9 @@ final class EvaluationController extends AbstractController
         Evaluation $evaluation,
         EntityManagerInterface $entityManager
     ): Response {
+        // Envoyer l'email de confirmation de soumission
+        $this->mailService->sendEvaluationSubmissionNotification($this->getUser(), $evaluation);
+        
         $this->addFlash('success', 'L\'évaluation a été soumise avec succès.');
         $mailService->sendEvaluationSubmissionNotification($this->getUse(), $evaluation);
         return $this->redirectToRoute('app_evaluation_show', ['id' => $evaluation->getId()]);
@@ -402,6 +415,12 @@ final class EvaluationController extends AbstractController
 
         if (!$evaluation) {
             throw $this->createNotFoundException('Évaluation non trouvée');
+        }
+
+        // Récupérer l'étudiant et envoyer la notification
+        $student = $entityManager->getRepository(User::class)->find($studentId);
+        if ($student) {
+            $this->mailService->sendEvaluationGradedNotification($student, $evaluation);
         }
 
         $this->addFlash('success', 'La correction a été soumise avec succès.');
