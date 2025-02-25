@@ -3,19 +3,18 @@ namespace App\Controller;
 
 use App\Entity\Reponse;
 use App\Form\ReponseType;
+use App\Form\QuestionType;
 use App\Entity\Evaluation;
 use App\Form\EvaluationType;
 use App\Entity\Question;
 use App\Repository\QuestionRepository;
 use App\Repository\EvaluationRepository;
+use App\Repository\ReponseRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\Form\FormError;
-use App\Repository\ReponseRepository;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use App\Service\StatisticsService;
 use App\Service\MailService;
@@ -44,7 +43,14 @@ final class EvaluationController extends AbstractController
     #[Route('/enseignant/new', name: 'app_evaluation_newenseignant', methods: ['GET', 'POST'])]
     public function newEnseignant(Request $request, EntityManagerInterface $entityManager): Response
     {
+        $user = $this->getUser(); // Récupérer l'utilisateur connecté
+        if (!$user) {
+            throw $this->createAccessDeniedException("Vous devez être connecté pour créer une évaluation.");
+        }
+    
         $evaluation = new Evaluation();
+        $evaluation->setCreatedBy($user); // Associer l'utilisateur à l'évaluation
+    
         $form = $this->createForm(EvaluationType::class, $evaluation);
         $form->handleRequest($request);
     
@@ -53,16 +59,16 @@ final class EvaluationController extends AbstractController
             $entityManager->flush();
             return $this->redirectToRoute('app_question_new', ['evaluationId' => $evaluation->getId()], Response::HTTP_SEE_OTHER);
         }
-        
     
         return $this->render('evaluation/new.html.twig', [
             'evaluation' => $evaluation,
             'form' => $form->createView(),
         ]);
     }
+    
 
     #[Route('/enseignant/{id}', name: 'app_evaluation_showenseignant', methods: ['GET'])]
-    public function showEnseignant(Evaluation $evaluation): Response
+    public function showEnseignant(Evaluation $evaluation, EntityManagerInterface $entityManager): Response
     {
         return $this->render('evaluation/show.html.twig', [
             'evaluation' => $evaluation,
@@ -148,98 +154,77 @@ final class EvaluationController extends AbstractController
     #[Route('/enseignant/{id}/correct', name: 'evaluation_correctenseignant', methods: ['GET'])]
     public function correctListEnseignant(
         Evaluation $evaluation,
-        ReponseRepository $reponseRepository
+        ReponseRepository $reponseRepository,
+        QuestionRepository $questionRepository
     ): Response {
-        // Récupérer toutes les réponses pour cette évaluation via les questions
-        $reponses = [];
-        foreach ($evaluation->getQuestions() as $question) {
-            $questionReponses = $reponseRepository->findBy(['question' => $question]);
-            $reponses = array_merge($reponses, $questionReponses);
+        $questions = $questionRepository->findBy(['evaluation' => $evaluation]);
+        $reponses = $reponseRepository->findBy(['evaluation' => $evaluation]);
+
+        // Calculer le score maximum total
+        $scoreMaxTotal = 0;
+        foreach ($questions as $question) {
+            $scoreMaxTotal += $question->getPoints();
         }
 
-        // Organiser les réponses par utilisateur
-        $userResponses = [];
+        // Organiser les réponses par question
+        $questionResponses = [];
+        foreach ($questions as $question) {
+            $questionResponses[$question->getId()] = [
+                'question' => $question,
+                'responses' => []
+            ];
+        }
+
         foreach ($reponses as $reponse) {
-            $userId = $reponse->getUserId();
-            if (!isset($userResponses[$userId])) {
-                $userResponses[$userId] = [
-                    'userId' => $userId,
-                    'reponses' => [],
-                    'isCorrected' => true
+            $questionId = $reponse->getQuestion()->getId();
+            if (isset($questionResponses[$questionId])) {
+                $questionResponses[$questionId]['responses'][] = [
+                    'reponse' => $reponse,
+                    'isCorrected' => $reponse->getNote() !== null
                 ];
-            }
-            $userResponses[$userId]['reponses'][] = $reponse;
-            if (!$reponse->isCorrect()) {
-                $userResponses[$userId]['isCorrected'] = false;
             }
         }
 
         return $this->render('evaluation/correct_list.html.twig', [
             'evaluation' => $evaluation,
-            'userResponses' => $userResponses
+            'questionResponses' => $questionResponses,
+            'scoreMaxTotal' => $scoreMaxTotal
         ]);
     }
 
-    #[Route('/enseignant/{evaluationId}/etudiant/{studentId}/correct', name: 'evaluation_correctenseignant_student', methods: ['GET'])]
+    #[Route('/enseignant/{evaluationId}/correction/{reponseId}', name: 'evaluation_correctenseignant_student', methods: ['GET', 'POST'])]
     public function correctStudent(
         int $evaluationId,
-        int $studentId,
-        EvaluationRepository $evaluationRepository,
-        ReponseRepository $reponseRepository
-    ): Response {
-        $evaluation = $evaluationRepository->find($evaluationId);
-        if (!$evaluation) {
-            throw $this->createNotFoundException('Evaluation non trouvée');
-        }
-
-        // Récupérer toutes les réponses de l'étudiant pour cette évaluation
-        $reponses = [];
-        foreach ($evaluation->getQuestions() as $question) {
-            $questionReponses = $reponseRepository->findBy([
-                'question' => $question,
-                'userId' => $studentId
-            ]);
-            $reponses = array_merge($reponses, $questionReponses);
-        }
-
-        return $this->render('evaluation/correct_student.html.twig', [
-            'evaluation' => $evaluation,
-            'studentId' => $studentId,
-            'reponses' => $reponses
-        ]);
-    }
-
-    #[Route('/enseignant/evaluation/{evaluationId}/etudiant/{studentId}/save-notes', name: 'evaluation_save_notes', methods: ['POST'])]
-    public function saveNotes(
-        Request $request,
-        int $evaluationId,
-        int $studentId,
+        int $reponseId,
         EvaluationRepository $evaluationRepository,
         ReponseRepository $reponseRepository,
+        Request $request,
         EntityManagerInterface $entityManager
     ): Response {
         $evaluation = $evaluationRepository->find($evaluationId);
         if (!$evaluation) {
-            throw $this->createNotFoundException('Evaluation non trouvée');
+            throw $this->createNotFoundException('Évaluation non trouvée');
         }
 
-        $submittedData = $request->request->all();
-        $notes = isset($submittedData['notes']) ? $submittedData['notes'] : [];
-        
-        foreach ($notes as $reponseId => $note) {
-            $reponse = $reponseRepository->find($reponseId);
-            if ($reponse && $reponse->getUserId() === $studentId) {
-                $reponse->setNote((float) $note);
-                $reponse->setIsCorrect(true);
-                $entityManager->persist($reponse);
+        $reponse = $reponseRepository->find($reponseId);
+        if (!$reponse || $reponse->getEvaluation()->getId() !== $evaluation->getId()) {
+            throw $this->createNotFoundException('Réponse non trouvée');
+        }
+
+        if ($request->isMethod('POST')) {
+            // Traitement de la correction
+            $note = $request->request->get('note');
+            if ($note !== null) {
+                $reponse->setNote((int) $note);
+                $entityManager->flush();
+                $this->addFlash('success', 'La note a été enregistrée avec succès.');
             }
+            return $this->redirectToRoute('evaluation_correctenseignant', ['id' => $evaluationId]);
         }
-        
-        $entityManager->flush();
 
-        $this->addFlash('success', 'Les notes ont été enregistrées avec succès');
-        return $this->redirectToRoute('evaluation_correctenseignant', [
-            'id' => $evaluationId
+        return $this->render('evaluation/correct_student.html.twig', [
+            'evaluation' => $evaluation,
+            'reponse' => $reponse
         ]);
     }
 
@@ -262,7 +247,7 @@ final class EvaluationController extends AbstractController
             ['question' => 'ASC']
         );
 
-        return $this->render('evaluation/correct_student.html.twig', [
+        return $this->render('evaluation/correct_list.html.twig', [
             'evaluation' => $evaluation,
             'studentId' => $studentId,
             'answers' => $answers
@@ -298,20 +283,13 @@ final class EvaluationController extends AbstractController
     #[Route('/etudiant/{id}/resultat', name: 'app_evaluation_show_result', methods: ['GET'])]
     public function showResult(
         Evaluation $evaluation,
-        ReponseRepository $reponseRepository,
-        Security $security
+        ReponseRepository $reponseRepository
     ): Response {
-        $user = $security->getUser();
-        if (!$user) {
-            return $this->redirectToRoute('app_login');
-        }
-
         // Récupérer les réponses de l'étudiant pour cette évaluation
         $reponses = [];
         foreach ($evaluation->getQuestions() as $question) {
             $questionReponses = $reponseRepository->findBy([
                 'question' => $question,
-                'userId' => $user->getId()
             ]);
             $reponses = array_merge($reponses, $questionReponses);
         }
@@ -353,8 +331,9 @@ final class EvaluationController extends AbstractController
                     $entityManager->persist($reponse);
                 }
             }
-    
+
             $entityManager->flush();
+
             $this->addFlash('success', 'Vos réponses ont été enregistrées avec succès.');
             return $this->redirectToRoute('app_evaluation_indexetudiant');
         }
@@ -404,12 +383,9 @@ final class EvaluationController extends AbstractController
     public function submitEvaluation(
         Request $request,
         Evaluation $evaluation,
-        EntityManagerInterface $entityManager,
-        MailService $mailService
+        EntityManagerInterface $entityManager
     ): Response {
-        // Votre logique existante
         $this->addFlash('success', 'L\'évaluation a été soumise avec succès.');
-        $mailService->sendEvaluationSubmissionNotification($this->getUser(), $evaluation);
         return $this->redirectToRoute('app_evaluation_show', ['id' => $evaluation->getId()]);
     }
 
@@ -419,28 +395,23 @@ final class EvaluationController extends AbstractController
         int $evaluationId,
         int $studentId,
         EvaluationRepository $evaluationRepository,
-        UserRepository $userRepository,
-        EntityManagerInterface $entityManager,
-        MailService $mailService
+        EntityManagerInterface $entityManager
     ): Response {
         $evaluation = $evaluationRepository->find($evaluationId);
-        $student = $userRepository->find($studentId);
 
-        if (!$evaluation || !$student) {
-            throw $this->createNotFoundException('Évaluation ou étudiant non trouvé');
+        if (!$evaluation) {
+            throw $this->createNotFoundException('Évaluation non trouvée');
         }
 
-        // Votre logique de correction existante
         $this->addFlash('success', 'La correction a été soumise avec succès.');
-        $mailService->sendEvaluationGradedNotification($student, $evaluation);
         return $this->redirectToRoute('evaluation_correctenseignant', ['id' => $evaluationId]);
     }
 
-    private function isEvaluationGradedForStudent(Evaluation $evaluation, User $student): bool
+    private function isEvaluationGradedForStudent(Evaluation $evaluation): bool
     {
         // Vérifier si toutes les réponses ont un score
         foreach ($evaluation->getQuestions() as $question) {
-            $response = $question->getReponseForStudent($student);
+            $response = $question->getReponse();
             if (!$response || $response->getScore() === null) {
                 return false;
             }
@@ -448,11 +419,11 @@ final class EvaluationController extends AbstractController
         return true;
     }
 
-    private function calculateStudentScore(Evaluation $evaluation, User $student): int
+    private function calculateStudentScore(Evaluation $evaluation): int
     {
         $totalScore = 0;
         foreach ($evaluation->getQuestions() as $question) {
-            $response = $question->getReponseForStudent($student);
+            $response = $question->getReponse();
             if ($response && $response->getScore() !== null) {
                 $totalScore += $response->getScore();
             }
@@ -467,21 +438,18 @@ final class EvaluationController extends AbstractController
         ReponseRepository $reponseRepository
     ): Response {
         $evaluations = $evaluationRepository->findAll();
-        $submittedEvaluations = [];
-
-        return $this->render('evaluation/indexetudiant.html.twig', [
+        
+        return $this->render('evaluation/indexEtudiant.html.twig', [
             'evaluations' => $evaluations,
-            'submittedEvaluations' => $submittedEvaluations
         ]);
     }
 
-    private function isEvaluationCorrected(Evaluation $evaluation, int $studentId, ReponseRepository $reponseRepository): bool
+    private function isEvaluationCorrected(Evaluation $evaluation, ReponseRepository $reponseRepository): bool
     {
         $allResponses = [];
         foreach ($evaluation->getQuestions() as $question) {
             $responses = $reponseRepository->findBy([
                 'question' => $question,
-                'userId' => $studentId
             ]);
             $allResponses = array_merge($allResponses, $responses);
         }
@@ -521,12 +489,11 @@ final class EvaluationController extends AbstractController
     public function testEmail(): Response
     {
         try {
-            $user = $this->getUser();
             $evaluation = new Evaluation();
             $evaluation->setTitle("Test d'évaluation");
             
             // Test d'envoi d'email de soumission
-            $this->mailService->sendEvaluationSubmissionNotification($user, $evaluation);
+            $this->mailService->sendEvaluationSubmissionNotification($evaluation);
             
             $this->addFlash('success', 'Email de test envoyé avec succès !');
         } catch (\Exception $e) {

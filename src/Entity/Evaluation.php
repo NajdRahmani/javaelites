@@ -55,21 +55,17 @@ class Evaluation
     #[ORM\OneToMany(targetEntity: Question::class, mappedBy: 'evaluation', orphanRemoval: true)]
     private Collection $questions;
 
-    // Validation : le nombre de cours doit être strictement positif
-    #[ORM\Column(type: 'integer')]
-    #[Assert\NotBlank(message: "Le nombre de cours est obligatoire")]
-    #[Assert\Range(
-        min: 1,
-        max: 20,
-        notInRangeMessage: "Le nombre de cours doit être entre {{ min }} et {{ max }}",
-    )]
-    private ?int $cours = null;
-
     #[ORM\OneToMany(mappedBy: 'evaluation', targetEntity: Reponse::class, orphanRemoval: true)]
     private Collection $reponses;
 
     #[ORM\ManyToOne(inversedBy: 'evaluations')]
     private ?Cours $cours_id = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $lastAccessUserId = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $lastAccessDate = null;
 
     public function __construct()
     {
@@ -176,16 +172,7 @@ class Evaluation
         return $this;
     }
 
-    public function getCours(): ?int
-    {
-        return $this->cours;
-    }
-
-    public function setCours(int $cours): static
-    {
-        $this->cours = $cours;
-        return $this;
-    }
+  
 
     /**
      * @return Collection<int, Reponse>
@@ -226,6 +213,29 @@ class Evaluation
     {
         $this->cours_id = $cours_id;
 
+        return $this;
+    }
+
+    public function getLastAccessUserId(): ?int
+    {
+        return $this->lastAccessUserId;
+    }
+
+    public function setLastAccessUserId(?int $userId): self
+    {
+        $this->lastAccessUserId = $userId;
+        $this->lastAccessDate = new \DateTime();
+        return $this;
+    }
+
+    public function getLastAccessDate(): ?\DateTimeInterface
+    {
+        return $this->lastAccessDate;
+    }
+
+    public function setLastAccessDate(?\DateTimeInterface $date): self
+    {
+        $this->lastAccessDate = $date;
         return $this;
     }
 }

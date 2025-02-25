@@ -26,6 +26,19 @@
         .deadline-passed {
             color: #6c757d;
         }
+        .status-badge {
+            padding: 0.5em 1em;
+            border-radius: 4px;
+            font-size: 0.875em;
+        }
+        .status-completed {
+            background-color: #28a745;
+            color: white;
+        }
+        .status-pending {
+            background-color: #ffc107;
+            color: #000;
+        }
     </style>
 {% endblock %}
 
@@ -41,60 +54,54 @@
                     <thead>
                         <tr>
                             <th>Titre</th>
+                            <th>Description</th>
                             <th>Score Maximum</th>
                             <th>Date Limite</th>
-                            <th>Cours</th>
+                            <th>Statut</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                    {% for evaluation in evaluations %}
-                        {% set hasSubmitted = evaluation.id in submittedEvaluations %}
-                        {% set deadlinePassed = evaluation.deadline|date('U') < 'now'|date('U') %}
-                        <tr class="{{ deadlinePassed ? 'deadline-passed' : '' }}">
+                    {% for item in evaluations %}
+                        <tr>
+                            <td class="evaluation-title">{{ item.evaluation.title }}</td>
+                            <td>{{ item.evaluation.description|length > 50 ? item.evaluation.description|slice(0, 50) ~ '...' : item.evaluation.description }}</td>
+                            <td>{{ item.evaluation.maxScore }}</td>
                             <td>
-                                <div class="evaluation-title" title="{{ evaluation.title }}">
-                                    {{ evaluation.title }}
-                                </div>
-                            </td>
-                            <td>{{ evaluation.maxScore }}</td>
-                            <td>
-                                {% if evaluation.deadline %}
-                                    {% if not deadlinePassed %}
-                                        {% set timeLeft = date(evaluation.deadline).diff(date()) %}
-                                        {% if timeLeft.days < 1 %}
-                                            <span class="deadline-warning">
-                                                {{ evaluation.deadline|date('d/m/Y H:i') }}
-                                                (Moins de 24h !)
-                                            </span>
-                                        {% else %}
-                                            {{ evaluation.deadline|date('d/m/Y H:i') }}
-                                        {% endif %}
-                                    {% else %}
-                                        <span class="text-muted">Terminée</span>
-                                    {% endif %}
+                                {% if item.evaluation.deadline < date() %}
+                                    <span class="deadline-passed">{{ item.evaluation.deadline|date('d/m/Y H:i') }}</span>
+                                {% elseif date().modify('+24 hours') > item.evaluation.deadline %}
+                                    <span class="deadline-warning">{{ item.evaluation.deadline|date('d/m/Y H:i') }}</span>
+                                {% else %}
+                                    {{ item.evaluation.deadline|date('d/m/Y H:i') }}
                                 {% endif %}
                             </td>
-                            <td>{{ evaluation.cours }}</td>
                             <td>
-                                {% if hasSubmitted %}
-                                    <a href="{{ path('app_evaluation_show_result', {'id': evaluation.id}) }}" 
-                                       class="btn btn-info btn-sm">
-                                        <i class="fas fa-eye"></i> Afficher résultat
-                                    </a>
-                                {% elseif not deadlinePassed %}
-                                    <a href="{{ path('etudiant_evaluation_show', {'id': evaluation.id}) }}" 
+                                {% if item.hasResponded %}
+                                    <span class="status-badge status-completed">Complété</span>
+                                {% else %}
+                                    <span class="status-badge status-pending">En attente</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if not item.hasResponded and item.evaluation.deadline > date() %}
+                                    <a href="{{ path('etudiant_evaluation_show', {'id': item.evaluation.id}) }}" 
                                        class="btn btn-primary btn-sm">
-                                        <i class="fas fa-pen"></i> Évaluer
+                                        <i class="fas fa-pen"></i> Répondre
+                                    </a>
+                                {% elseif item.hasResponded %}
+                                    <a href="{{ path('app_evaluation_show_result', {'id': item.evaluation.id}) }}" 
+                                       class="btn btn-info btn-sm">
+                                        <i class="fas fa-eye"></i> Voir les résultats
                                     </a>
                                 {% else %}
-                                    <span class="badge bg-secondary">Non complétée</span>
+                                    <span class="text-muted">Délai expiré</span>
                                 {% endif %}
                             </td>
                         </tr>
                     {% else %}
                         <tr>
-                            <td colspan="5" class="text-center">Aucune évaluation disponible</td>
+                            <td colspan="6" class="text-center">Aucune évaluation disponible</td>
                         </tr>
                     {% endfor %}
                     </tbody>

@@ -86,12 +86,6 @@ class Cours
      */
     #[ORM\OneToMany(targetEntity: Evaluation::class, mappedBy: 'cours_id')]
     private Collection $evaluations;
-<<<<<<< HEAD
-
-    #[ORM\Column(length: 255)]
-    private ?string $lienDePaiment = null;
-=======
->>>>>>> 2d13c7974ec93dbbd208481ec00520f0918871f6
 
     public function __construct()
     {
@@ -302,8 +296,4 @@ class Cours
 
         return $this;
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 2d13c7974ec93dbbd208481ec00520f0918871f6

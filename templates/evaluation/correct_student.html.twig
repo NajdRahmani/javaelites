@@ -1,6 +1,6 @@
 {% extends 'base3.html.twig' %}
 
-{% block title %}Correction des réponses - Étudiant {{ studentId }}{% endblock %}
+{% block title %}Corriger la réponse{% endblock %}
 
 {% block body %}
 <div class="container mt-4">
@@ -9,130 +9,59 @@
         <p class="mb-0">{{ evaluation.description }}</p>
     </div>
 
-    <div class="student-info mb-4">
-        <h4>Correction des réponses</h4>
-        <p>Étudiant ID: {{ studentId }}</p>
-    </div>
-
-    {% if reponses|length > 0 %}
-        <form id="correction-form" method="POST" action="{{ path('evaluation_save_notes', {'evaluationId': evaluation.id, 'studentId': studentId}) }}">
-            {% set totalPoints = 0 %}
-            {% for reponse in reponses %}
-                <div class="question-card card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Question: {{ reponse.question.text }}</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="response-content mb-3">
-                            <p><strong>Réponse de l'étudiant :</strong></p>
-                            <p class="response-text">{{ reponse.text }}</p>
-                        </div>
-                        <div class="grading-section">
-                            <label for="note_{{ reponse.id }}" class="form-label">Note :</label>
-                            <div class="input-group" style="width: 200px;">
-                                <input type="number" 
-                                       id="note_{{ reponse.id }}" 
-                                       name="notes[{{ reponse.id }}]"
-                                       class="form-control note-input" 
-                                       value="{{ reponse.note }}"
-                                       min="0" 
-                                       max="{{ evaluation.maxScore }}"
-                                       required>
-                                <span class="input-group-text">/ {{ evaluation.maxScore }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% if reponse.note is not null %}
-                    {% set totalPoints = totalPoints + reponse.note %}
-                {% endif %}
-            {% endfor %}
-
-            <div class="total-score card mb-4">
-                <div class="card-body">
-                    <h5>Score total : {{ totalPoints }} / {{ evaluation.maxScore * reponses|length }}</h5>
-                </div>
+    <div class="card">
+        <div class="card-body">
+            <div class="question-section mb-4">
+                <h4>Question</h4>
+                <p class="question-text">{{ reponse.question.text }}</p>
+                <p class="text-muted">Points maximum : {{ reponse.question.points }}</p>
             </div>
 
-            <div class="d-flex justify-content-between">
-                <a href="{{ path('evaluation_correctenseignant', {'id': evaluation.id}) }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Retour à la liste des étudiants
-                </a>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Enregistrer les notes
-                </button>
+            <div class="response-section mb-4">
+                <h4>Réponse de l'étudiant</h4>
+                <p class="response-text bg-light p-3 rounded">{{ reponse.text }}</p>
             </div>
-        </form>
-    {% else %}
-        <div class="alert alert-info">
-            Cet étudiant n'a pas encore répondu à cette évaluation.
+
+            <form method="post" class="mt-4">
+                <div class="form-group mb-4">
+                    <label for="note" class="form-label">Note :</label>
+                    <div class="input-group" style="max-width: 200px;">
+                        <input type="number" 
+                               class="form-control" 
+                               id="note" 
+                               name="note" 
+                               value="{{ reponse.note }}" 
+                               min="0" 
+                               max="{{ reponse.question.points }}" 
+                               required>
+                        <span class="input-group-text">/ {{ reponse.question.points }}</span>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <a href="{{ path('evaluation_correctenseignant', {'id': evaluation.id}) }}" 
+                       class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Retour à la liste
+                    </a>
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="fas fa-save"></i> Enregistrer la correction
+                    </button>
+                </div>
+            </form>
         </div>
-    {% endif %}
+    </div>
 </div>
 
 <style>
     .evaluation-header {
         border-radius: 5px;
     }
-    .question-card {
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
+    .question-text, .response-text {
+        font-size: 1.1rem;
+        white-space: pre-wrap;
     }
-    .question-card .card-header {
-        background-color: #f8f9fa;
-        border-bottom: 1px solid #dee2e6;
-    }
-    .response-text {
-        background-color: #f8f9fa;
-        padding: 15px;
-        border-radius: 5px;
-        margin-top: 10px;
-    }
-    .grading-section {
-        background-color: #fff;
-        padding: 15px;
-        border-radius: 5px;
-    }
-    .total-score {
-        background-color: #e9ecef;
+    .card {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 </style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('correction-form');
-    const noteInputs = document.querySelectorAll('.note-input');
-    
-    // Mettre à jour le score total en temps réel
-    noteInputs.forEach(input => {
-        input.addEventListener('change', function() {
-            let total = 0;
-            noteInputs.forEach(input => {
-                total += Number(input.value) || 0;
-            });
-            document.querySelector('.total-score h5').textContent = `Score total : ${total} / {{ evaluation.maxScore * reponses|length }}`;
-        });
-    });
-
-    // Validation du formulaire
-    form.addEventListener('submit', function(e) {
-        let isValid = true;
-        noteInputs.forEach(input => {
-            const value = Number(input.value);
-            const max = Number(input.getAttribute('max'));
-            if (value < 0 || value > max) {
-                isValid = false;
-                input.classList.add('is-invalid');
-            } else {
-                input.classList.remove('is-invalid');
-            }
-        });
-
-        if (!isValid) {
-            e.preventDefault();
-            alert('Veuillez vérifier que toutes les notes sont comprises entre 0 et le maximum autorisé.');
-        }
-    });
-});
-</script>
 {% endblock %}
