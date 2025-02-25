@@ -391,7 +391,7 @@ public function confirmationAction(int $id, Request $request, EntityManagerInter
             'form' => $form,
         ]);
     }
-// enseignant
+
 #[Route('/{id}/favorite', name: 'app_cours_toggle_favorite', methods: ['POST'])]
 public function toggleFavorite(Request $request, Cours $cour, EntityManagerInterface $entityManager): Response
 {
@@ -412,7 +412,7 @@ public function toggleFavorite(Request $request, Cours $cour, EntityManagerInter
 
     return $this->redirectToRoute('app_cours_show', ['id' => $cour->getId()]);
 }
-
+// enseignant
     #[Route('/{id}', name: 'app_cours_delete', methods: ['POST'])]
     public function delete(Request $request, Cours $cour, EntityManagerInterface $entityManager): Response
     {
