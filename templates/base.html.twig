@@ -45,6 +45,7 @@
         <link rel="stylesheet" href="{{ asset('assets/css/template.css') }}">
 
 {% block stylesheets %}
+            {{ encore_entry_link_tags('app') }}
     {% endblock %}
 </head>
 <body>
@@ -292,5 +293,7 @@
     </script>
 
     {% block javascripts %}{% endblock %}
+            {% block importmap %}{{ importmap('app') }}{% endblock %}
+            {{ encore_entry_script_tags('app') }}
 </body>
 </html>

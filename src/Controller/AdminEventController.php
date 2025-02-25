@@ -12,13 +12,24 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\UX\Chartjs\Builder\ChartBuilderInterface;
+use Symfony\UX\Chartjs\Model\Chart;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
 #[Route('/admin')]
 final class AdminEventController extends AbstractController
 {
+    #[Route('/eventCharts', name: 'app_admin_event_charts')]
+    public function eventCharts(EventsRepository $eventsRepository): Response
+    {
+        
+        return $this->render('admin_event/eventCharts.html.twig', [
+            'events' => $eventsRepository->findByStartDate(),
+        ]);
+    }
+
+
     #[Route('/event', name: 'app_admin_event')]
     public function index(EventsRepository $eventsRepository): Response
     {

@@ -30,6 +30,15 @@ class EventsRepository extends ServiceEntityRepository
         ;
     }
 
+    public function findByStartDate(): array
+    {
+        return $this->createQueryBuilder('e')
+            ->orderBy('e.start_date', 'ASC')
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
     public function findOneById($value): ?Events
     {
         return $this->createQueryBuilder('e')

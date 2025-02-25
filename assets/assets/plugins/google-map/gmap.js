@@ -1,105 +1,33 @@
 window.marker = null;
 
 function initialize() {
-  var map;
+  // Get coordinates and marker from data attributes
   var latitude = $('#map').attr('data-latitude');
   var longitude = $('#map').attr('data-longitude');
-  var mapMarker = $('#map').attr('data-marker');
-  var mapMarkerName = $('#map').attr('data-marker-name');
-  var nottingham = new google.maps.LatLng(latitude, longitude);
-  var style = [
-      {
-          "featureType": "road.highway",
-          "elementType": "geometry",
-          "stylers": [
-              { "saturation": -100 },
-              { "lightness": -8 },
-              { "gamma": 1.18 }
-          ]
-      }, {
-          "featureType": "road.arterial",
-          "elementType": "geometry",
-          "stylers": [
-              { "saturation": -100 },
-              { "gamma": 1 },
-              { "lightness": -24 }
-          ]
-      }, {
-          "featureType": "poi",
-          "elementType": "geometry",
-          "stylers": [
-              { "saturation": -100 }
-          ]
-      }, {
-          "featureType": "administrative",
-          "stylers": [
-              { "saturation": -100 }
-          ]
-      }, {
-          "featureType": "transit",
-          "stylers": [
-              { "saturation": -100 }
-          ]
-      }, {
-          "featureType": "water",
-          "elementType": "geometry.fill",
-          "stylers": [
-              { "saturation": -100 }
-          ]
-      }, {
-          "featureType": "road",
-          "stylers": [
-              { "saturation": -100 }
-          ]
-      }, {
-          "featureType": "administrative",
-          "stylers": [
-              { "saturation": -100 }
-          ]
-      }, {
-          "featureType": "landscape",
-          "stylers": [
-              { "saturation": -100 }
-          ]
-      }, {
-          "featureType": "poi",
-          "stylers": [
-              { "saturation": -100 }
-          ]
-      }, {
-      }
-  ];
-  var mapOptions = {
-    center: nottingham,
-    mapTypeId: google.maps.MapTypeId.ROADMAP,
-    backgroundColor: "#000",
-    zoom: 10,
-    panControl: !1,
-    zoomControl: !0,
-    mapTypeControl: !1,
-    scaleControl: !1,
-    streetViewControl: !1,
-    overviewMapControl: !1,
-    zoomControlOptions: {
-      style: google.maps.ZoomControlStyle.LARGE
-    }
-  }
-  map = new google.maps.Map(document.getElementById('map'), mapOptions);
-  var mapType = new google.maps.StyledMapType(style, {
-    name: "Grayscale"
-  });
-  map.mapTypes.set('grey', mapType);
-  map.setMapTypeId('grey');
-  var marker_image = mapMarker;
-  var pinIcon = new google.maps.MarkerImage(marker_image, null, null, null, new google.maps.Size(40, 60));
-  marker = new google.maps.Marker({
-    position: nottingham,
-    map: map,
-    icon: pinIcon,
-    title: mapMarkerName
-  })
+  var markerImage = $('#map').attr('data-marker'); // The marker image path
+  
+  // Initialize the Leaflet map
+  var map = L.map('map').setView([latitude, longitude], 13); // Set the center of the map and zoom level
+  
+  // Add tile layer (OpenStreetMap)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+  // Add a custom marker
+  var marker = L.marker([latitude, longitude], {
+    icon: L.icon({
+      iconUrl: markerImage,
+      iconSize: [40, 60], // Adjust the size of the marker
+      iconAnchor: [20, 60], // Position the marker
+    })
+  }).addTo(map);
+  
+  // Optionally, add a popup with the marker's title
+  marker.bindPopup('<b>' + $('#map').attr('data-marker-name') + '</b>').openPopup();
 }
-var map = document.getElementById('map');
-if (map != null) {
-  google.maps.event.addDomListener(window, 'load', initialize)
+
+var mapElement = document.getElementById('map');
+if (mapElement != null) {
+  initialize();
 }
