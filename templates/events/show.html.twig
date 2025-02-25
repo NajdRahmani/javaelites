@@ -13,7 +13,7 @@
             window.location.href = "{{ path('logout') }}";
         </script>
     {% endif %}
-
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 <link rel="stylesheet" href="{{ asset('assets/css/show_event.css') }}">
 {% endblock %}
 {% block body %}
@@ -112,31 +112,16 @@
 			<div class="col-lg-6 col-md-12 p-0">
 				<div class="registration-block bg-registration overlay-dark">
 					<div class="block">
-						<div class="title text-left">
-							<h3>Register to <span class="alternate">Eventre</span></h3>
-							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit</p>
+						<div class="map">
+						<div class="address-block">
+							<h4>Docklands Convention</h4>
+							<ul class="address-list p-0 m-0">
+							<li><i class="fa fa-home"></i><span>{{ event.location }}</span></li>
+							<li><i class="fa fa-phone"></i><span>[+216] {{ event.organizer.numTelephone }}</span></li>
+							</ul>
+							<a href="#" class="btn btn-white-md">Get Direction</a>
 						</div>
-						<form action="#" class="row">
-							<div class="col-md-6">
-								<input type="text" class="form-control main" placeholder="Your Name" required>
-							</div>
-							<div class="col-md-6">
-								<input type="email" class="form-control main" placeholder="Email" required>
-							</div>
-							<div class="col-md-6">
-								<input type="text" class="form-control main" placeholder="Phone" required>
-							</div>
-							<div class="col-md-6">
-								<div class="form-group">
-									<select class="form-control main" id="select-ticket" required>
-								      <option>Ticket Type</option>
-								    </select>
-								</div>
-							</div>
-							<div class="col-12">
-								<button type="submit" class="btn btn-white-md">Register Now</button>
-							</div>
-						</form>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -146,17 +131,11 @@
 
 
 <section class="map">
-	<!-- Google Map -->
-	<div id="map" data-latitude="36.80197599768998" data-longitude="10.180712940476518" data-marker="images/icon/marker.png" data-marker-name="Eventre"></div>
-	<div class="address-block">
-		<h4>Docklands Convention</h4>
-		<ul class="address-list p-0 m-0">
-			<li><i class="fa fa-home"></i><span>{{ event.location }}</span></li>
-			<li><i class="fa fa-phone"></i><span>[+216] {{ event.organizer.numTelephone }}</span></li>
-		</ul>
-		<a href="#" class="btn btn-white-md">Get Direction</a>
-	</div>
+  <!-- Leaflet Map -->
+  <div id="map" data-latitude="{{ event.latitude }}" data-longitude="{{ event.longitude }}"></div>
 </section>
+
+
 
 {% endblock %}
 
@@ -176,9 +155,8 @@
     <script src="{{ asset('assets/plugins/jquery-nice-select/js/jquery.nice-select.min.js') }}"></script>
     <script src="{{ asset('assets/js/event.js') }}"></script>
     <script src="{{ asset('assets/plugins/syotimer/jquery.syotimer.min.js') }}"></script>
-    <!-- Google Mapl -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCcABaamniA6OL5YvYSpB3pFMNrXwXnLwU"></script>
-    <script src="{{ asset('assets/plugins/google-map/gmap.js') }}"></script>
+	<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+	<script src="{{ asset('assets/js/leaflet.js') }}"></script>
     <script>
     $(document).ready(function() {
         $('select').niceSelect();

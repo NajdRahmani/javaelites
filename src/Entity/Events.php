@@ -61,6 +61,12 @@ class Events
     #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
     private ?User $organizer = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?float $longitude = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?float $latitude = null;
+
     public function __construct()
     {
         if ($this->created_at === null) {
@@ -101,6 +107,30 @@ class Events
     public function getRegistrations(): Collection
     {
         return $this->registrations;
+    }
+
+    public function getLongitude(): ?float
+    {
+        return $this->longitude;
+    }
+
+    public function setLongitude(?float $longitude): static
+    {
+        $this->longitude = $longitude;
+
+        return $this;
+    }
+
+    public function getLatitude(): ?float
+    {
+        return $this->latitude;
+    }
+
+    public function setLatitude(?float $latitude): static
+    {
+        $this->latitude = $latitude;
+
+        return $this;
     }
 
 
