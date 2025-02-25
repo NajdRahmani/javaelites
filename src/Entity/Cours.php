@@ -45,32 +45,36 @@ class Cours
     private ?Matiere $matiere = null;
 
     #[ORM\Column(length: 255)]
-#[Assert\NotBlank(message: "La langue est obligatoire")]
-#[Assert\Length(
-    min: 2,
-    max: 255,
-    minMessage: "La langue doit contenir au moins {{ limit }} caractères",
-    maxMessage: "La langue ne peut pas dépasser {{ limit }} caractères"
-)]
-#[Assert\Choice(
-    choices: ['fr', 'en', 'es', 'de', 'ar'],
-    message: "Langue non valide. Choix possibles: fr, en, es, de, ar"
-)]
-private ?string $langue = null;
+    #[Assert\NotBlank(message: "La langue est obligatoire.")]
+    #[Assert\Length(
+        min: 2,
+        max: 255,
+        minMessage: "La langue doit contenir au moins {{ limit }} caractères.",
+        maxMessage: "La langue ne peut pas dépasser {{ limit }} caractères."
+    )]
+    #[Assert\Choice(
+        choices: ['fr', 'en', 'es', 'de', 'ar'],
+        message: "Langue non valide. Choix possibles : fr, en, es, de, ar."
+    )]
+    private ?string $langue = null;
 
-#[ORM\Column]
-#[Assert\NotBlank(message: "Le prix est obligatoire")]
-#[Assert\Type(
-    type: 'integer',
-    message: "Le prix doit être un nombre entier"
-)]
-#[Assert\PositiveOrZero(message: "Le prix ne peut pas être négatif")]
-private ?int $prix = null;
+    #[ORM\Column]
+    #[Assert\NotBlank(message: "Le prix est obligatoire.")]
+    #[Assert\Type(
+        type: 'integer',
+        message: "Le prix doit être un nombre entier."
+    )]
+    #[Assert\PositiveOrZero(message: "Le prix ne peut pas être négatif.")]
+    private ?int $prix = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $lienDePaiment = null;
 
     #[ORM\ManyToOne(inversedBy: 'cours')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Assert\NotNull(message: "L'enseignant doit être spécifié")]
+    #[Assert\NotNull(message: "L'enseignant doit être spécifié.")]
     private ?User $enseignant = null;
+
     /**
      * @var Collection<int, User>
      */
@@ -82,9 +86,12 @@ private ?int $prix = null;
      */
     #[ORM\OneToMany(targetEntity: Evaluation::class, mappedBy: 'cours_id')]
     private Collection $evaluations;
+<<<<<<< HEAD
 
     #[ORM\Column(length: 255)]
     private ?string $lienDePaiment = null;
+=======
+>>>>>>> 2d13c7974ec93dbbd208481ec00520f0918871f6
 
     public function __construct()
     {
@@ -155,7 +162,6 @@ private ?int $prix = null;
     public function removeChapitre(Chapitre $chapitre): static
     {
         if ($this->chapitres->removeElement($chapitre)) {
-            // set the owning side to null (unless already changed)
             if ($chapitre->getCours() === $this) {
                 $chapitre->setCours(null);
             }
@@ -168,6 +174,7 @@ private ?int $prix = null;
     {
         return $this->chapitres->count();
     }
+
     public function getNbEtudiants(): int
     {
         return $this->etudiants->count();
@@ -228,15 +235,16 @@ private ?int $prix = null;
     {
         return $this->etudiants;
     }
+
     public function isUserEnrolled(int $id): bool
-{
-    foreach ($this->etudiants as $etudiant) {
-        if ($etudiant->getId() === $id) {
-            return true;
+    {
+        foreach ($this->etudiants as $etudiant) {
+            if ($etudiant->getId() === $id) {
+                return true;
+            }
         }
+        return false;
     }
-    return false;
-}
 
     public function addEtudiant(User $etudiant): static
     {
@@ -275,7 +283,6 @@ private ?int $prix = null;
     public function removeEvaluation(Evaluation $evaluation): static
     {
         if ($this->evaluations->removeElement($evaluation)) {
-            // set the owning side to null (unless already changed)
             if ($evaluation->getCoursId() === $this) {
                 $evaluation->setCoursId(null);
             }
@@ -295,4 +302,8 @@ private ?int $prix = null;
 
         return $this;
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 2d13c7974ec93dbbd208481ec00520f0918871f6

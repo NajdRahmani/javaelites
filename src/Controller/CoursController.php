@@ -270,6 +270,10 @@ public function confirmationAction(int $id, Request $request, EntityManagerInter
         SluggerInterface $slugger,
         #[Autowire('%kernel.project_dir%/public/uploads/brochures')] string $brochuresDirectory
     ): Response {
+        $userId = $request->getSession()->get('id');
+        $user = $entityManager->getRepository(User::class)->find($userId);
+        $enseignant=$cour->getEnseignant();
+        if($user->getId()==$enseignant->getId() || $user->getRoles()=="Admin" ){
         $form = $this->createForm(CoursType::class, $cour);
         $form->handleRequest($request);
     
@@ -305,6 +309,9 @@ public function confirmationAction(int $id, Request $request, EntityManagerInter
             $entityManager->flush();
     
             return $this->redirectToRoute('app_cours', ['id' => $cour->getId()], Response::HTTP_SEE_OTHER);
+        }}
+        else{
+            return $this->redirectToRoute('app_login');
         }
     
         return $this->render('cours/edit.html.twig', [
