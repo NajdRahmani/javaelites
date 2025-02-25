@@ -18,15 +18,18 @@ use Symfony\Component\Form\FormError;
 use App\Repository\ReponseRepository;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use App\Service\StatisticsService;
+use App\Service\MailService;
 
 #[Route('/evaluation')]
 final class EvaluationController extends AbstractController
 {
     private StatisticsService $statisticsService;
+    private MailService $mailService;
 
-    public function __construct(StatisticsService $statisticsService)
+    public function __construct(StatisticsService $statisticsService, MailService $mailService)
     {
         $this->statisticsService = $statisticsService;
+        $this->mailService = $mailService;
     }
 
     // Routes pour l'enseignant
@@ -397,6 +400,42 @@ final class EvaluationController extends AbstractController
         ]);
     }
 
+    #[Route('/etudiant/{id}/submit', name: 'app_evaluation_submit', methods: ['POST'])]
+    public function submitEvaluation(
+        Request $request,
+        Evaluation $evaluation,
+        EntityManagerInterface $entityManager,
+        MailService $mailService
+    ): Response {
+        // Votre logique existante
+        $this->addFlash('success', 'L\'évaluation a été soumise avec succès.');
+        $mailService->sendEvaluationSubmissionNotification($this->getUser(), $evaluation);
+        return $this->redirectToRoute('app_evaluation_show', ['id' => $evaluation->getId()]);
+    }
+
+    #[Route('/enseignant/evaluation/{evaluationId}/student/{studentId}/correct', name: 'app_evaluation_correct_submit', methods: ['POST'])]
+    public function submitCorrection(
+        Request $request,
+        int $evaluationId,
+        int $studentId,
+        EvaluationRepository $evaluationRepository,
+        UserRepository $userRepository,
+        EntityManagerInterface $entityManager,
+        MailService $mailService
+    ): Response {
+        $evaluation = $evaluationRepository->find($evaluationId);
+        $student = $userRepository->find($studentId);
+
+        if (!$evaluation || !$student) {
+            throw $this->createNotFoundException('Évaluation ou étudiant non trouvé');
+        }
+
+        // Votre logique de correction existante
+        $this->addFlash('success', 'La correction a été soumise avec succès.');
+        $mailService->sendEvaluationGradedNotification($student, $evaluation);
+        return $this->redirectToRoute('evaluation_correctenseignant', ['id' => $evaluationId]);
+    }
+
     private function isEvaluationGradedForStudent(Evaluation $evaluation, User $student): bool
     {
         // Vérifier si toutes les réponses ont un score
@@ -476,5 +515,24 @@ final class EvaluationController extends AbstractController
             'reponses' => $reponses,
             'totalScore' => $totalScore
         ]);
+    }
+
+    #[Route('/test-email', name: 'app_evaluation_test_email')]
+    public function testEmail(): Response
+    {
+        try {
+            $user = $this->getUser();
+            $evaluation = new Evaluation();
+            $evaluation->setTitle("Test d'évaluation");
+            
+            // Test d'envoi d'email de soumission
+            $this->mailService->sendEvaluationSubmissionNotification($user, $evaluation);
+            
+            $this->addFlash('success', 'Email de test envoyé avec succès !');
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors de l\'envoi de l\'email : ' . $e->getMessage());
+        }
+        
+        return $this->redirectToRoute('app_evaluation_indexetudiant');
     }
 }
