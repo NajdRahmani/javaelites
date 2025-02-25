@@ -1,0 +1,58 @@
+{% extends 'base3.html.twig' %}
+
+{% block title %}Modifier l'Énoncé{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+        <link rel="stylesheet" href="{{ asset('assets/css/editquestion.css') }}">
+
+{% endblock %}
+
+{% block body %}
+    <div class="container1">
+        <h2 class="mb-4 text-center">Modifier l'Énoncé de la Question</h2>
+
+        {# Afficher les erreurs globales du formulaire #}
+        {% if form.vars.errors|length > 0 %}
+            <div class="alert">
+                <ul>
+                    {% for error in form.vars.errors %}
+                        <li>{{ error.message }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': 'novalidate'}}) }}
+            <div class="mb-3">
+                {{ form_label(form.text, 'Énoncé de la question', {'class': 'form-label'}) }}
+                {{ form_widget(form.text, {'attr': {'class': 'form-control', 'data-bs-toggle': 'tooltip', 'title': 'Écrivez l\'énoncé complet de la question.'}}) }}
+                {{ form_errors(form.text) }}
+            </div>
+            <div class="mb-3">
+                {{ form_label(form.point, 'Points', {'class': 'form-label'}) }}
+                {{ form_widget(form.point, {'attr': {'class': 'form-control', 'data-bs-toggle': 'tooltip', 'title': 'Indiquez le nombre de points que cette question vaut.'}}) }}
+                {{ form_errors(form.point) }}
+            </div>
+            <div class="form-group text-center">
+                <button class="btn btn-primary btn-lg" type="submit">
+                    <i class="fas fa-save"></i> Enregistrer les modifications
+                </button>
+                <a href="{{ path('app_question_index', {'evaluationId': question.evaluation.id}) }}" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-arrow-left"></i> Retour à la liste
+                </a>
+            </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Activer les tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    </script>
+{% endblock %}

@@ -77,14 +77,23 @@ private ?int $prix = null;
     #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'cours')]
     private Collection $etudiants;
 
+<<<<<<< HEAD
+    /**
+     * @var Collection<int, Evaluation>
+     */
+    #[ORM\OneToMany(targetEntity: Evaluation::class, mappedBy: 'cours_id')]
+    private Collection $evaluations;
+=======
     #[ORM\Column(length: 255)]
     private ?string $lienDePaiment = null;
+>>>>>>> a6cc750300bcfaf7a1f02eda110629a828733fdd
 
     
     public function __construct()
     {
         $this->chapitres = new ArrayCollection();
         $this->etudiants = new ArrayCollection();
+        $this->evaluations = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -248,6 +257,34 @@ private ?int $prix = null;
         return $this;
     }
 
+<<<<<<< HEAD
+    /**
+     * @return Collection<int, Evaluation>
+     */
+    public function getEvaluations(): Collection
+    {
+        return $this->evaluations;
+    }
+
+    public function addEvaluation(Evaluation $evaluation): static
+    {
+        if (!$this->evaluations->contains($evaluation)) {
+            $this->evaluations->add($evaluation);
+            $evaluation->setCoursId($this);
+        }
+
+        return $this;
+    }
+
+    public function removeEvaluation(Evaluation $evaluation): static
+    {
+        if ($this->evaluations->removeElement($evaluation)) {
+            // set the owning side to null (unless already changed)
+            if ($evaluation->getCoursId() === $this) {
+                $evaluation->setCoursId(null);
+            }
+        }
+=======
     public function getLienDePaiment(): ?string
     {
         return $this->lienDePaiment;
@@ -256,6 +293,7 @@ private ?int $prix = null;
     public function setLienDePaiment(string $lienDePaiment): static
     {
         $this->lienDePaiment = $lienDePaiment;
+>>>>>>> a6cc750300bcfaf7a1f02eda110629a828733fdd
 
         return $this;
     }

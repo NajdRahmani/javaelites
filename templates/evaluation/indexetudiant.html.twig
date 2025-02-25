@@ -1,0 +1,111 @@
+{% extends 'base3.html.twig' %}
+
+{% block title %}Liste des Évaluations{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .evaluation-list {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+        .table th {
+            background-color: #f8f9fa;
+        }
+        .evaluation-title {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .deadline-warning {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .deadline-passed {
+            color: #6c757d;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="evaluation-list">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Mes Évaluations</h1>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Titre</th>
+                            <th>Score Maximum</th>
+                            <th>Date Limite</th>
+                            <th>Cours</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for evaluation in evaluations %}
+                        {% set hasSubmitted = evaluation.id in submittedEvaluations %}
+                        {% set deadlinePassed = evaluation.deadline|date('U') < 'now'|date('U') %}
+                        <tr class="{{ deadlinePassed ? 'deadline-passed' : '' }}">
+                            <td>
+                                <div class="evaluation-title" title="{{ evaluation.title }}">
+                                    {{ evaluation.title }}
+                                </div>
+                            </td>
+                            <td>{{ evaluation.maxScore }}</td>
+                            <td>
+                                {% if evaluation.deadline %}
+                                    {% if not deadlinePassed %}
+                                        {% set timeLeft = date(evaluation.deadline).diff(date()) %}
+                                        {% if timeLeft.days < 1 %}
+                                            <span class="deadline-warning">
+                                                {{ evaluation.deadline|date('d/m/Y H:i') }}
+                                                (Moins de 24h !)
+                                            </span>
+                                        {% else %}
+                                            {{ evaluation.deadline|date('d/m/Y H:i') }}
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">Terminée</span>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                            <td>{{ evaluation.cours }}</td>
+                            <td>
+                                {% if hasSubmitted %}
+                                    <a href="{{ path('app_evaluation_show_result', {'id': evaluation.id}) }}" 
+                                       class="btn btn-info btn-sm">
+                                        <i class="fas fa-eye"></i> Afficher résultat
+                                    </a>
+                                {% elseif not deadlinePassed %}
+                                    <a href="{{ path('etudiant_evaluation_show', {'id': evaluation.id}) }}" 
+                                       class="btn btn-primary btn-sm">
+                                        <i class="fas fa-pen"></i> Évaluer
+                                    </a>
+                                {% else %}
+                                    <span class="badge bg-secondary">Non complétée</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center">Aucune évaluation disponible</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% if app.session.flashBag.has('success') %}
+        <div class="alert alert-success">
+            {{ app.session.flashBag.get('success')[0] }}
+        </div>
+    {% endif %}
+{% endblock %}

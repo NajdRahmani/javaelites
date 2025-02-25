@@ -1,0 +1,23 @@
+{# templates/evaluation/answer.html.twig #}
+
+{% extends 'base3.html.twig' %}
+
+{% block title %}Répondre à l'évaluation{% endblock %}
+
+{% block body %}
+    <h1>Répondre à l'évaluation: {{ evaluation.title }}</h1>
+
+    <form method="POST">
+        {% for question in questions %}
+            <div>
+                <h3>{{ question.title }}</h3>
+                <p>{{ question.description }}</p>
+                
+                {# Le champ de réponse, par exemple une zone de texte ou un champ à choix multiple #}
+                <input type="text" name="answer_{{ loop.index0 }}" placeholder="Répondez à la question...">
+            </div>
+        {% endfor %}
+        
+        <button type="submit">Soumettre vos réponses</button>
+    </form>
+{% endblock %}
