@@ -1,0 +1,2 @@
+import { Application } from '@hotwired/stimulus';
+export default Application.prototype;
