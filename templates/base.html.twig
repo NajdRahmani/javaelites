@@ -14,8 +14,6 @@
 
     <!-- Additional CSS Files -->
     <!-- Google Font: Source Sans Pro -->
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
 <!-- Font Awesome -->
 <link rel="stylesheet" href="{{ asset('assets/css/fontawesome-all.min.css') }}">
@@ -45,7 +43,6 @@
         <link rel="stylesheet" href="{{ asset('assets/css/template.css') }}">
 
 {% block stylesheets %}
-            {{ encore_entry_link_tags('app') }}
     {% endblock %}
 </head>
 <body>
@@ -68,7 +65,7 @@
                             <li class="has-sub">
                                 <a href="javascript:void(0)">Events</a>
                                 <ul class="sub-menu">
-                                    <li><a href="{{ path('app_events_index') }}">Events</a></li>
+                                    <li><a href="{{ path('app_events_index') }}">Events test</a></li>
                                     <li><a href="{{ path('app_events_my_events') }}">My Events</a></li>
                                     <li><a href="{{ path('app_events_my_registration') }}">My Reservation</a></li>
                                 </ul>
@@ -78,8 +75,7 @@
                                 <a href="javascript:void(0)">Courses</a>
                                 <ul class="sub-menu">
                                     <li><a href="{{ path('app_cours_index2') }}">view all courses</a></li>
-                                    <li><a href="{{ path('app_cours_index3') }}">view my courses</a></li>
-                                    <li><a href="{{ path('app_cours_index4') }}">view my favoris</a></li>
+                                    <li><a href="{{ path('app_cours_index2') }}">view my courses</a></li>
                                    
                                 </ul>
                             </li>
@@ -93,6 +89,10 @@
                             </li>
                             <li class="scroll-to-section"><a href="#testimonials">Testimonials</a></li>
                             <li class="scroll-to-section"><a href="#contact-section">Contact Us</a></li>
+                            <li class=""><a href="/user/front/{{app.session.get('id')}}/edit">Profile</a></li>
+                            
+                            <li class=""><a href="{{ path('logout') }}">Logout</a></li>
+
                         </ul>
                         <a class='menu-trigger'>
                             <span>Menu</span>
@@ -293,7 +293,5 @@
     </script>
 
     {% block javascripts %}{% endblock %}
-            {% block importmap %}{{ importmap('app') }}{% endblock %}
-            {{ encore_entry_script_tags('app') }}
 </body>
 </html>

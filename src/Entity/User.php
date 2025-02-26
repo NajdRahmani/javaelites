@@ -93,6 +93,10 @@ class User  implements PasswordAuthenticatedUserInterface
     #[Assert\NotBlank(message: "Password est obligatoire.")]
     private ?string $confirm_password = null;
 
+
+    #[ORM\Column(length: 30, nullable: true)]
+    private ?string $verification_code = null;
+
     #[ORM\Column]
     private ?int $banned = null;
 
@@ -114,27 +118,10 @@ class User  implements PasswordAuthenticatedUserInterface
      */
     #[ORM\OneToMany(targetEntity: EventRegistration::class, mappedBy: 'User')]
     private Collection $eventRegistrations;
-
-    /**
-     * @var Collection<int, Cours>
-     */
-    #[ORM\OneToMany(targetEntity: Cours::class, mappedBy: 'enseignant')]
-    private Collection $cours;
-
-    /**
-     * @var Collection<int, Reponse>
-     */
-    #[ORM\OneToMany(targetEntity: Reponse::class, mappedBy: 'user_id')]
-    private Collection $reponses;
-
-    
     public function __construct()
     {
         $this->date_naissance = new \DateTime();
-        $this->eventRegistrations = new ArrayCollection();
-        $this->cours = new ArrayCollection();
-        $this->reponses = new ArrayCollection();
-       
+        $this->eventRegistrations = new ArrayCollection(); 
        
     }
 
@@ -347,6 +334,27 @@ class User  implements PasswordAuthenticatedUserInterface
         return $this;
     }
 
+
+
+
+
+    public function getVerificationCode(): ?string
+    {
+        return $this->verification_code;
+    }
+
+    public function setVerificationCode(?string $verification_code): static
+    {
+        $this->verification_code = $verification_code;
+
+        return $this;
+    }
+
+
+
+
+
+
     /**
      * @return Collection<int, EventRegistration>
      */
@@ -376,65 +384,4 @@ class User  implements PasswordAuthenticatedUserInterface
 
         return $this;
     }
-
-    /**
-     * @return Collection<int, Cours>
-     */
-    public function getCours(): Collection
-    {
-        return $this->cours;
-    }
-
-    public function addCour(Cours $cour): static
-    {
-        if (!$this->cours->contains($cour)) {
-            $this->cours->add($cour);
-            $cour->setEnseignant($this);
-        }
-
-        return $this;
-    }
-
-    public function removeCour(Cours $cour): static
-    {
-        if ($this->cours->removeElement($cour)) {
-            // set the owning side to null (unless already changed)
-            if ($cour->getEnseignant() === $this) {
-                $cour->setEnseignant(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Reponse>
-     */
-    public function getReponses(): Collection
-    {
-        return $this->reponses;
-    }
-
-    public function addReponse(Reponse $reponse): static
-    {
-        if (!$this->reponses->contains($reponse)) {
-            $this->reponses->add($reponse);
-            $reponse->setUserId($this->getId());
-        }
-
-        return $this;
-    }
-
-    public function removeReponse(Reponse $reponse): static
-    {
-        if ($this->reponses->removeElement($reponse)) {
-            // set the owning side to null (unless already changed)
-            if ($reponse->getUserId() === $this) {
-                $reponse->setUserId(null);
-            }
-        }
-
-        return $this;
-    }
-
 }

@@ -14,8 +14,146 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 final class UserController extends AbstractController
 {
+
+
+
+
+
+
+
+    #[Route('/user/resetpassword', name: 'reset')]
+    public function nomaya(): Response
+    {
+        return $this->render('user/resetpassword.html.twig');
+    }
+    
+    #[Route('/user/{id}/modifierpassword', name: 'modifierpassword', methods: ['GET', 'POST'])]
+    public function modifpassword(Request $request,UserRepository $repo,UserPasswordHasherInterface $passwordHasher,EntityManagerInterface $em  ,SessionInterface $session,AuthenticationUtils $authenticationUtils,int $id): Response
+    {
+
+        $user = $repo->findOneBy(['id' => $id]);
+        if ($request->isMethod('POST')) {
+        
+            $confirmpassword = $request->request->get('confirmpassword');
+            $password = $request->request->get('password');
+           
+            
+              if ($confirmpassword != $password ) {
+                $this->addFlash('error', " Mot de pass différents");
+                return $this->render('user/modifierpassword.html.twig',[
+                    'id'=>$id,
+                   ]);
+               }
+         
+            if ($confirmpassword == $password ) {
+                $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+                $user->setPassword($hashedPassword);
+                $user->setConfirmPassword($hashedPassword);
+                $user->setVerificationCode(null);
+                $em->flush();
+                return $this->redirectToRoute('app_login');
+            }
+          
+        }
+        return $this->render('user/modifierpassword.html.twig',[
+         'id'=>$id,
+        ]);
+    }
+    
+    
+
+
+
+
+ 
+
+
+
+    #[Route('/user/sendverificationcode', name: 'verificationcode', methods: ['GET', 'POST'])]
+    public function verifcode(Request $request,MailerInterface $mailer,UserRepository $repo,EntityManagerInterface $em): Response
+    {
+        if ($request->isMethod('POST')) {
+       
+            $email = $request->request->get('email');
+            $user = $repo->findOneBy(['email' => $email]);
+            if (!$user ) {
+                $this->addFlash('error', "Email n'existe pas ");
+                return $this->redirectToRoute('reset');
+             }
+             if ($user ->getDeleted() ==1 ) {
+                $this->addFlash('error', "Utilisateur a été Supprimé ");
+                return $this->redirectToRoute('reset');
+             
+            }
+            if ($user ->getBanned() ==1 ) {
+                $this->addFlash('error', "Utilisateur a été banni ");
+                return $this->redirectToRoute('reset');
+             
+            }
+            else{
+                $verification_code =$repo->generateVerificationCode();
+                $email = (new Email())
+                ->from('projetknowlity@gmail.com')
+                ->to($email)  
+                ->subject('Reset Password')
+                ->text('Sending emails is fun again!')
+                ->html('<p>this is your verification code</p>'  . $verification_code);        
+            $mailer->send($email);
+            $user->setVerificationCode($verification_code);
+            $em->flush();
+            return $this->redirectToRoute('page_verification', ['id' => $user->getId()]);
+           }
+        }
+        return $this->render('user/resetpassword.html.twig');
+    }
+
+
+
+
+        #[Route('/user/{id}/verifiercode', name: 'page_verification', methods: ['GET', 'POST'])]
+        public function verifiercode(Request $request,MailerInterface $mailer,UserRepository $repo,EntityManagerInterface $em,int $id): Response
+        {
+            
+            if ($request->isMethod('POST')) {
+                $compteur = (int) $request->request->get('compteur', 0);
+
+                
+                $code = $request->request->get('code');
+                $user = $repo->findOneBy(['id' => $id]);
+                if ($user->getVerificationCode() != $code ) {
+                    $compteur=$compteur+1;
+                    $this->addFlash('error', " Code Incorrecte ");
+                    return $this->render('user/verificationcode.html.twig',[
+                        'id' => $user->getId(),
+                    ]);
+                
+                }
+                else{
+                    return $this->redirectToRoute('modifierpassword', ['id' => $user->getId()]); }
+            }
+            return $this->render('user/verificationcode.html.twig',[
+        'id'=>$id,
+
+            ]);
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
     #[Route('/user', name: 'app_user')]
     public function index(): Response
     {
@@ -23,6 +161,55 @@ final class UserController extends AbstractController
             'controller_name' => 'UserController',
         ]);
     }
+    
+
+
+    #[Route('/resetfrontpas', name: 'app_resetuserpassword', methods: ['GET', 'POST'])]
+    public function reset_user_page(Request $request,UserRepository $repo, SessionInterface $session,AuthenticationUtils $authenticationUtils,EntityManagerInterface $em): Response
+    {
+        if ($request->isMethod('POST')) {
+           
+            $email =$session->get('email');
+            $oldpassword = $request->request->get('oldpassword');
+            $newpassword = $request->request->get('newpassword');
+            $confirmpassword = $request->request->get('confirmpassword');
+            $user = $repo->findOneBy(['email' => $email]);
+          
+         
+            if ( !$isValid = password_verify($oldpassword, $user->getPassword()))  {
+                $this->addFlash('error', "Faux Password ");
+                return $this->render('user/resetpass.html.twig'); 
+             
+            }
+            if ($newpassword != $confirmpassword){
+            $this->addFlash('error', "Les 2 pass sont différents");
+            return $this->render('user/resetpass.html.twig'); 
+            
+            }
+            if ( ($isValid = password_verify($oldpassword, $user->getPassword())) && $newpassword == $confirmpassword )  {
+                $hashedPassword = password_hash($newpassword, PASSWORD_BCRYPT);
+                $user->setPassword($hashedPassword);
+                $user->setConfirmPassword($hashedPassword);
+                $em->persist($user);
+                $em->flush();
+                return $this->render('user/front.html.twig');
+             
+            }
+        }
+        return $this->render('user/resetpass.html.twig');
+    }
+
+
+
+
+
+
+
+
+
+
+
+
 
     #[Route('/', name: 'app_login', methods: ['GET', 'POST'])]
     public function login(Request $request,UserRepository $repo, SessionInterface $session,AuthenticationUtils $authenticationUtils): Response
@@ -429,11 +616,126 @@ public function showalletudiant(UserRepository $repo): Response
         'roles' => "Etudiant",
         'deleted' => 0
     ]);
-
-    return $this->render('user/showetudiant.html.twig', [
-        'user' => $user,
+    return $this->render('user/showetudiant.html.twig'
+        ,[
+            'user' =>$user,
+            'page' => 0,    
+            'limit'=> 0,
+            'pages'=>0,
+      
     ]);
 }
+#[Route('/user/back/gestion_etudiant', name: 'back_user_etudiant', methods: ['GET', 'POST'])]
+public function gestion_user_backetudiant(UserRepository $repo, Request $request): Response
+{
+    $page = $request->query->getInt('page', 1); 
+
+    if ($request->isMethod('POST')) {
+        $te = $request->request->get('nombre_pagination');
+        
+     
+        if ($te != null && $te > 0) {
+            $request->getSession()->set('nombre_pagination', $te);
+        }
+    } 
+    else {
+        $te = $request->getSession()->get('nombre_pagination'); 
+    }
+
+   
+    if ($te <= 0) { 
+        return $this->redirectToRoute('showalletudiant');
+    } else {
+        $users = $repo->findActiveUsers($page, $te);
+        return $this->render('user/showetudiant.html.twig', [
+            'user' => $users['data'],
+            'page' => $page,
+            'limit' => $users['limit'],
+            'pages' => $users['pages'],
+        ]);
+    }
+}
+
+
+
+
+#[Route('/user/back/gestion_admin', name: 'back_user_admin', methods: ['GET', 'POST'])]
+public function gestion_user_backadmin(UserRepository $repo, Request $request): Response
+{
+    $page = $request->query->getInt('page', 1); 
+
+    if ($request->isMethod('POST')) {
+        $te = $request->request->get('nombre_pagination');
+        
+     
+        if ($te != null && $te > 0) {
+            $request->getSession()->set('nombre_pagination', $te);
+        }
+    } 
+    else {
+        $te = $request->getSession()->get('nombre_pagination'); 
+    }
+
+   
+    if ($te <= 0) { 
+        return $this->redirectToRoute('showalladmin');
+    } else {
+        $users = $repo->findActiveUsersAdmin($page, $te);
+        return $this->render('user/showadmin.html.twig', [
+            'user' => $users['data'],
+            'page' => $page,
+            'limit' => $users['limit'],
+            'pages' => $users['pages'],
+        ]);
+    }
+}
+
+
+
+#[Route('/user/back/gestion_ens', name: 'back_user_ens', methods: ['GET', 'POST'])]
+public function gestion_user_backenseigiant(UserRepository $repo, Request $request): Response
+{
+    $page = $request->query->getInt('page', 1); 
+
+    if ($request->isMethod('POST')) {
+        $te = $request->request->get('nombre_pagination');
+        
+     
+        if ($te != null && $te > 0) {
+            $request->getSession()->set('nombre_pagination', $te);
+        }
+    } 
+    else {
+        $te = $request->getSession()->get('nombre_pagination'); 
+    }
+
+   
+    if ($te <= 0) { 
+        return $this->redirectToRoute('showallenseignant');
+    } else {
+        $users = $repo->findActiveUsersEnseignant($page, $te);
+        return $this->render('user/showenseignant.html.twig', [
+            'user' => $users['data'],
+            'page' => $page,
+            'limit' => $users['limit'],
+            'pages' => $users['pages'],
+        ]);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #[Route('/user/showall/admin', name: 'showalladmin')]
 public function showalladmint(UserRepository $repo): Response
