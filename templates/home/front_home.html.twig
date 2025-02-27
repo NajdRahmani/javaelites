@@ -6,18 +6,6 @@
     
 
 {% block stylesheets %}
-
-    {% if app.session.get('roles') is null %}
-        <script type="text/javascript">
-            window.location.href = "{{ path('app_login') }}";
-        </script>
-    {% endif %}
-    {% if app.session.get('deleted') ==1%}
-        <script type="text/javascript">
-            window.location.href = "{{ path('logout') }}";
-        </script>
-    {% endif %}
-
     <link rel="stylesheet" href="{{ asset('assets/css/home.css') }}">
 {% endblock %}
 
@@ -28,59 +16,64 @@
 
 {% block body %}
   <!-- ***** Main Banner Area Start ***** -->
-  <section class="main-banner" id="top">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-6 align-self-center">
-          <div class="header-text">
-            <h6>Welcome to our school</h6>
-            <h2>Best Place To Learn Graphic <em>Design!</em></h2>
-            <div class="main-button-gradient">
-              <div class="scroll-to-section"><a href="#contact-section">Join Us Now!</a></div>
+    <section class="main-banner" id="top">
+        <div class="container">
+        <div class="row">
+            <div class="col-lg-6 align-self-center">
+            <div class="header-text">
+                <h6>Welcome to Knowlity</h6>
+                <h2>Master New Skills Through <em>Interactive Learning!</em></h2>
+                <div class="main-button-gradient">
+                <div class="scroll-to-section"><a href="#courses-section">Explore Learning Paths</a></div>
+                </div>
             </div>
-          </div>
+            </div>
+            <div class="col-lg-6">
+            <div class="right-image">
+                <img src="{{ asset('assets/images/banner-right-image.png') }}" alt="Online Learning Platform Interface">
+            </div>
+            </div>
         </div>
-        <div class="col-lg-6">
-          <div class="right-image">
-            <img src="{{ asset('assets/images/banner-right-image.png') }}" alt="">
-          </div>
         </div>
-      </div>
-    </div>
-  </section>
+    </section>
   <!-- ***** Main Banner Area End ***** -->
 
-   <section class="get-info">
+  <section class="get-info">
     <div class="container">
       <div class="row">
         <div class="col-lg-6">
           <div class="left-image">
-            <img src="{{ asset('assets/images/about-left-image.png') }}" alt="">
+            <img src="{{ asset('assets/images/about-left-image.png') }}" alt="Knowlity Platform Overview">
           </div>
         </div>
         <div class="col-lg-6 align-self-center">
           <div class="section-heading">
-            <h6>Get info</h6>
-            <h4>Read More <em>About Us</em></h4>
-            <p>You are allowed 100% to download and use our templates from TemplateMo for your commercial or business websites. You are <strong>not allowed</strong> to redistribute this template ZIP file on any other website without a permission from us.<br><br>There are some unethical people on this planet earth who copied our templates so easily without any permission from us and then reposted on their websites. Their Karma will hit them really hard. Yeah, that is right.</p>
+            <h6>Discover Knowlity</h6>
+            <h4>Your Gateway to <em>Smart Learning</em></h4>
+            <p>Knowlity is revolutionizing online education by combining comprehensive courses, interactive assessments, and AI-powered support. Our platform offers:<br><br>
+            • 500+ expert-led courses across various disciplines<br>
+            • Live virtual events with industry professionals<br>
+            • Certified exam preparation resources<br>
+            • Adaptive quizzes with instant feedback<br>
+            • 24/7 AI learning assistant</p>
           </div>
           <div class="row">
             <div class="col-lg-6">
               <div class="info-item">
                 <div class="icon">
-                  <img src="{{ asset('assets/images/service-icon-01.png') }}" alt="">
+                  <img src="{{ asset('assets/images/service-icon-01.png') }}" alt="Learning Paths">
                 </div>
-                <h4>Best Strategy</h4>
-                <p>Food &amp; truck tumeric taxidermy hoodie chiasore bitters retroed gentrify street portland.</p>
+                <h4>Personalized Paths</h4>
+                <p>AI-driven recommendations to match your learning style and career goals.</p>
               </div>
             </div>
             <div class="col-lg-6">
               <div class="info-item">
                 <div class="icon">
-                  <img src="{{ asset('assets/images/service-icon-02.png') }}" alt="">
+                  <img src="{{ asset('assets/images/service-icon-02.png') }}" alt="Interactive Learning">
                 </div>
-                <h4>Creative Ideas</h4>
-                <p>Food &amp; truck tumeric taxidermy hoodie chiasore bitters retroed gentrify street portland.</p>
+                <h4>Smart Assessments</h4>
+                <p>Real-time quizzes and mock exams with performance analytics.</p>
               </div>
             </div>
           </div>
@@ -94,8 +87,8 @@
       <div class="row">
         <div class="col-lg-12">
           <div class="section-heading">
-            <h6>Our Services</h6>
-            <h4>Provided <em>Services</em></h4>
+            <h6>Our Features</h6>
+            <h4>Core <em>Learning Services</em></h4>
           </div>
         </div>
         <div class="col-lg-12">
@@ -103,109 +96,56 @@
             <div class="item">
               <div class="service-item">
                 <div class="icon">
-                  <img src="{{ asset('assets/images/service-icon-01.png') }}" alt="">
+                  <img src="{{ asset('assets/images/service-icon-01.png') }}" alt="Courses">
                 </div>
-                <h4>Useful Tricks</h4>
-                <p>EduWell is the professional HTML5 template for your school or university websites.</p>
+                <h4>Expert Courses</h4>
+                <p>Industry-leading courses with professional certification programs.</p>
               </div>
             </div>
             <div class="item">
               <div class="service-item">
                 <div class="icon">
-                  <img src="{{ asset('assets/images/service-icon-02.png') }}" alt="">
+                  <img src="{{ asset('assets/images/service-icon-02.png') }}" alt="Events">
                 </div>
-                <h4>Creative Ideas</h4>
-                <p>You can download and use this EduWell Template for your teaching and learning stuffs.</p>
+                <h4>Live Events</h4>
+                <p>Interactive webinars and workshops with Q&A sessions.</p>
               </div>
             </div>
             <div class="item">
               <div class="service-item">
                 <div class="icon">
-                  <img src="{{ asset('assets/images/service-icon-03.png') }}" alt="">
+                  <img src="{{ asset('assets/images/service-icon-03.png') }}" alt="Exams">
                 </div>
-                <h4>Ready Target</h4>
-                <p>Please tell your friends about the best CSS template website that is TemplateMo.</p>
+                <h4>Exam Prep</h4>
+                <p>Comprehensive test banks and timed practice exams.</p>
               </div>
             </div>
             <div class="item">
               <div class="service-item">
                 <div class="icon">
-                  <img src="{{ asset('assets/images/service-icon-04.png') }}" alt="">
+                  <img src="{{ asset('assets/images/service-icon-04.png') }}" alt="AI Tutor">
                 </div>
-                <h4>Technology</h4>
-                <p>Aenean bibendum consectetur ex eu porttitor. Pellentesque id ultrices metus.</p>
+                <h4>AI Tutor</h4>
+                <p>24/7 intelligent assistance for instant learning support.</p>
+              </div>
+            </div>
+            <!-- Repeat core services for carousel effect -->
+            <div class="item">
+              <div class="service-item">
+                <div class="icon">
+                  <img src="{{ asset('assets/images/service-icon-01.png') }}" alt="Progress Tracking">
+                </div>
+                <h4>Skill Tracking</h4>
+                <p>Detailed analytics to monitor your learning progress.</p>
               </div>
             </div>
             <div class="item">
               <div class="service-item">
                 <div class="icon">
-                  <img src="{{ asset('assets/images/service-icon-01.png') }}" alt="">
+                  <img src="{{ asset('assets/images/service-icon-02.png') }}" alt="Collaboration">
                 </div>
-                <h4>Useful Tricks</h4>
-                <p>In non nisi eget magna efficitur ultricies non quis sapien. Pellentesque tellus.</p>
-              </div>
-            </div>
-            <div class="item">
-              <div class="service-item">
-                <div class="icon">
-                  <img src="{{ asset('assets/images/service-icon-02.png') }}" alt="">
-                </div>
-                <h4>Creative Ideas</h4>
-                <p>Aenean bibendum consectetur ex eu porttitor. Pellentesque id ultrices metus.</p>
-              </div>
-            </div>
-            <div class="item">
-              <div class="service-item">
-                <div class="icon">
-                  <img src="{{ asset('assets/images/service-icon-03.png') }}" alt="">
-                </div>
-                <h4>Ready Target</h4>
-                <p>In non nisi eget magna efficitur ultricies non quis sapien. Pellentesque tellus.</p>
-              </div>
-            </div>
-            <div class="item">
-              <div class="service-item">
-                <div class="icon">
-                  <img src="{{ asset('assets/images/service-icon-04.png') }}" alt="">
-                </div>
-                <h4>Technology</h4>
-                <p>Aenean bibendum consectetur ex eu porttitor. Pellentesque id ultrices metus.</p>
-              </div>
-            </div>
-            <div class="item">
-              <div class="service-item">
-                <div class="icon">
-                  <img src="{{ asset('assets/images/service-icon-01.png') }}" alt="">
-                </div>
-                <h4>Useful Tricks</h4>
-                <p>In non nisi eget magna efficitur ultricies non quis sapien. Pellentesque tellus.</p>
-              </div>
-            </div>
-            <div class="item">
-              <div class="service-item">
-                <div class="icon">
-                  <img src="{{ asset('assets/images/service-icon-02.png') }}" alt="">
-                </div>
-                <h4>Creative Ideas</h4>
-                <p>Aenean bibendum consectetur ex eu porttitor. Pellentesque id ultrices metus.</p>
-              </div>
-            </div>
-            <div class="item">
-              <div class="service-item">
-                <div class="icon">
-                  <img src="{{ asset('assets/images/service-icon-03.png') }}" alt="">
-                </div>
-                <h4>Ready Target</h4>
-                <p>In non nisi eget magna efficitur ultricies non quis sapien. Pellentesque tellus.</p>
-              </div>
-            </div>
-            <div class="item">
-              <div class="service-item">
-                <div class="icon">
-                  <img src="{{ asset('assets/images/service-icon-04.png') }}" alt="">
-                </div>
-                <h4>Technology</h4>
-                <p>Praesent accumsan condimentum arcu, id porttitor est semper nec. Nunc diam lorem.</p>
+                <h4>Study Groups</h4>
+                <p>Collaborative learning spaces with peer interaction.</p>
               </div>
             </div>
           </div>
@@ -213,6 +153,8 @@
       </div>
     </div>
   </section>
+
+
 
   <section class="our-courses" id="courses">
     <div class="container">
@@ -326,15 +268,15 @@
       <div class="row">
         <div class="col-lg-5 offset-lg-1">
           <div class="left-image">
-            <img src="{{ asset('assets/images/cta-left-image.png') }}" alt="">
+            <img src="{{ asset('assets/images/cta-left-image.png') }}" alt="Learning Opportunities">
           </div>
         </div>
         <div class="col-lg-5 align-self-center">
-          <h6>Get the sale right now!</h6>
-          <h4>Up to 50% OFF For 1+ courses</h4>
-          <p>Kogi VHS freegan bicycle rights try-hard green juice probably haven't heard of them cliche la croix af chillwave.</p>
+          <h6>Limited Time Offer</h6>
+          <h4>Enroll Now & Get 30% Off</h4>
+          <p>Start your learning journey today with full access to all courses, premium features, and exclusive event invitations.</p>
           <div class="white-button">
-            <a href="contact-us.html">View Courses</a>
+            <a href="/courses">Explore Programs</a>
           </div>
         </div>
       </div>
