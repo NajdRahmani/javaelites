@@ -1,0 +1,79 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Quiz: {{ quiz.titre }}{% endblock %}
+
+{% block body %}
+<div class="container">
+    <h2>{{ quiz.titre }}</h2>
+
+    <form method="post" action="{{ path('quiz_submit', {'id': quiz.id}) }}">
+        {% for question in quiz.questions %}
+            <div class="mb-3 question-container" id="question-{{ question.id }}" {% if not loop.first %}style="display: none;"{% endif %}>
+                <label class="form-label">{{ question.texte }}</label>
+
+                {# Debugging: Check if responses exist #}
+                {% if question.reponses is empty %}
+                    <p class="text-danger">No responses available.</p>
+                {% endif %}
+
+                {# If it's a text-based question #}
+                {% if question.type == 'text' %}
+                    <input type="text" name="responses[{{ question.id }}]" class="form-control" placeholder="Your answer here">
+                {% endif %}
+
+                {# If it's a multiple-choice question #}
+                {% if question.type == 'multiple_choice' %}
+                    <div class="form-group">
+                        <select name="responses[{{ question.id }}][]" class="form-control" multiple>
+                            {% for response in question.reponses %}
+                                <option value="{{ response.id }}">{{ response.texte }}</option>
+                            {% else %}
+                                <option disabled>Aucune option disponible</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endif %}
+
+                {# If it's a single-choice (radio) question #}
+                {% if question.type == 'single_choice' %}
+                    <div class="form-group">
+                        <select name="responses[{{ question.id }}]" class="form-control">
+                            {% for response in question.reponses %}
+                                <option value="{{ response.id }}">{{ response.texte }}</option>
+                            {% else %}
+                                <option disabled>Aucune option disponible</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endif %}
+
+                {# Next button for all questions except the last one #}
+                {% if not loop.last %}
+                    <button type="button" class="btn btn-primary next-question" data-next="question-{{ quiz.questions[loop.index].id }}">Next</button>
+                {% else %}
+                    <button type="submit" class="btn btn-success">Submit Quiz</button>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const nextButtons = document.querySelectorAll('.next-question');
+
+    nextButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const currentQuestion = this.closest('.question-container');
+            const nextQuestionId = this.getAttribute('data-next');
+            const nextQuestion = document.getElementById(nextQuestionId);
+
+            if (currentQuestion && nextQuestion) {
+                currentQuestion.style.display = 'none';
+                nextQuestion.style.display = 'block';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

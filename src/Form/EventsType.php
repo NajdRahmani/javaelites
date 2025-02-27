@@ -112,8 +112,9 @@ class EventsType extends AbstractType
                     'Sports Event' => 'sports',
                     'Networking Event' => 'networking',
                 ],
-                'multiple' => true, // Enables multiple selection
-                'expanded' => true, // Keeps it as a dropdown instead of checkboxes
+                'label' => 'Categeory',
+                'multiple' => false, // Enables multiple selection
+                'expanded' => false, // Keeps it as a dropdown instead of checkboxes
                 'required' => false,
                 'attr' => ['class' => 'form-control'],
                 'constraints' => [

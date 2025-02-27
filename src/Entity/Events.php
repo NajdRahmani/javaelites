@@ -52,7 +52,7 @@ class Events
     private ?string $image = null;
 
     #[ORM\Column(length: 255)]
-    private ?array $category = null;
+    private ?string $category = null;
 
     #[ORM\OneToMany(mappedBy: "events", targetEntity: EventRegistration::class, orphanRemoval: true)]
     private Collection $registrations;
@@ -98,8 +98,8 @@ class Events
     public function setCreatedAt(\DateTime $created_at): static { $this->created_at = $created_at; return $this; }
     public function getImage(): ?string { return $this->image; }
     public function setImage(?string $image): static { $this->image = $image; return $this; }
-    public function getCategory(): ?array { return $this->category; }
-    public function setCategory(array $category): static { $this->category = $category; return $this; }
+    public function getCategory(): ?string { return $this->category; }
+    public function setCategory(string $category): static { $this->category = $category; return $this; }
 
     public function getOrganizer(): ?User { return $this->organizer; }
     public function setOrganizer(?User $organizer): self { $this->organizer = $organizer; return $this; }
