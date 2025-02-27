@@ -13,8 +13,11 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use App\Entity\User;
 use App\Entity\Events;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\HttpFoundation\RequestStack;
-
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Writer\SvgWriter;
 
 #[Route('/event/registration')]
 final class EventRegistrationController extends AbstractController
@@ -136,14 +139,14 @@ final class EventRegistrationController extends AbstractController
     }
 
     #[Route('/{id}/update-status', name: 'update_event_registration_status', methods: ['POST'])]
-    public function updateStatus(Request $request, EventRegistration $eventRegistration, EntityManagerInterface $entityManager): Response
+    public function updateStatus(Request $request,MailerInterface $mailer, EventRegistration $eventRegistration, EntityManagerInterface $entityManager): Response
     {
         // Get the new status from the form submission
         $newStatus = $request->get('status');
         
         // Get the associated Event
         $event = $eventRegistration->getEvent();
-        
+        $user = $eventRegistration->getUser();
         // Get the current status of the registration
         $currentStatus = $eventRegistration->getStatus();
         
@@ -157,8 +160,44 @@ final class EventRegistrationController extends AbstractController
                 // Decrease the available seats when status is set to confirmed
                 $seatsAvailable = $event->getSeatsAvailable();
                 if ($seatsAvailable > $eventRegistration->getPlacesReserved()) {
-                    $event->setSeatsAvailable($seatsAvailable - $eventRegistration->getPlacesReserved()); // Decrease by 1
-                } else {
+                    $event->setSeatsAvailable($seatsAvailable - $eventRegistration->getPlacesReserved());
+                
+                    // Ensure the directory exists or create it
+                    $directory = realpath('public/uploads/qr-codes');
+                    if (!$directory) {
+                        mkdir('public/uploads/qr-codes', 0775, true); // Create directory with permissions
+                    }
+                
+                    // Create the QR code using SvgWriter
+                    $result = Builder::create()
+                        ->writer(new SvgWriter()) // Use SvgWriter for SVG output
+                        ->data($eventRegistration->getId()) // Data to encode
+                        ->size(300)
+                        ->margin(10)
+                        ->build();
+                
+                    // Save the SVG QR code to the directory
+                    $qrCodePath = $directory . '/qr-code.svg';
+                    $result->saveToFile($qrCodePath);
+                
+                    // Send the email with the SVG QR code attached
+                    $email = $user->getEmail();
+                    $email = (new Email())
+                        ->from('projetknowlity@gmail.com')
+                        ->to($email)
+                        ->subject('Event Registration')
+                        ->text('Event Registration to ' . $event->getTitle())
+                        ->html('<p>Event Registration is successfully completed. This is a QR code for the confirmation:</p><img src="cid:qr-code-image" />');
+                    
+                    // Attach the SVG QR code with the correct MIME type and Content-ID
+                    $email->attachFromPath($qrCodePath, 'qr-code.svg', 'image/svg+xml')
+                        ->getHeaders()->addTextHeader('Content-ID', '<qr-code-image>'); // Ensure correct Content-ID format
+                
+                    // Send the email
+                    $mailer->send($email);
+                }
+                
+                 else {
                     $this->addFlash('error', 'No seats available to confirm the registration!');
                     return $this->redirectToRoute('app_event_registration_show', ['id' => $eventRegistration->getId()]);
                 }
