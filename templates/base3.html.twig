@@ -198,7 +198,7 @@
       <div class="user-panel mt-3 pb-3 mb-3 d-flex">
        <a href="/user/back/{{app.session.get('id')}}/editenseignant" class="d-block">
         <div class="image">
-          <img src="{{ asset('uploads/user/' ~ app.session.get('image')) }}" class="img-circle elevation-2" alt="User Image">
+          <img src="{{ asset('uploads/' ~ app.session.get('image')) }}" class="img-circle elevation-2" alt="User Image">
         </div>
         <div class="info">
          {{app.session.get('user_prenom')}}</a>
@@ -235,7 +235,29 @@
              <p>Gérer mes cours</p>
             </a>
           </li>
-       
+          <li class="nav-item">
+            <a href="#" class="nav-link">
+              <i class="nav-icon fas fa-edit"></i>
+              <p>
+                Events
+                <i class="fas fa-angle-left right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview" style="display: none;">
+              <li class="nav-item">
+                <a href="{{ path('app_admin_event') }}" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Manage your Events</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{{ path('app_events_new') }}" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Create Event</p>
+                </a>
+              </li>
+            </ul>
+          </li>
            <li class="nav-item">
             <a href="/user/logout" class="nav-link">
               <i class="nav-icon fas fa-columns"></i>

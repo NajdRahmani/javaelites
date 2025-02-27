@@ -121,6 +121,19 @@ class UserRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function findEnseignant(): array
+    {
+        return $this->createQueryBuilder('u')
+            ->andWhere('u.deleted = :deleted')
+            ->andWhere('u.roles LIKE :enseignant')
+            ->setParameter('deleted', 0)
+            ->setParameter('enseignant', '%Enseignant%')
+            ->setMaxResults(3)
+            ->getQuery()
+            ->getResult();
+    }
+
     public function findInactiveUsers(): array
     {
         return $this->createQueryBuilder('u')
