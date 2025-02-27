@@ -102,6 +102,7 @@ class Cours
                 ->addViolation();
         }
     }
+   
     public function __construct()
     {
         $this->chapitres = new ArrayCollection();

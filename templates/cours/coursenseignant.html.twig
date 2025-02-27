@@ -6,9 +6,33 @@
     {{ parent() }}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('assets/css/chapitre1.css') }}">
+    <link rel="stylesheet" href="{{ asset('node_modules/shepherd.js/dist/css/shepherd.css') }}">
 {% endblock %}
 
 {% block body %}
+<div data-controller="tour"
+     data-tour-steps-value='[
+        {
+            "title": "Bienvenue !",
+            "text": "Découvrez votre tableau de bord",
+            "target": ".display-5",
+            "placement": "bottom"
+        },
+        {
+            "title": "Création de cours",
+            "text": "Cliquez ici pour ajouter un nouveau cours",
+            "target": ".btn-primary.btn-lg",
+            "placement": "left"
+        }
+     ]'>
+
+    <!-- Bouton de démarrage manuel -->
+    <button data-action="click->tour#startTour" 
+            data-tour-target="startButton"
+            class="btn btn-primary">
+        Démarrer le tutoriel
+    </button>
+    </div>
 <div class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-5">
         <h1 class="display-5 fw-bold">Vos Cours</h1>
@@ -20,7 +44,7 @@
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
         {% for cour in cours %}
         <div class="col">
-            <div class="card h-100 shadow-lg course-card">
+            <div class="card h-100 shadow-lg course-card" data-tour-target="courseCard">
                 <div class="card-header position-relative p-0 overflow-hidden" style="height: 180px;">
                     <img src="{{ asset('uploads/brochures/' ~ cour.urlImage) }}" 
                          class="img-fluid h-100 w-100 object-fit-cover"
@@ -130,4 +154,6 @@
     }
     
 </style>
+<script src="{{ asset('bundles/stimulus.umd.js') }}"></script>
+
 {% endblock %}
