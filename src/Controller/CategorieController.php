@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Controller;
-
+use Liip\ImagineBundle\Imagine\Filter\FilterManager;
 use App\Entity\Categorie;
 use App\Form\CategorieType;
 use App\Repository\CategorieRepository;
@@ -14,7 +14,10 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\String\Slugger\SluggerInterface;
-
+use Liip\ImagineBundle\Binary\BinaryInterface;
+use Liip\ImagineBundle\Model\Binary;
+use Imagine\Gd\Imagine;
+use Imagine\Image\ImageInterface;   
 #[Route('/categorie')]
 final class CategorieController extends AbstractController
 {
@@ -26,49 +29,63 @@ final class CategorieController extends AbstractController
         ]);
     }
 
+   
+
     #[Route('/new', name: 'app_categorie_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager,SluggerInterface $slugger,
-    #[Autowire('%kernel.project_dir%/public/uploads/brochures')] string $brochuresDirectory
-): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, SluggerInterface $slugger,
+                        #[Autowire('%kernel.project_dir%/public/uploads/brochures')] string $brochuresDirectory,
+                        FilterManager $filterManager): Response
     {
         $categorie = new Categorie();
         $form = $this->createForm(CategorieType::class, $categorie);
         $form->handleRequest($request);
-
+    
         if ($form->isSubmitted() && $form->isValid()) {
+            // Traitement de l'image téléchargée (brochure)
             $brochureFile = $form->get('brochure')->getData();
-
-            // this condition is needed because the 'brochure' field is not required
-            // so the PDF file must be processed only when a file is uploaded
             if ($brochureFile) {
                 $originalFilename = pathinfo($brochureFile->getClientOriginalName(), PATHINFO_FILENAME);
-                // this is needed to safely include the file name as part of the URL
                 $safeFilename = $slugger->slug($originalFilename);
-                $newFilename = $safeFilename.'-'.uniqid().'.'.$brochureFile->guessExtension();
-
-                // Move the file to the directory where brochures are stored
+                $newFilename = $safeFilename.'-'.uniqid().'.jpg'; // Force output to JPEG
+            
+                // Convert to a supported format using Imagine
+                $imagine = new Imagine();
+                $image = $imagine->open($brochureFile->getPathname());
+                $imageContent = $image->get('jpeg', ['quality' => 80]); // Convert to JPEG
+            
+                // Create Binary with correct MIME type
+                $binary = new Binary($imageContent, 'image/jpeg');
+            
+                // Apply filter
+                $filteredImage = $filterManager->applyFilter($binary, 'my_filter');
+            
+                // Save the filtered image
                 try {
-                    $brochureFile->move($brochuresDirectory, $newFilename);
+                    file_put_contents(
+                        $brochuresDirectory . '/' . $newFilename,
+                        $filteredImage->getContent()
+                    );
                 } catch (FileException $e) {
-                    // ... handle exception if something happens during file upload
+                    // Gérer l'exception si le fichier ne peut pas être déplacé
                 }
-
-                // updates the 'brochureFilename' property to store the PDF file name
-                // instead of its contents
+    
+                // Mettez à jour l'entité avec le nouveau nom de fichier de l'image
                 $categorie->setIcone($newFilename);
             }
-
+    
+            // Enregistrer l'entité dans la base de données
             $entityManager->persist($categorie);
             $entityManager->flush();
-
+    
             return $this->redirectToRoute('app_categorie_index', ['id' => $categorie->getId()], Response::HTTP_SEE_OTHER);
         }
-
+    
         return $this->render('categorie/new.html.twig', [
             'categorie' => $categorie,
             'form' => $form,
         ]);
     }
+
 
     #[Route('/{id}', name: 'app_categorie_show', methods: ['GET'])]
     public function show(Categorie $categorie): Response

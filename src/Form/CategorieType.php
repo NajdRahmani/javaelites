@@ -69,18 +69,16 @@ class CategorieType extends AbstractType
                 ],
                 'constraints' => [
                     new File([
-                        'maxSize' => '2048k',
-                        'mimeTypes' => [
-                            'application/pdf',
-                            'application/x-pdf',
-                            'application/msword',
-                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        'mimeTypes' => [ // Allowed MIME types
                             'image/jpeg',
                             'image/png',
+                            'image/gif',
+                            'image/webp',
                         ],
-                        'mimeTypesMessage' => 'Veuillez uploader un fichier valide (PDF, DOC, DOCX, JPEG ou PNG)',
+                        'mimeTypesMessage' => 'Please upload a valid image (JPEG, PNG, GIF, or WEBP).',
                     ])
                 ],
+                    
             ]);
     }
 

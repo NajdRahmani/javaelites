@@ -38,8 +38,7 @@ class Categorie
     private ?string $descrption = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(message: "L'icône est obligatoire")]
-    #[Assert\Length(max: 255)]
+    
     private ?string $icone = null;
 
     #[ORM\OneToMany(targetEntity: Matiere::class, mappedBy: 'categorie')]
