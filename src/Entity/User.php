@@ -118,10 +118,19 @@ class User  implements PasswordAuthenticatedUserInterface
      */
     #[ORM\OneToMany(targetEntity: EventRegistration::class, mappedBy: 'User')]
     private Collection $eventRegistrations;
+
+    /**
+     * @var Collection<int, UserEventPreference>
+     */
+    #[ORM\OneToMany(targetEntity: UserEventPreference::class, mappedBy: 'user')]
+    private Collection $userEventPreferences;
+
     public function __construct()
     {
         $this->date_naissance = new \DateTime();
-        $this->eventRegistrations = new ArrayCollection(); 
+        $this->eventRegistrations = new ArrayCollection();
+        $this->event = new ArrayCollection();
+        $this->userEventPreferences = new ArrayCollection(); 
        
     }
 
@@ -384,4 +393,35 @@ class User  implements PasswordAuthenticatedUserInterface
 
         return $this;
     }
-}
+
+    /**
+     * @return Collection<int, UserEventPreference>
+     */
+    public function getUserEventPreferences(): Collection
+    {
+        return $this->userEventPreferences;
+    }
+
+    public function addUserEventPreference(UserEventPreference $userEventPreference): static
+    {
+        if (!$this->userEventPreferences->contains($userEventPreference)) {
+            $this->userEventPreferences->add($userEventPreference);
+            $userEventPreference->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUserEventPreference(UserEventPreference $userEventPreference): static
+    {
+        if ($this->userEventPreferences->removeElement($userEventPreference)) {
+            // set the owning side to null (unless already changed)
+            if ($userEventPreference->getUser() === $this) {
+                $userEventPreference->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+   }

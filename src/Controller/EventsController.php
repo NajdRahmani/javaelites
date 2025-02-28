@@ -30,9 +30,13 @@ final class EventsController extends AbstractController{
     #[Route(name: 'app_events_index', methods: ['GET'])]
     public function index(EventsRepository $eventsRepository, UserRepository $userRepository): Response
     {
-        
+        $session = $this->requestStack->getSession();
+        $user_id = $session->get('id');
+        $user = $userRepository->findOneById($user_id);
+        $recommendedEvents = $eventsRepository->findRecommendedEvents($user);   
         return $this->render('events/index.html.twig', [
             'events' => $eventsRepository->findAll(),
+            'recommendation' => $recommendedEvents,
         ]);
     }
 
