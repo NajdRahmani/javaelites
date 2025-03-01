@@ -132,6 +132,13 @@ class Cours
     {
         return $this->title;
     }
+    public function getDureeTotale(): int {
+        return array_reduce(
+            $this->chapitres->toArray(), 
+            fn(int $total, Chapitre $chapitre) => $total + $chapitre->getDureeEstimee(), 
+            0
+        );
+    }
 
     public function setTitle(string $title): static
     {

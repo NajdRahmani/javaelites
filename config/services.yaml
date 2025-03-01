@@ -6,6 +6,7 @@
 parameters:
     event_images_directory: '%kernel.project_dir%/public/uploads/events'
     upload_directory: '%kernel.project_dir%/public/uploads/'
+    ml_endpoint: '%env(ML_ENDPOINT)%'
 
 
 services:
@@ -29,3 +30,8 @@ services:
     App\Service\MailService:
         arguments:
             $mailer: '@mailer.mailer'
+
+
+    Knp\Component\Pager\PaginatorInterface:
+        alias: knp_paginator        
+    

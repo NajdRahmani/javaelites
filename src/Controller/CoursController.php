@@ -20,27 +20,92 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-
+use Knp\Component\Pager\PaginatorInterface;
+use Knp\Bundle\PaginatorBundle\Pagination\SlidingPagination;
+     
 #[Route('/cours')]
 final class CoursController extends AbstractController
 {
    
     #[Route(name: 'app_cours_index', methods: ['GET'])]
-    public function index(CoursRepository $coursRepository): Response
-    {
-        return $this->render('cours/index.html.twig', [
-            'cours' => $coursRepository->findAll(),
-        ]);
-    }
-     // etudiant
-    #[Route('/cours', name: 'app_cours_index2', methods: ['GET'])]
-    public function index2(CoursRepository $coursRepository, MatiereRepository $matiereRepository): Response
+    public function index(CoursRepository $coursRepository, MatiereRepository $matiereRepository): Response
     {
         return $this->render('cours/index.html.twig', [
             'cours' => $coursRepository->findAll(),
             'matieres' => $matiereRepository->findAll(),
         ]);
     }
+     // etudiant
+ 
+     #[Route('/cours', name: 'app_cours_index2', methods: ['GET'])]
+     public function index2(
+         Request $request,
+         CoursRepository $coursRepository,
+         MatiereRepository $matiereRepository,
+         PaginatorInterface $paginator
+     ): Response {
+         // Création du QueryBuilder de base
+         $queryBuilder = $coursRepository->createQueryBuilder('c')
+             ->leftJoin('c.matiere', 'm')->addSelect('m')
+             ->leftJoin('c.enseignant', 'e')->addSelect('e')
+             ->leftJoin('c.chapitres', 'ch')
+             ->leftJoin('c.etudiants', 'et')
+             ->groupBy('c.id')
+             ->addSelect('COUNT(DISTINCT ch.id) AS HIDDEN nbChapitres')
+             ->addSelect('COUNT(DISTINCT et.id) AS HIDDEN NbEtudiants');
+     
+         // Gestion des paramètres de recherche
+         $searchTerm = $request->query->get('search');
+         $matiereId = $request->query->get('matiere');
+     
+         // Filtre par terme de recherche
+         if ($searchTerm) {
+             $queryBuilder
+                 ->andWhere('c.title LIKE :searchTerm')
+                 ->setParameter('searchTerm', '%' . $searchTerm . '%');
+         }
+     
+         // Filtre par matière
+         if ($matiereId && is_numeric($matiereId)) {
+             $queryBuilder
+                 ->andWhere('m.id = :matiereId')
+                 ->setParameter('matiereId', $matiereId);
+         }
+     
+         // Gestion du tri
+         $sortField = $request->query->get('sort_by', 'c.title');
+         $sortDirection = $request->query->get('sort_order', 'ASC');
+     
+         $allowedSorts = [
+             'c.title' => 'c.title',
+             'nbChapitres' => 'nbChapitres',
+             'NbEtudiants' => 'NbEtudiants'
+         ];
+     
+         if (array_key_exists($sortField, $allowedSorts)) {
+             $queryBuilder->orderBy($allowedSorts[$sortField], $sortDirection);
+         }
+     
+         // Pagination
+         $pagination = $paginator->paginate(
+             $queryBuilder->getQuery(),
+             $request->query->getInt('page', 1),
+             9,
+             [
+                 'wrap-queries' => true,
+                 'sortFieldAllowList' => array_keys($allowedSorts)
+             ]
+         );
+     
+         return $this->render('cours/index.html.twig', [
+             'pagination' => $pagination,
+             'matieres' => $matiereRepository->findAll(),
+             'current_sort' => [
+                 'field' => $sortField,
+                 'direction' => $sortDirection
+             ]
+         ]);
+     }
     #[Route('/cours3', name: 'app_cours_index3', methods: ['GET'])]
     public function index3(
         Request $request,
