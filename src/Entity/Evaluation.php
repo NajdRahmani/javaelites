@@ -31,7 +31,7 @@ class Evaluation
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: "La description est obligatoire")]
     #[Assert\Length(
-        min: 10,
+        min: 4,
         minMessage: "La description doit contenir au moins {{ limit }} caractères"
     )]
     private ?string $description = null;
@@ -62,7 +62,6 @@ class Evaluation
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?Cours $cours = null;
 
-  
     public function __construct()
     {
         $this->questions = new ArrayCollection();
@@ -108,7 +107,7 @@ class Evaluation
         // Calculer le max_score comme la somme des points des questions
         $total = 0;
         foreach ($this->questions as $question) {
-            $total += $question->getPoints();
+            $total += $question->getPoint();
         }
         return $total;
     }
@@ -168,8 +167,6 @@ class Evaluation
         return $this;
     }
 
-  
-
     /**
      * @return Collection<int, Reponse>
      */
@@ -211,6 +208,4 @@ class Evaluation
 
         return $this;
     }
-
-    
 }

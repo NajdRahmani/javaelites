@@ -3,99 +3,198 @@
 {% block title %}Nouvelle Question{% endblock %}
 
 {% block stylesheets %}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    {{ parent() }}
+    <link href="{{ asset('css/template.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/events.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/owl.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/lightbox.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/templatemo-eduwell-style.css') }}" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" rel="stylesheet" />
     <style>
-        .form-container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 2rem;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        #code-preview {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            background-color: #272822;
         }
-        .form-group {
-            margin-bottom: 1.5rem;
+        .preview-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        pre {
+            margin: 0 !important;
+            padding: 15px !important;
+            border-radius: 4px;
+            background: #272822 !important;
+        }
+        .code-container {
             position: relative;
         }
-        .error-icon {
+        .language-label {
             position: absolute;
+            top: -10px;
             right: 10px;
-            top: 38px;
-            color: #dc3545;
+            background-color: #3c3c3c;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            color: #fff;
         }
-        .invalid-feedback {
-            display: none;
-            margin-top: 0.25rem;
-        }
-        .form-control.is-invalid ~ .invalid-feedback {
-            display: block;
-        }
-        .form-control.is-invalid {
-            border-color: #dc3545;
-            padding-right: calc(1.5em + 0.75rem);
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right calc(0.375em + 0.1875rem) center;
-            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        .form-control {
+            margin-bottom: 1rem;
         }
     </style>
 {% endblock %}
 
 {% block body %}
-    <div class="form-container">
-        <h1 class="mb-4">Créer une nouvelle question</h1>
-
-        {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': 'novalidate'}}) }}
-
-        {% for field in form.children %}
-            <div class="form-group">
-                {{ form_label(field) }}
-                {{ form_widget(field, {
-                    'attr': {
-                        'class': 'form-control' ~ (field.vars.valid ? '' : ' is-invalid'),
-                        'data-field': field.vars.name,
-                        'placeholder': field.vars.label == 'Texte de la question' ? 'Entrez votre question ici...' :
-                                    field.vars.label == 'Points' ? 'Nombre de points pour cette question' :
-                                    'Ordre d\'apparition de la question'
-                    }
-                }) }}
-                {% if not field.vars.valid %}
-                    <div class="invalid-feedback d-block">
-                        <i class="fas fa-exclamation-circle"></i>
-                        {{ form_errors(field) }}
+    <div class="content-wrapper">
+        <section class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1>Nouvelle Question</h1>
                     </div>
-                {% endif %}
+                </div>
             </div>
-        {% endfor %}
+        </section>
 
-        <div class="form-group text-center">
-            <button class="btn btn-primary btn-lg" type="submit">
-                <i class="fas fa-save"></i> Enregistrer la question
-            </button>
-            <a href="{{ path('app_question_index', {'evaluationId': evaluation.id}) }}" class="btn btn-secondary btn-lg">
-                <i class="fas fa-arrow-left"></i> Retour à la liste
-            </a>
-        </div>
+        <section class="content">
+            <div class="container-fluid">
+                <div class="card">
+                    <div class="card-body">
+                        {{ form_start(form) }}
+                        
+                        <div class="form-group">
+                            {{ form_label(form.title) }}
+                            {{ form_widget(form.title, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.title) }}
+                        </div>
 
-        {{ form_end(form) }}
+                        <div class="form-group">
+                            {{ form_label(form.enonce) }}
+                            {{ form_widget(form.enonce, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.enonce) }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form_label(form.point) }}
+                            {{ form_widget(form.point, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.point) }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form_label(form.ordreQuestion) }}
+                            {{ form_widget(form.ordreQuestion, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.ordreQuestion) }}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form_label(form.programmingLanguage) }}
+                                    {{ form_widget(form.programmingLanguage, {
+                                        'attr': {
+                                            'class': 'form-control',
+                                            'id': 'programming_language'
+                                        }
+                                    }) }}
+                                    {{ form_errors(form.programmingLanguage) }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form_label(form.codeSnippet) }}
+                                    {{ form_widget(form.codeSnippet, {
+                                        'attr': {
+                                            'class': 'form-control',
+                                            'id': 'code_extract',
+                                            'rows': 6,
+                                            'placeholder': 'Entrez votre code ici (optionnel)'
+                                        }
+                                    }) }}
+                                    {{ form_errors(form.codeSnippet) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="code-preview" class="mb-4" style="display: none;">
+                            <div class="preview-title">Prévisualisation du code :</div>
+                            <div class="code-container">
+                                <span class="language-label" id="language-display"></span>
+                                <pre><code id="preview-content"></code></pre>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> {{ button_label|default('Créer') }}
+                            </button>
+                            <a href="{{ path('app_question_index', {'evaluationId': app.request.get('evaluationId')}) }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Retour à la liste
+                            </a>
+                        </div>
+
+                        {{ form_end(form) }}
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
 {% endblock %}
 
 {% block javascripts %}
-<script>
-(function () {
-    'use strict'
-    var forms = document.querySelectorAll('.needs-validation')
-    Array.prototype.slice.call(forms).forEach(function (form) {
-        form.addEventListener('submit', function (event) {
-            if (!form.checkValidity()) {
-                event.preventDefault()
-                event.stopPropagation()
+    {{ parent() }}
+    <script src="{{ asset('js/isotope.min.js') }}"></script>
+    <script src="{{ asset('js/owl-carousel.js') }}"></script>
+    <script src="{{ asset('js/lightbox.js') }}"></script>
+    <script src="{{ asset('js/tabs.js') }}"></script>
+    <script src="{{ asset('js/video.js') }}"></script>
+    <script src="{{ asset('js/slick-slider.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-php.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-ruby.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const codeExtract = document.getElementById('code_extract');
+            const languageSelect = document.getElementById('programming_language');
+            const preview = document.getElementById('code-preview');
+            const previewContent = document.getElementById('preview-content');
+            const languageDisplay = document.getElementById('language-display');
+
+            function updatePreview() {
+                const code = codeExtract.value.trim();
+                const language = languageSelect.value;
+
+                if (code && language) {
+                    preview.style.display = 'block';
+                    previewContent.className = `language-${language}`;
+                    previewContent.textContent = code;
+                    languageDisplay.textContent = language.toUpperCase();
+                    Prism.highlightElement(previewContent);
+                } else {
+                    preview.style.display = 'none';
+                }
             }
-            form.classList.add('was-validated')
-        }, false)
-    })
-})()
-</script>
+
+            // Mettre à jour la prévisualisation lors de la saisie
+            codeExtract.addEventListener('input', updatePreview);
+
+            // Mettre à jour lors du changement de langage
+            languageSelect.addEventListener('change', updatePreview);
+
+            // Initialiser la prévisualisation si des valeurs existent déjà
+            if (codeExtract.value.trim() && languageSelect.value) {
+                updatePreview();
+            }
+        });
+    </script>
 {% endblock %}

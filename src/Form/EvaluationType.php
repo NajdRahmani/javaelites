@@ -36,10 +36,13 @@ class EvaluationType extends AbstractType
             ->add('deadline', DateType::class, [
                 'widget' => 'single_text',
                 'required' => true,
-                'label' => 'Date Limite',
+                'label' => 'Date et Heure Limite',
+                'html5' => true,
+                'input' => 'datetime',
                 'attr' => [
                     'class' => 'form-control',
-                    'min' => (new \DateTime())->format('Y-m-d')
+                    'min' => (new \DateTime())->format('Y-m-d\TH:i'),
+                    'type' => 'datetime-local'
                 ]
             ])
            ;

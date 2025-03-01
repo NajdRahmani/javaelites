@@ -64,33 +64,33 @@
                     <tbody>
                     {% for item in evaluations %}
                         <tr>
-                            <td class="evaluation-title">{{ item.evaluation.title }}</td>
-                            <td>{{ item.evaluation.description|length > 50 ? item.evaluation.description|slice(0, 50) ~ '...' : item.evaluation.description }}</td>
-                            <td>{{ item.evaluation.maxScore }}</td>
+                            <td class="evaluation-title">{{ item.title }}</td>
+                            <td>{{ item.description|length > 50 ? item.description|slice(0, 50) ~ '...' : item.description }}</td>
+                            <td>{{ item.maxScore }}</td>
                             <td>
-                                {% if item.evaluation.deadline < date() %}
-                                    <span class="deadline-passed">{{ item.evaluation.deadline|date('d/m/Y H:i') }}</span>
-                                {% elseif date().modify('+24 hours') > item.evaluation.deadline %}
-                                    <span class="deadline-warning">{{ item.evaluation.deadline|date('d/m/Y H:i') }}</span>
+                                {% if item.deadline < date() %}
+                                    <span class="deadline-passed">{{ item.deadline|date('d/m/Y H:i') }}</span>
+                                {% elseif date().modify('+24 hours') > item.deadline %}
+                                    <span class="deadline-warning">{{ item.deadline|date('d/m/Y H:i') }}</span>
                                 {% else %}
-                                    {{ item.evaluation.deadline|date('d/m/Y H:i') }}
+                                    {{ item.deadline|date('d/m/Y H:i') }}
                                 {% endif %}
                             </td>
                             <td>
-                                {% if item.hasResponded %}
+                                {% if item.hasResponded is defined and item.hasResponded %}
                                     <span class="status-badge status-completed">Complété</span>
                                 {% else %}
                                     <span class="status-badge status-pending">En attente</span>
                                 {% endif %}
                             </td>
                             <td>
-                                {% if not item.hasResponded and item.evaluation.deadline > date() %}
-                                    <a href="{{ path('etudiant_evaluation_show', {'id': item.evaluation.id}) }}" 
+                                {% if (item.hasResponded is not defined or not item.hasResponded) and item.deadline > date() %}
+                                    <a href="{{ path('app_evaluation_showetudiant', {'id': item.id}) }}" 
                                        class="btn btn-primary btn-sm">
                                         <i class="fas fa-pen"></i> Répondre
                                     </a>
-                                {% elseif item.hasResponded %}
-                                    <a href="{{ path('app_evaluation_show_result', {'id': item.evaluation.id}) }}" 
+                                {% elseif item.hasResponded is defined and item.hasResponded %}
+                                    <a href="{{ path('app_evaluation_show_result', {'id': item.id}) }}" 
                                        class="btn btn-info btn-sm">
                                         <i class="fas fa-eye"></i> Voir les résultats
                                     </a>

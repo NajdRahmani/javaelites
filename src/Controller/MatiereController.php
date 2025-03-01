@@ -22,17 +22,16 @@ final class MatiereController extends AbstractController
             'matieres' => $matiereRepository->findAll(),
         ]);
     }
-    #[Route('/new/{id}', name: 'app_matiere_new', methods: ['GET', 'POST'])]
-    public function new($id, Request $request, EntityManagerInterface $entityManager): Response
+    #[Route('/new', name: 'app_matiere_new', methods: ['GET', 'POST'])]
+    public function new( Request $request, EntityManagerInterface $entityManager): Response
     {
         // Créer une nouvelle instance de Matiere
         $matiere = new Matiere();
     
         // Récupérer la catégorie correspondant à l'ID
-        $categorie = $entityManager->getRepository(Categorie::class)->find($id);
     
         // Définir la catégorie par défaut
-        $matiere->setCategorie($categorie);
+       
     
         // Définir la date de création et de mise à jour par défaut
         $matiere->setCreatedAt(new \DateTimeImmutable()); // Date actuelle

@@ -1,88 +1,139 @@
 {% extends 'base3.html.twig' %}
 
-{% block title %}Liste des réponses à corriger{% endblock %}
+{% block title %}Correction de l'évaluation{% endblock %}
 
 {% block body %}
 <div class="container mt-4">
-    <div class="evaluation-header bg-primary text-white p-3 mb-4">
-        <h2>{{ evaluation.title }}</h2>
-        <p class="mb-0">{{ evaluation.description }}</p>
-        <p class="mb-0">Score maximum total : {{ scoreMaxTotal }} points</p>
-    </div>
-
-    <div class="questions-list">
-        {% for questionData in questionResponses %}
-            <div class="question-section card mb-4">
-                <div class="card-header bg-light">
-                    <h4 class="mb-0">Question : {{ questionData.question.text }}</h4>
-                    <p class="text-muted mb-0">Points : {{ questionData.question.points }}</p>
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">{{ evaluation.title }}</h2>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <p><strong>Description :</strong></p>
+                    <p class="mb-3">{{ evaluation.description }}</p>
                 </div>
-                
-                <div class="card-body">
-                    {% if questionData.responses|length > 0 %}
-                        {% for responseData in questionData.responses %}
-                            <div class="response-item border-bottom py-3">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div class="response-content flex-grow-1">
-                                        <p class="mb-2"><strong>Réponse de l'étudiant :</strong></p>
-                                        <p class="response-text bg-light p-3 rounded">{{ responseData.reponse.text }}</p>
-                                    </div>
-                                    <div class="ms-3">
-                                        {% if responseData.isCorrected %}
-                                            <span class="badge bg-success">Note : {{ responseData.reponse.note }}/{{ questionData.question.points }}</span>
-                                        {% else %}
-                                            <span class="badge bg-warning">En attente de correction</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                
-                                <div class="mt-2">
-                                    <a href="{{ path('evaluation_correctenseignant_student', {
-                                        'evaluationId': evaluation.id,
-                                        'reponseId': responseData.reponse.id
-                                    }) }}" class="btn btn-sm btn-primary">
-                                        {% if responseData.isCorrected %}
-                                            <i class="fas fa-edit"></i> Modifier la correction
-                                        {% else %}
-                                            <i class="fas fa-check"></i> Corriger la réponse
-                                        {% endif %}
-                                    </a>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    {% else %}
-                        <p class="text-muted mb-0">Aucune réponse pour cette question.</p>
-                    {% endif %}
+                <div class="col-md-4">
+                    <p><strong>Date de création :</strong> {{ evaluation.createAt|date('d/m/Y') }}</p>
+                    <p><strong>Date limite :</strong> {{ evaluation.deadline|date('d/m/Y') }}</p>
+                    <p><strong>Total des points :</strong> {{ scoreMaxTotal }}</p>
                 </div>
             </div>
-        {% endfor %}
+        </div>
     </div>
 
-    <a href="{{ path('app_evaluation_indexenseignant') }}" class="btn btn-secondary mt-3">
-        <i class="fas fa-arrow-left"></i> Retour à la liste des évaluations
-    </a>
+    <form method="post" action="{{ path('evaluation_save_correctionenseignant', {
+        'evaluationId': evaluation.id,
+        'studentId': student.id
+    }) }}">
+    {% for item in questionResponses %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="h4 mb-0">Question {{ loop.index }}</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="question-content mb-4">
+                            <h4 class="h5">Énoncé</h4>
+                            <p class="mb-4">{{ item.question.enonce }}</p>
+                            
+                            <h4 class="h5">Réponse de l'étudiant</h4>
+                            <div class="student-response p-3 bg-light rounded">
+                                {{ item.reponse.text|nl2br }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="correction-panel p-3 bg-light rounded">
+                            <div class="form-group mb-3">
+                                <label class="form-label">
+                                    <strong>Note :</strong>
+                                    <span class="text-muted">(sur {{ item.question.point }} points)</span>
+                                </label>
+                                <input type="number" 
+                                       class="form-control"
+                                       name="notes[{{ item.question.id }}]"
+                                       min="0"
+                                       max="{{ item.question.point }}"
+                                       value="{{ item.reponse.note }}"
+                                       required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label"><strong>Commentaire :</strong></label>
+                                <textarea class="form-control"
+                                          name="commentaires[{{ item.question.id }}]"
+                                          rows="3">{{ item.reponse.commentaire }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Score total : <span id="totalScore">0</span>/{{ scoreMaxTotal }}</h4>
+                <div>
+                    <a href="{{ path('app_evaluation_showenseignant', {'id': evaluation.id}) }}" class="btn btn-secondary me-2">
+                        <i class="fas fa-arrow-left"></i> Retour à l'évaluation
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Enregistrer les corrections
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </form>
 </div>
 
 <style>
-    .evaluation-header {
-        border-radius: 5px;
-    }
-    .questions-list {
-        max-width: 900px;
-        margin: 0 auto;
-    }
-    .response-text {
-        white-space: pre-wrap;
-    }
-    .badge {
-        font-size: 0.9rem;
-        padding: 0.5em 1em;
-    }
-    .question-section {
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .response-item:last-child {
-        border-bottom: none !important;
-    }
+.question-content {
+    background-color: #fff;
+    border-radius: 0.25rem;
+}
+
+.student-response {
+    border: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+}
+
+.correction-panel {
+    border: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+    height: 100%;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #495057;
+}
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const noteInputs = document.querySelectorAll('input[type="number"]');
+    const totalScoreDisplay = document.getElementById('totalScore');
+    
+    function updateTotalScore() {
+        let total = 0;
+        noteInputs.forEach(input => {
+            total += parseInt(input.value) || 0;
+        });
+        totalScoreDisplay.textContent = total;
+    }
+    
+    noteInputs.forEach(input => {
+        input.addEventListener('change', updateTotalScore);
+        input.addEventListener('input', updateTotalScore);
+    });
+    
+    // Calculer le score total initial
+    updateTotalScore();
+});
+</script>
 {% endblock %}

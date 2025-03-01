@@ -28,14 +28,31 @@ class Reponse
     #[ORM\JoinColumn(nullable: true)]
     private ?Resultat $resultat = null;
 
-    #[ORM\Column(type: 'integer', nullable: true)]
-    private ?int $userId = null;
+    
 
     #[ORM\Column(type: 'integer', nullable: true)]
     private ?int $note = null;
 
     #[ORM\ManyToOne(inversedBy: 'reponses')]
-    private ?User $user_id = null; // Ajout de la propriété note
+    private ?User $user = null;
+
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $startTime = null;
+
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $submitTime = null;
+
+    #[ORM\Column(type: 'boolean')]
+    private bool $plagiatSuspect = false;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $plagiatDetails = null;
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $typingPattern = null;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $commentaire = null;
 
     public function getId(): ?int
     {
@@ -97,14 +114,14 @@ class Reponse
         return $this;
     }
 
-    public function getUserId(): ?int
+    public function getUser(): ?User
     {
-        return $this->userId;
+        return $this->user;
     }
 
-    public function setUserId(?int $userId): static
+    public function setUser(?User $user): static
     {
-        $this->userId = $userId;
+        $this->user = $user;
         return $this;
     }
 
@@ -116,6 +133,72 @@ class Reponse
     public function setNote(?int $note): static
     {
         $this->note = $note;
+        return $this;
+    }
+
+    public function getStartTime(): ?\DateTimeInterface
+    {
+        return $this->startTime;
+    }
+
+    public function setStartTime(?\DateTimeInterface $startTime): self
+    {
+        $this->startTime = $startTime;
+        return $this;
+    }
+
+    public function getSubmitTime(): ?\DateTimeInterface
+    {
+        return $this->submitTime;
+    }
+
+    public function setSubmitTime(?\DateTimeInterface $submitTime): self
+    {
+        $this->submitTime = $submitTime;
+        return $this;
+    }
+
+    public function isPlagiatSuspect(): bool
+    {
+        return $this->plagiatSuspect;
+    }
+
+    public function setPlagiatSuspect(bool $plagiatSuspect): self
+    {
+        $this->plagiatSuspect = $plagiatSuspect;
+        return $this;
+    }
+
+    public function getPlagiatDetails(): ?string
+    {
+        return $this->plagiatDetails;
+    }
+
+    public function setPlagiatDetails(?string $plagiatDetails): self
+    {
+        $this->plagiatDetails = $plagiatDetails;
+        return $this;
+    }
+
+    public function getTypingPattern(): ?array
+    {
+        return $this->typingPattern;
+    }
+
+    public function setTypingPattern(?array $typingPattern): self
+    {
+        $this->typingPattern = $typingPattern;
+        return $this;
+    }
+
+    public function getCommentaire(): ?string
+    {
+        return $this->commentaire;
+    }
+
+    public function setCommentaire(?string $commentaire): self
+    {
+        $this->commentaire = $commentaire;
         return $this;
     }
 }

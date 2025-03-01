@@ -11,6 +11,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/question')]
@@ -39,48 +40,58 @@ final class QuestionController extends AbstractController
     }
 
     #[Route('/new/{evaluationId}', name: 'app_question_new', methods: ['GET', 'POST'])]
-    public function new(int $evaluationId, Request $request, EntityManagerInterface $entityManager): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, int $evaluationId): Response
     {
-        // Récupérer l'évaluation par son ID
         $evaluation = $entityManager->getRepository(Evaluation::class)->find($evaluationId);
-    
-        // Si l'évaluation n'est pas trouvée, afficher une erreur
+        
         if (!$evaluation) {
             throw $this->createNotFoundException('Évaluation non trouvée');
         }
-    
-        // Créer une nouvelle question
+
         $question = new Question();
-        
-        // Associer l'évaluation à la question
         $question->setEvaluation($evaluation);
-    
-        // Trouver la dernière question de l'évaluation pour déterminer l'ordre
+
+        // Définir l'ordre automatiquement
         $lastQuestion = $entityManager->getRepository(Question::class)
             ->findOneBy(['evaluation' => $evaluation], ['ordreQuestion' => 'DESC']);
-        
-        // Définir l'ordre de la nouvelle question
-        $newOrder = $lastQuestion ? $lastQuestion->getOrdreQuestion() + 1 : 1; // Si pas de question existante, commence à 1
-        $question->setOrdreQuestion($newOrder);
-    
-        // Créer le formulaire pour la question
+        $question->setOrdreQuestion($lastQuestion ? $lastQuestion->getOrdreQuestion() + 1 : 1);
+
         $form = $this->createForm(QuestionType::class, $question);
-        $form->handleRequest($request);
-    
-        // Vérifier si le formulaire est soumis et valide
-        if ($form->isSubmitted() && $form->isValid()) {
-            // Persister la question dans la base de données
-            $entityManager->persist($question);
-            $entityManager->flush();
-    
-            // Rediriger vers la page des questions de l'évaluation
-            return $this->redirectToRoute('app_question_index', ['evaluationId' => $evaluation->getId()], Response::HTTP_SEE_OTHER);
+        
+        if ($request->isMethod('POST')) {
+            $data = $request->request->all();
+            if (isset($data['question']['enonce'])) {
+                $question->setEnonce($data['question']['enonce']);
+            }
+            
+            $form->handleRequest($request);
+
+            if ($form->isValid()) {
+                try {
+                    $entityManager->persist($question);
+                    $entityManager->flush();
+
+                    $this->addFlash('success', 'Question créée avec succès !');
+
+                    if ($request->request->has('add_another')) {
+                        return $this->redirectToRoute('app_question_new', ['evaluationId' => $evaluationId]);
+                    }
+
+                    return $this->redirectToRoute('app_question_index', ['evaluationId' => $evaluationId]);
+                } catch (\Exception $e) {
+                    $this->addFlash('error', 'Une erreur est survenue lors de la création de la question : ' . $e->getMessage());
+                }
+            } else {
+                foreach ($form->getErrors(true) as $error) {
+                    $this->addFlash('error', $error->getMessage());
+                }
+            }
         }
-    
+
         return $this->render('question/new.html.twig', [
             'question' => $question,
-            'form' => $form->createView(),
             'evaluation' => $evaluation,
+            'form' => $form
         ]);
     }
 
@@ -107,6 +118,7 @@ final class QuestionController extends AbstractController
         return $this->render('question/edit.html.twig', [
             'question' => $question,
             'form' => $form->createView(),
+            'editMode' => true
         ]);
     }
 
@@ -133,5 +145,17 @@ public function delete(Request $request, Question $question, EntityManagerInterf
         }
 
         return $this->redirectToRoute('app_reponse_new', ['questionId' => $id]);
+    }
+
+    #[Route('/preview-code', name: 'app_question_preview_code', methods: ['POST'])]
+    public function previewCode(Request $request): JsonResponse
+    {
+        $code = $request->request->get('code');
+        $language = $request->request->get('language');
+        
+        return new JsonResponse([
+            'code' => $code,
+            'language' => $language
+        ]);
     }
 }

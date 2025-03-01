@@ -1,0 +1,9 @@
+knp_snappy:
+    pdf:
+        enabled: true
+        binary: '"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"'  # Nous utiliserons le chemin d'installation
+        options:
+            - { name: 'encoding', value: 'UTF-8' }
+            - { name: 'page-size', value: 'A4' }
+    image:
+        enabled: false  # On désactive l'image car on n'en a pas besoin

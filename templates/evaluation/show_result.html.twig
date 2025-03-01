@@ -12,8 +12,8 @@
     <div class="score-summary card mb-4">
         <div class="card-body text-center">
             <h3>Score total</h3>
-            <div class="display-4 mb-0">{{ totalScore }} / {{ evaluation.maxScore * reponses|length }}</div>
-            {% set percentage = (totalScore / (evaluation.maxScore * reponses|length)) * 100 %}
+            <div class="display-4 mb-0">{{ totalScore }} / {{ evaluation.maxScore }}</div>
+            {% set percentage = (totalScore / evaluation.maxScore) * 100 %}
             <div class="progress mt-3" style="height: 20px;">
                 <div class="progress-bar {% if percentage >= 70 %}bg-success{% elseif percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
                      role="progressbar" 
@@ -92,7 +92,7 @@
                     <div class="card-body">
                         <div class="question-text mb-3">
                             <strong>Question :</strong>
-                            <p class="mb-0">{{ reponse.question.text }}</p>
+                            <p class="mb-0">{{ reponse.question.enonce }}</p>
                         </div>
                         <div class="answer-section">
                             <strong>Votre réponse :</strong>
@@ -107,6 +107,13 @@
             Vous n'avez pas encore répondu à cette évaluation.
         </div>
     {% endif %}
+
+    <div class="text-right mb-4">
+        <a href="{{ path('app_evaluation_pdf', {'id': evaluation.id}) }}" 
+           class="btn btn-primary">
+            <i class="fas fa-file-pdf"></i> Télécharger en PDF
+        </a>
+    </div>
 
     <a href="{{ path('app_evaluation_indexetudiant') }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left"></i> Retour aux évaluations

@@ -1,98 +1,122 @@
 <?php
+
 namespace App\Controller;
 
+use App\Entity\Cours;
+use App\Entity\CoursType;
+
+use App\Entity\Evaluation;
+use App\Entity\Question;
 use App\Entity\Reponse;
 use App\Entity\User;
-use App\Entity\Cours;
-use App\Form\ReponseType;
-use App\Entity\Evaluation;
 use App\Form\EvaluationType;
-use App\Entity\Question;
 use App\Form\QuestionType;
-use App\Repository\QuestionRepository;
+use App\Repository\UserRepository;
 use App\Repository\EvaluationRepository;
+use App\Repository\QuestionRepository;
 use App\Repository\ReponseRepository;
+use App\Service\MailService;
+use App\Service\StatisticsService;
+use App\Service\PdfService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use App\Service\StatisticsService;
-use App\Service\MailService;
 
 #[Route('/evaluation')]
 final class EvaluationController extends AbstractController
 {
     private StatisticsService $statisticsService;
     private MailService $mailService;
+    private PdfService $pdfService;
 
-    public function __construct(StatisticsService $statisticsService, MailService $mailService)
+    public function __construct(StatisticsService $statisticsService, MailService $mailService, PdfService $pdfService)
     {
         $this->statisticsService = $statisticsService;
         $this->mailService = $mailService;
+        $this->pdfService = $pdfService;
     }
 
     // Routes pour l'enseignant
     #[Route('/enseignant', name: 'app_evaluation_indexenseignant', methods: ['GET'])]
-    public function indexEnseignant(EvaluationRepository $evaluationRepository): Response
+    public function indexEnseignant(Request $request, EvaluationRepository $evaluationRepository): Response
     {
+        // Récupérer l'ID du cours depuis la requête
+        $coursId = $request->query->get('coursId');
+        
+        if (!$coursId) {
+            // Rediriger vers la page des cours si aucun coursId n'est fourni
+            return $this->redirectToRoute('app_cours_index');
+        }
+        
+        $evaluations = $evaluationRepository->findBy(['cours' => $coursId]);
+        
         return $this->render('evaluation/indexenseignant.html.twig', [
-            'evaluations' => $evaluationRepository->findAll(),
+            'evaluations' => $evaluations,
+            'coursId' => $coursId
         ]);
     }
 
-    #[Route('/enseignant/new/{id}', name: 'app_evaluation_newenseignant', methods: ['GET', 'POST'])]
-public function newEnseignant($id, Request $request, EntityManagerInterface $entityManager): Response
-{
-    // Récupérer la session et l'ID de l'utilisateur connecté
-    $session = $request->getSession();
-    $userId = $session->get('id');
+    #[Route('/enseignant/new/{coursId}', name: 'app_evaluation_newenseignant', methods: ['GET', 'POST'])]
+    public function newEnseignant(int $coursId, Request $request, EntityManagerInterface $entityManager): Response
+    {
+        // Récupérer la session et l'ID de l'utilisateur connecté
+        $session = $request->getSession();
+        $userId = $session->get('id');
 
-    // Récupérer l'utilisateur et le cours associé
-    $user = $entityManager->getRepository(User::class)->find($userId);
-    $cour = $entityManager->getRepository(Cours::class)->find($id);
+        // Récupérer l'utilisateur et le cours associé
+        $user = $entityManager->getRepository(User::class)->find($userId);
+        $cour = $entityManager->getRepository(Cours::class)->find($coursId);
 
-    // Vérifier si l'utilisateur est connecté
-    if (!$user) {
-        throw $this->createAccessDeniedException("Vous devez être connecté pour créer une évaluation.");
+        // Vérifier si l'utilisateur est connecté
+        if (!$user) {
+            throw $this->createAccessDeniedException("Vous devez être connecté pour créer une évaluation.");
+        }
+
+        // Vérifier si le cours existe
+        if (!$cour) {
+            throw $this->createNotFoundException("Le cours spécifié n'existe pas.");
+        }
+
+        // Créer une nouvelle évaluation
+        $evaluation = new Evaluation();
+        $evaluation->setCours($cour); // Associer le cours à l'évaluation
+        $evaluation->setCreateAt(new \DateTime()); // Définir la date de création
+
+        // Créer et gérer le formulaire
+        $form = $this->createForm(EvaluationType::class, $evaluation);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->persist($evaluation);
+            $entityManager->flush();
+
+            // Envoyer l'email de confirmation à l'enseignant
+            $this->mailService->sendEvaluationCreatedToTeacher($user, $evaluation);
+
+            // Rediriger vers la création de questions pour cette évaluation
+            return $this->redirectToRoute('app_question_new', ['evaluationId' => $evaluation->getId()], Response::HTTP_SEE_OTHER);
+        }
+
+        // Afficher le formulaire de création d'évaluation
+        return $this->render('evaluation/new.html.twig', [
+            'evaluation' => $evaluation,
+            'form' => $form->createView(),
+            'coursId' => $coursId
+        ]);
     }
-
-    // Vérifier si le cours existe
-    if (!$cour) {
-        throw $this->createNotFoundException("Le cours spécifié n'existe pas.");
-    }
-
-    // Créer une nouvelle évaluation
-    $evaluation = new Evaluation();
-    $evaluation->setCours($cour); // Associer le cours à l'évaluation
-    $evaluation->setCreateAt(new \DateTime()); // Définir la date de création
-
-    // Créer et gérer le formulaire
-    $form = $this->createForm(EvaluationType::class, $evaluation);
-    $form->handleRequest($request);
-
-    // Vérifier si le formulaire est soumis et valide
-    if ($form->isSubmitted() && $form->isValid()) {
-        $entityManager->persist($evaluation);
-        $entityManager->flush();
-
-        // Rediriger vers la création de questions pour cette évaluation
-        return $this->redirectToRoute('app_question_new', ['evaluationId' => $evaluation->getId()], Response::HTTP_SEE_OTHER);
-    }
-
-    // Afficher le formulaire de création d'évaluation
-    return $this->render('evaluation/new.html.twig', [
-        'evaluation' => $evaluation,
-        'form' => $form->createView(),
-    ]);
-}
 
     #[Route('/enseignant/{id}', name: 'app_evaluation_showenseignant', methods: ['GET'])]
-    public function showEnseignant(Evaluation $evaluation, EntityManagerInterface $entityManager): Response
+    public function showEnseignant(Evaluation $evaluation, QuestionRepository $questionRepository, EntityManagerInterface $entityManager): Response
     {
-        return $this->render('evaluation/show.html.twig', [
+        // Récupérer les questions de l'évaluation
+        $questions = $questionRepository->findBy(['evaluation' => $evaluation]);
+        
+        return $this->render('evaluation/showenseignant.html.twig', [
             'evaluation' => $evaluation,
+            'questions' => $questions
         ]);
     }
 
@@ -104,7 +128,8 @@ public function newEnseignant($id, Request $request, EntityManagerInterface $ent
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
-            return $this->redirectToRoute('app_evaluation_indexenseignant', [], Response::HTTP_SEE_OTHER);
+            $this->addFlash('success', 'Évaluation modifiée avec succès !');
+            return $this->redirectToRoute('app_evaluation_showenseignant', ['id' => $evaluation->getId()], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('evaluation/edit.html.twig', [
@@ -126,8 +151,16 @@ public function newEnseignant($id, Request $request, EntityManagerInterface $ent
         // Récupérer les réponses des étudiants par question
         $responsesByQuestion = [];
         foreach ($questions as $question) {
-            $responsesByQuestion[$question->getId()] = $entityManager->getRepository(Reponse::class)
+            $responsesByQuestion[$question->getId()] = [
+                'question' => $question,
+                'responses' => []
+            ];
+        }
+    
+        foreach ($questions as $question) {
+            $responses = $entityManager->getRepository(Reponse::class)
                 ->findBy(['question' => $question]);
+            $responsesByQuestion[$question->getId()]['responses'] = $responses;
         }
     
         // Création d'une nouvelle question via un formulaire
@@ -172,54 +205,96 @@ public function newEnseignant($id, Request $request, EntityManagerInterface $ent
         return $this->redirectToRoute('app_evaluation_indexenseignant', [], Response::HTTP_SEE_OTHER);
     }
     
-    #[Route('/enseignant/{id}/correct', name: 'evaluation_correctenseignant', methods: ['GET'])]
-    public function correctListEnseignant(
-        Evaluation $evaluation,
+    #[Route('/evaluation/enseignant/{evaluationId}/correct/{studentId}', name: 'app_evaluation_correct', methods: ['GET', 'POST'])]
+    public function correct(
+        int $evaluationId,
+        int $studentId,
+        EvaluationRepository $evaluationRepository,
+        UserRepository $userRepository,
         ReponseRepository $reponseRepository,
-        QuestionRepository $questionRepository
+        QuestionRepository $questionRepository,
+        Request $request,
+        EntityManagerInterface $entityManager
     ): Response {
-        $questions = $questionRepository->findBy(['evaluation' => $evaluation]);
-        $reponses = $reponseRepository->findBy(['evaluation' => $evaluation]);
-
-        // Calculer le score maximum total
-        $scoreMaxTotal = 0;
-        foreach ($questions as $question) {
-            $scoreMaxTotal += $question->getPoints();
+        $evaluation = $evaluationRepository->find($evaluationId);
+        if (!$evaluation) {
+            throw $this->createNotFoundException('Évaluation non trouvée.');
         }
+
+        $student = $userRepository->find($studentId);
+        if (!$student) {
+            throw $this->createNotFoundException('Étudiant non trouvé.');
+        }
+
+        // Traitement du formulaire de correction
+        if ($request->isMethod('POST')) {
+            try {
+                $data = $request->request->all();
+                
+                if (isset($data['notes'])) {
+                    foreach ($data['notes'] as $reponseId => $note) {
+                        $reponse = $reponseRepository->find($reponseId);
+                        
+                        if ($reponse && $reponse->getEvaluation()->getId() === $evaluation->getId()) {
+                            $reponse->setNote((int)$note);
+                            $reponse->setCommentaire($data['commentaires'][$reponseId] ?? null);
+                        }
+                    }
+
+                    $entityManager->flush();
+                    $this->addFlash('success', 'Les corrections ont été enregistrées avec succès.');
+                    return $this->redirectToRoute('app_evaluation_student_list', ['evaluationId' => $evaluationId]);
+                }
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Une erreur est survenue lors de l\'enregistrement des corrections.');
+                throw $e;
+            }
+        }
+
+        // Récupérer les questions et les réponses
+        $questions = $questionRepository->findBy(['evaluation' => $evaluation], ['ordreQuestion' => 'ASC']);
+        $responses = $reponseRepository->findBy([
+            'evaluation' => $evaluation,
+            'user' => $student
+        ]);
 
         // Organiser les réponses par question
         $questionResponses = [];
-        foreach ($questions as $question) {
-            $questionResponses[$question->getId()] = [
-                'question' => $question,
-                'responses' => []
-            ];
-        }
+        $scoreMaxTotal = 0;
 
-        foreach ($reponses as $reponse) {
-            $questionId = $reponse->getQuestion()->getId();
-            if (isset($questionResponses[$questionId])) {
-                $questionResponses[$questionId]['responses'][] = [
-                    'reponse' => $reponse,
-                    'isCorrected' => $reponse->getNote() !== null
+        foreach ($questions as $question) {
+            $scoreMaxTotal += $question->getPoint();
+            $response = null;
+
+            foreach ($responses as $r) {
+                if ($r->getQuestion()->getId() === $question->getId()) {
+                    $response = $r;
+                    break;
+                }
+            }
+
+            if ($response) {
+                $questionResponses[] = [
+                    'question' => $question,
+                    'reponse' => $response,
+                    'isCorrected' => $response->getNote() !== null
                 ];
             }
         }
 
         return $this->render('evaluation/correct_list.html.twig', [
             'evaluation' => $evaluation,
+            'student' => $student,
             'questionResponses' => $questionResponses,
             'scoreMaxTotal' => $scoreMaxTotal
         ]);
     }
 
-    #[Route('/enseignant/{evaluationId}/correction/{reponseId}', name: 'evaluation_correctenseignant_student', methods: ['GET', 'POST'])]
-    public function correctStudent(
+    #[Route('/enseignant/{evaluationId}/students', name: 'app_evaluation_student_list', methods: ['GET'])]
+    public function studentList(
         int $evaluationId,
-        int $reponseId,
         EvaluationRepository $evaluationRepository,
         ReponseRepository $reponseRepository,
-        Request $request,
         EntityManagerInterface $entityManager
     ): Response {
         $evaluation = $evaluationRepository->find($evaluationId);
@@ -227,55 +302,153 @@ public function newEnseignant($id, Request $request, EntityManagerInterface $ent
             throw $this->createNotFoundException('Évaluation non trouvée');
         }
 
-        $reponse = $reponseRepository->find($reponseId);
-        if (!$reponse || $reponse->getEvaluation()->getId() !== $evaluation->getId()) {
-            throw $this->createNotFoundException('Réponse non trouvée');
-        }
+        // Récupérer toutes les questions de l'évaluation
+        $questions = $evaluation->getQuestions();
+        $totalQuestions = count($questions);
 
-        if ($request->isMethod('POST')) {
-            // Traitement de la correction
-            $note = $request->request->get('note');
-            if ($note !== null) {
-                $reponse->setNote((int) $note);
-                $entityManager->flush();
-                $this->addFlash('success', 'La note a été enregistrée avec succès.');
+        // Calculer le score maximum total
+        $scoreMaxTotal = array_sum(array_map(fn($q) => $q->getPoint(), $questions->toArray()));
+
+        // Récupérer toutes les réponses pour cette évaluation
+        $responses = $reponseRepository->findBy(['evaluation' => $evaluation]);
+        
+        // Organiser les réponses par étudiant
+        $studentData = [];
+        foreach ($responses as $response) {
+            $studentId = $response->getUser()->getId();
+            if (!isset($studentData[$studentId])) {
+                $studentData[$studentId] = [
+                    'student' => $response->getUser(),
+                    'totalScore' => 0,
+                    'correctedCount' => 0,
+                    'totalQuestions' => $totalQuestions,
+                    'lastSubmitTime' => $response->getSubmitTime(),
+                    'isFullyCorrected' => false
+                ];
             }
-            return $this->redirectToRoute('evaluation_correctenseignant', ['id' => $evaluationId]);
+
+            // Si la réponse a une note, on l'ajoute au score total
+            if ($response->getNote() !== null) {
+                $studentData[$studentId]['totalScore'] += $response->getNote();
+                $studentData[$studentId]['correctedCount']++;
+            }
+
+            // Mettre à jour la dernière date de soumission si plus récente
+            if ($response->getSubmitTime() > $studentData[$studentId]['lastSubmitTime']) {
+                $studentData[$studentId]['lastSubmitTime'] = $response->getSubmitTime();
+            }
         }
 
-        return $this->render('evaluation/correct_student.html.twig', [
+        // Calculer la moyenne et marquer les copies entièrement corrigées
+        $totalScore = 0;
+        $correctedCopies = 0;
+        foreach ($studentData as &$data) {
+            if ($data['correctedCount'] == $totalQuestions) {
+                $data['isFullyCorrected'] = true;
+                $totalScore += $data['totalScore'];
+                $correctedCopies++;
+            }
+        }
+
+        // Calculer la moyenne de la classe
+        $moyenne = $correctedCopies > 0 ? $totalScore / $correctedCopies : 0;
+
+        return $this->render('evaluation/student_list.html.twig', [
             'evaluation' => $evaluation,
-            'reponse' => $reponse
+            'studentData' => $studentData,
+            'scoreMaxTotal' => $scoreMaxTotal,
+            'correctedCopies' => $correctedCopies,
+            'moyenne' => $moyenne
         ]);
     }
 
-    #[Route('/enseignant/{evaluationId}/correct/{studentId}', name: 'app_evaluation_correct_student', methods: ['GET'])]
+    #[Route('/enseignant/evaluation/{evaluationId}/student/{studentId}/correct', name: 'app_evaluation_correct_student', methods: ['GET', 'POST'])]
     public function correctStudentEnseignant(
         int $evaluationId,
         int $studentId,
         EvaluationRepository $evaluationRepository,
-        ReponseRepository $reponseRepository
+        UserRepository $userRepository,
+        ReponseRepository $reponseRepository,
+        QuestionRepository $questionRepository,
+        Request $request,
+        EntityManagerInterface $entityManager
     ): Response {
         $evaluation = $evaluationRepository->find($evaluationId);
+        $student = $userRepository->find($studentId);
 
-        if (!$evaluation) {
-            throw $this->createNotFoundException('Évaluation non trouvée');
+        if (!$evaluation || !$student) {
+            throw $this->createNotFoundException('Évaluation ou étudiant non trouvé.');
         }
 
-        // Récupérer toutes les réponses de l'étudiant pour cette évaluation
-        $answers = $reponseRepository->findBy(
-            ['evaluation' => $evaluation, 'userId' => $studentId],
-            ['question' => 'ASC']
-        );
+        // Traitement du formulaire de correction
+        if ($request->isMethod('POST')) {
+            try {
+                $data = $request->request->all();
+                
+                if (isset($data['notes'])) {
+                    foreach ($data['notes'] as $questionId => $note) {
+                        $reponse = $reponseRepository->findOneBy([
+                            'evaluation' => $evaluation,
+                            'user' => $student,
+                            'question' => $questionId
+                        ]);
+
+                        if ($reponse) {
+                            $reponse->setNote((int)$note);
+                            $reponse->setCommentaire($data['commentaires'][$questionId] ?? null);
+                        }
+                    }
+
+                    $entityManager->flush();
+                    $this->addFlash('success', 'Les corrections ont été enregistrées avec succès.');
+                    return $this->redirectToRoute('app_evaluation_student_list', ['evaluationId' => $evaluationId]);
+                }
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Une erreur est survenue lors de l\'enregistrement des corrections.');
+                throw $e;
+            }
+        }
+
+        // Récupérer les questions et les réponses
+        $questions = $questionRepository->findBy(['evaluation' => $evaluation], ['ordreQuestion' => 'ASC']);
+        $responses = $reponseRepository->findBy([
+            'evaluation' => $evaluation,
+            'user' => $student
+        ]);
+
+        // Organiser les réponses par question
+        $questionResponses = [];
+        $scoreMaxTotal = 0;
+
+        foreach ($questions as $question) {
+            $scoreMaxTotal += $question->getPoint();
+            $response = null;
+
+            foreach ($responses as $r) {
+                if ($r->getQuestion()->getId() === $question->getId()) {
+                    $response = $r;
+                    break;
+                }
+            }
+
+            if ($response) {
+                $questionResponses[] = [
+                    'question' => $question,
+                    'reponse' => $response,
+                    'isCorrected' => $response->getNote() !== null
+                ];
+            }
+        }
 
         return $this->render('evaluation/correct_list.html.twig', [
             'evaluation' => $evaluation,
-            'studentId' => $studentId,
-            'answers' => $answers
+            'student' => $student,
+            'questionResponses' => $questionResponses,
+            'scoreMaxTotal' => $scoreMaxTotal
         ]);
     }
 
-    #[Route('/enseignant/{evaluationId}/save-correction/{studentId}', name: 'evaluation_save_correctionenseignant', methods: ['POST'])]
+    #[Route('/enseignant/evaluation/{evaluationId}/save-correction/{studentId}', name: 'evaluation_save_correctionenseignant', methods: ['POST'])]
     public function saveCorrectionEnseignant(
         Request $request,
         int $evaluationId,
@@ -283,29 +456,118 @@ public function newEnseignant($id, Request $request, EntityManagerInterface $ent
         EntityManagerInterface $entityManager,
         ReponseRepository $reponseRepository
     ): Response {
-        $points = $request->request->get('points', []);
-        $comments = $request->request->get('comments', []);
+        $data = $request->request->all();
+        $notes = $data['notes'] ?? [];
+        $commentaires = $data['commentaires'] ?? [];
 
-        foreach ($points as $answerId => $score) {
-            $answer = $reponseRepository->find($answerId);
-            if ($answer) {
-                $answer->setScore($score);
-                $answer->setComment($comments[$answerId] ?? '');
-                $entityManager->persist($answer);
+        if (!is_array($notes) || !is_array($commentaires)) {
+            throw new \InvalidArgumentException('Les notes et commentaires doivent être des tableaux');
+        }
+
+        foreach ($notes as $questionId => $note) {
+            $reponse = $reponseRepository->findOneBy([
+                'question' => $questionId,
+                'user' => $studentId
+            ]);
+            
+            if ($reponse) {
+                $reponse->setNote((float)$note);
+                $reponse->setCommentaire($commentaires[$questionId] ?? '');
+                $entityManager->persist($reponse);
             }
         }
 
         $entityManager->flush();
+        $this->addFlash('success', 'Les corrections ont été enregistrées avec succès.');
 
-        // Récupérer l'étudiant et envoyer la notification
-        $student = $entityManager->getRepository(User::class)->find($studentId);
-        if ($student) {
-            $evaluation = $entityManager->getRepository(Evaluation::class)->find($evaluationId);
-            $this->mailService->sendEvaluationGradedNotification($student, $evaluation);
+        return $this->redirectToRoute('app_evaluation_student_list', ['evaluationId' => $evaluationId]);
+    }
+
+    #[Route('/evaluation/enseignant/{id}/statistics', name: 'app_evaluation_statistics', methods: ['GET'])]
+    public function showStatistics(
+        Evaluation $evaluation, 
+        ReponseRepository $reponseRepository,
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): Response {
+        // Récupérer les paramètres de tri et recherche
+        $sortBy = $request->query->get('sort', 'score');
+        $order = $request->query->get('order', 'DESC');
+        $search = $request->query->get('search', '');
+
+        // Construire la requête DQL de base
+        $dql = 'SELECT DISTINCT u.id, u.nom, u.prenom, u.email, 
+                (SELECT COUNT(r2.id) FROM App\Entity\Reponse r2 WHERE r2.user = u AND r2.evaluation = :evaluation) as totalAnswers,
+                (SELECT COALESCE(SUM(r3.note), 0) FROM App\Entity\Reponse r3 WHERE r3.user = u AND r3.evaluation = :evaluation) as totalScore,
+                (SELECT COUNT(r4.id) FROM App\Entity\Reponse r4 WHERE r4.user = u AND r4.evaluation = :evaluation AND r4.note IS NOT NULL) as gradedAnswers
+                FROM App\Entity\User u
+                JOIN App\Entity\Reponse r WITH r.user = u
+                WHERE r.evaluation = :evaluation';
+
+        // Ajouter la condition de recherche si nécessaire
+        if ($search) {
+            $dql .= ' AND (LOWER(u.nom) LIKE LOWER(:search) OR LOWER(u.prenom) LIKE LOWER(:search) OR LOWER(u.email) LIKE LOWER(:search))';
         }
 
-        $this->addFlash('success', 'La correction a été enregistrée avec succès.');
-        return $this->redirectToRoute('evaluation_correctenseignant', ['id' => $evaluationId]);
+        // Ajouter l'ordre de tri
+        $dql .= ' ORDER BY ' . ($sortBy === 'name' ? 'u.nom' : 'totalScore') . ' ' . $order;
+
+        // Créer et exécuter la requête
+        $query = $entityManager->createQuery($dql)
+            ->setParameter('evaluation', $evaluation);
+
+        if ($search) {
+            $query->setParameter('search', '%' . $search . '%');
+        }
+
+        $studentRankings = $query->getResult();
+
+        // Calculer les statistiques globales
+        $totalStudents = count($studentRankings);
+        $totalQuestions = count($evaluation->getQuestions());
+        $scoreMaxTotal = array_sum(array_map(fn($q) => $q->getPoint(), $evaluation->getQuestions()->toArray()));
+        
+        // Calculer les statistiques détaillées
+        $totalScores = array_column($studentRankings, 'totalScore');
+        $averageScore = $totalStudents > 0 ? array_sum($totalScores) / $totalStudents : 0;
+        
+        // Calculer le taux de réussite (pourcentage d'étudiants ayant plus de 50%)
+        $passCount = array_reduce($totalScores, function($count, $score) use ($scoreMaxTotal) {
+            return $count + ($score >= $scoreMaxTotal * 0.5 ? 1 : 0);
+        }, 0);
+        $passRate = $totalStudents > 0 ? ($passCount / $totalStudents) * 100 : 0;
+
+        // Préparer les données pour la distribution des scores
+        $scoreRanges = [
+            '0-20%' => 0,
+            '21-40%' => 0,
+            '41-60%' => 0,
+            '61-80%' => 0,
+            '81-100%' => 0
+        ];
+
+        foreach ($totalScores as $score) {
+            $percentage = ($score / $scoreMaxTotal) * 100;
+            if ($percentage <= 20) $scoreRanges['0-20%']++;
+            elseif ($percentage <= 40) $scoreRanges['21-40%']++;
+            elseif ($percentage <= 60) $scoreRanges['41-60%']++;
+            elseif ($percentage <= 80) $scoreRanges['61-80%']++;
+            else $scoreRanges['81-100%']++;
+        }
+
+        return $this->render('evaluation/statistics.html.twig', [
+            'evaluation' => $evaluation,
+            'totalStudents' => $totalStudents,
+            'averageScore' => $averageScore,
+            'scoreMaxTotal' => $scoreMaxTotal,
+            'passRate' => $passRate,
+            'scoreRanges' => $scoreRanges,
+            'studentRankings' => $studentRankings,
+            'currentSort' => $sortBy,
+            'currentOrder' => $order,
+            'currentSearch' => $search,
+            'totalQuestions' => $totalQuestions
+        ]);
     }
 
     #[Route('/etudiant/{id}/resultat', name: 'app_evaluation_show_result', methods: ['GET'])]
@@ -337,18 +599,93 @@ public function newEnseignant($id, Request $request, EntityManagerInterface $ent
         ]);
     }
 
-    #[Route('/etudiant/{id}', name: 'etudiant_evaluation_show', methods: ['GET', 'POST'])]
-    public function showEtudiant(Request $request, Evaluation $evaluation, QuestionRepository $questionRepository, EntityManagerInterface $entityManager): Response
-    {
+    #[Route('/etudiant/{id}/pdf', name: 'app_evaluation_pdf')]
+    public function downloadPdf(
+        Evaluation $evaluation,
+        ReponseRepository $reponseRepository,
+        UserRepository $userRepository,
+        Request $request
+    ): Response {
+        // Récupérer l'ID de l'utilisateur depuis la session
+        $session = $request->getSession();
+        $userId = $session->get('id');
+    
+        if (!$userId) {
+            throw $this->createAccessDeniedException('Utilisateur non authentifié.');
+        }
+    
+        // Récupérer l'utilisateur depuis la base de données
+        $user = $userRepository->find($userId);
+    
+        if (!$user) {
+            throw $this->createNotFoundException('Utilisateur non trouvé.');
+        }
+    
+        // Vérifier que l'utilisateur a des réponses pour cette évaluation
+        $responses = $reponseRepository->findBy([
+            'evaluation' => $evaluation,
+            'user' => $user
+        ]);
+    
+        if (empty($responses)) {
+            throw $this->createNotFoundException('Aucune réponse trouvée pour cette évaluation.');
+        }
+    
+        return $this->pdfService->generateEvaluationPdf($evaluation, $user);
+    }
+    #[Route('/etudiant/{id}', name: 'app_evaluation_showetudiant', methods: ['GET', 'POST'])]
+    public function showEtudiant(
+        UserRepository $userRepository,
+        Request $request,
+        Evaluation $evaluation,
+        QuestionRepository $questionRepository,
+        EntityManagerInterface $entityManager,
+        ReponseRepository $reponseRepository
+    ): Response {
         $questionsArray = $questionRepository->findBy(['evaluation' => $evaluation], ['ordreQuestion' => 'ASC']);
         
         if (empty($questionsArray)) {
-            $this->addFlash('warning', 'Aucune question n\'est disponible pour cette évaluation.');
+            throw $this->createNotFoundException('Aucune question trouvée pour cette évaluation.');
+        }
+
+        // Vérifier si l'étudiant a déjà répondu
+        $session = $request->getSession();
+        $userId = $session->get('id');
+        $user = $userRepository->find($userId);
+
+        if (!$user) {
+            throw $this->createNotFoundException('Utilisateur introuvable.');
+        }
+
+        // Vérifier si l'étudiant a déjà des réponses pour cette évaluation
+        $existingResponses = $reponseRepository->findBy([
+            'evaluation' => $evaluation,
+            'user' => $user
+        ]);
+
+        if (!empty($existingResponses)) {
+            $this->addFlash('error', 'Vous avez déjà répondu à cette évaluation.');
             return $this->redirectToRoute('app_evaluation_indexetudiant');
         }
 
         if ($request->isMethod('POST')) {
             $responses = $request->request->all()['responses'] ?? [];
+            
+            // Récupérer l'utilisateur connecté
+            $session = $request->getSession();
+            $userId = $session->get('id'); // Récupère l'ID de l'utilisateur depuis la session
+        
+            if (!$userId) {
+                throw $this->createAccessDeniedException('Utilisateur non connecté.');
+            }
+        
+            $user = $userRepository->find($userId);
+        
+            if (!$user) {
+                throw $this->createNotFoundException('Utilisateur introuvable.');
+            }
+        
+            
             foreach ($questionsArray as $question) {
                 $responseContent = $responses[$question->getId()] ?? null;
                 if ($responseContent) {
@@ -356,6 +693,7 @@ public function newEnseignant($id, Request $request, EntityManagerInterface $ent
                     $reponse->setQuestion($question);
                     $reponse->setText($responseContent);
                     $reponse->setEvaluation($evaluation);
+                    $reponse->setUser($user);
                     $entityManager->persist($reponse);
                 }
             }
@@ -363,7 +701,7 @@ public function newEnseignant($id, Request $request, EntityManagerInterface $ent
             $entityManager->flush();
 
             // Envoyer l'email de confirmation de soumission
-            $this->mailService->sendEvaluationSubmissionNotification($this->getUser(), $evaluation);
+            $this->mailService->sendEvaluationSubmittedToStudent($user, $evaluation);
 
             $this->addFlash('success', 'Vos réponses ont été enregistrées avec succès.');
             return $this->redirectToRoute('app_evaluation_indexetudiant');
@@ -375,7 +713,7 @@ public function newEnseignant($id, Request $request, EntityManagerInterface $ent
         ]);
     }
 
-    #[Route('/etudiant/{evaluationId}/repondre', name: 'etudiant_evaluation_answer', methods: ['GET', 'POST'])]
+    #[Route('/etudiant/{id}/repondre', name: 'etudiant_evaluation_answer', methods: ['GET', 'POST'])]
     public function answerEtudiant(int $evaluationId, Request $request, EntityManagerInterface $entityManager): Response
     {
         $evaluation = $entityManager->getRepository(Evaluation::class)->find($evaluationId);
@@ -417,10 +755,9 @@ public function newEnseignant($id, Request $request, EntityManagerInterface $ent
         EntityManagerInterface $entityManager
     ): Response {
         // Envoyer l'email de confirmation de soumission
-        $this->mailService->sendEvaluationSubmissionNotification($this->getUser(), $evaluation);
+        $this->mailService->sendEvaluationSubmittedToStudent($this->getUser(), $evaluation);
         
         $this->addFlash('success', 'L\'évaluation a été soumise avec succès.');
-        $mailService->sendEvaluationSubmissionNotification($this->getUse(), $evaluation);
         return $this->redirectToRoute('app_evaluation_show', ['id' => $evaluation->getId()]);
     }
 
@@ -441,6 +778,7 @@ public function newEnseignant($id, Request $request, EntityManagerInterface $ent
         // Récupérer l'étudiant et envoyer la notification
         $student = $entityManager->getRepository(User::class)->find($studentId);
         if ($student) {
+            $evaluation = $entityManager->getRepository(Evaluation::class)->find($evaluationId);
             $this->mailService->sendEvaluationGradedNotification($student, $evaluation);
         }
 
@@ -480,8 +818,27 @@ public function newEnseignant($id, Request $request, EntityManagerInterface $ent
     ): Response {
         $evaluations = $evaluationRepository->findAll();
         
+        // Préparer les données pour le template
+        $evaluationsData = [];
+        foreach ($evaluations as $evaluation) {
+            $hasResponded = false;
+            $reponses = $reponseRepository->findBy(['evaluation' => $evaluation]);
+            if (!empty($reponses)) {
+                $hasResponded = true;
+            }
+            
+            $evaluationsData[] = [
+                'id' => $evaluation->getId(),
+                'title' => $evaluation->getTitle(),
+                'description' => $evaluation->getDescription(),
+                'maxScore' => $evaluation->getMaxScore(),
+                'deadline' => $evaluation->getDeadline(),
+                'hasResponded' => $hasResponded
+            ];
+        }
+        
         return $this->render('evaluation/indexEtudiant.html.twig', [
-            'evaluations' => $evaluations,
+            'evaluations' => $evaluationsData
         ]);
     }
 
@@ -508,21 +865,11 @@ public function newEnseignant($id, Request $request, EntityManagerInterface $ent
         return true;
     }
 
-    #[Route('/enseignant/{id}/statistics', name: 'app_evaluation_statistics', methods: ['GET'])]
-    public function showStatistics(Evaluation $evaluation, ReponseRepository $reponseRepository): Response
+    #[Route('/enseignant/details/{id}', name: 'app_evaluation_detailsenseignant', methods: ['GET'])]
+    public function detailsEnseignant(Evaluation $evaluation): Response
     {
-        $statistics = $this->statisticsService->calculateStatistics($evaluation);
-        $reponses = $reponseRepository->findBy(['evaluation' => $evaluation]);
-        $totalScore = 0;
-        foreach ($reponses as $reponse) {
-            $totalScore += $reponse->getNote() ?? 0;
-        }
-        
-        return $this->render('evaluation/show_result.html.twig', [
-            'evaluation' => $evaluation,
-            'statistics' => $statistics,
-            'reponses' => $reponses,
-            'totalScore' => $totalScore
+        return $this->render('evaluation/showenseignant.html.twig', [
+            'evaluation' => $evaluation
         ]);
     }
 
@@ -543,4 +890,50 @@ public function newEnseignant($id, Request $request, EntityManagerInterface $ent
         
         return $this->redirectToRoute('app_evaluation_indexetudiant');
     }
+
+    private function calculateMedian(array $scores): float
+    {
+        if (empty($scores)) {
+            return 0;
+        }
+        
+        sort($scores);
+        $count = count($scores);
+        $middle = floor($count / 2);
+
+        if ($count % 2 == 0) {
+            return ($scores[$middle - 1] + $scores[$middle]) / 2;
+        }
+
+        return $scores[$middle];
+    }
+
+    private function calculateStandardDeviation(array $scores): float
+    {
+        if (empty($scores)) {
+            return 0;
+        }
+
+        $mean = array_sum($scores) / count($scores);
+        $variance = array_sum(array_map(function($x) use ($mean) {
+            return pow($x - $mean, 2);
+        }, $scores)) / count($scores);
+
+        return sqrt($variance);
+    }
+
+    private function calculatePassingRate(array $scores, float $passingScore): float
+    {
+        if (empty($scores)) {
+            return 0;
+        }
+
+        $passing = count(array_filter($scores, function($score) use ($passingScore) {
+            return $score >= $passingScore;
+        }));
+
+        return $passing / count($scores);
+    }
+
+    
 }
