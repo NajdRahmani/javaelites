@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Controller;
-
+use Symfony\Component\HttpClient\HttpClient;
 use App\Entity\Cours;
 use App\Entity\Matiere;
 use App\Entity\User;
@@ -19,6 +19,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Security\Core\Security;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 #[Route('/cours')]
 final class CoursController extends AbstractController
@@ -286,53 +287,125 @@ public function confirmationAction(int $id, Request $request, EntityManagerInter
     }
 
 // enseignant
-    #[Route('/new/{id}', name: 'app_cours_new', methods: ['GET', 'POST'])]
-    public function new($id,Request $request, EntityManagerInterface $entityManager, SluggerInterface $slugger,
-    #[Autowire('%kernel.project_dir%/public/uploads/brochures')] string $brochuresDirectory
-): Response
-    {   $session = $request->getSession();
-        $userId = $session->get('id');
-       
-        $enseignant = $entityManager->getRepository(User::class)->find($userId);
-        $cour = new Cours();
-        $cour->setEnseignant($enseignant);
-        $form = $this->createForm(CoursType::class, $cour);
-        $form->handleRequest($request);
+#[Route('/new/{id}', name: 'app_cours_new', methods: ['GET', 'POST'])]
+public function new(
+    $id,
+    Request $request,
+    EntityManagerInterface $entityManager,
+    SluggerInterface $slugger,
+    #[Autowire('%kernel.project_dir%/public/uploads/brochures')] string $brochuresDirectory,
+    #[Autowire('%env(FACEBOOK_PAGE_ID)%')] string $facebookPageId,
+    #[Autowire('%env(FACEBOOK_ACCESS_TOKEN)%')] string $accessToken
+): Response {
+    $session = $request->getSession();
+    $userId = $session->get('id');
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $brochureFile = $form->get('brochure')->getData();
+    $enseignant = $entityManager->getRepository(User::class)->find($userId);
+    $cour = new Cours();
+    $cour->setEnseignant($enseignant);
+    $form = $this->createForm(CoursType::class, $cour);
+    $form->handleRequest($request);
 
-            // this condition is needed because the 'brochure' field is not required
-            // so the PDF file must be processed only when a file is uploaded
-            if ($brochureFile) {
-                $originalFilename = pathinfo($brochureFile->getClientOriginalName(), PATHINFO_FILENAME);
-                // this is needed to safely include the file name as part of the URL
-                $safeFilename = $slugger->slug($originalFilename);
-                $newFilename = $safeFilename.'-'.uniqid().'.'.$brochureFile->guessExtension();
+    if ($form->isSubmitted() && $form->isValid()) {
+        $brochureFile = $form->get('brochure')->getData();
 
-                // Move the file to the directory where brochures are stored
-                try {
-                    $brochureFile->move($brochuresDirectory, $newFilename);
-                } catch (FileException $e) {
-                    // ... handle exception if something happens during file upload
-                }
+        if ($brochureFile) {
+            $originalFilename = pathinfo($brochureFile->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeFilename = $slugger->slug($originalFilename);
+            $newFilename = $safeFilename . '-' . uniqid() . '.' . $brochureFile->guessExtension();
 
-                // updates the 'brochureFilename' property to store the PDF file name
-                // instead of its contents
-                $cour->setUrlImage($newFilename);
+            try {
+                $brochureFile->move($brochuresDirectory, $newFilename);
+                $brochurePath = $brochuresDirectory . '/' . $newFilename;
+                $this->addWatermark($brochurePath, $brochuresDirectory . '/watermark.png');
+            } catch (FileException $e) {
+                // Gestion d'erreur
             }
 
-            $entityManager->persist($cour);
-            $entityManager->flush();
-
-            return $this->redirectToRoute('app_chapitre_new',['id' => $cour->getId()], Response::HTTP_SEE_OTHER);
+            $cour->setUrlImage($newFilename);
         }
 
-        return $this->render('cours/new.html.twig', [
-            'cour' => $cour,
-            'form' => $form,
-        ]);
+        $entityManager->persist($cour);
+        $entityManager->flush();
+
+        // Partage sur Facebook
+        try {
+            $client = HttpClient::create();
+            
+            $postMessage = sprintf(
+                "🎓 Nouveau cours disponible !\n\n".
+                "📚 Titre : %s\n".
+                "📝 Description : %s\n".
+                "💵 Prix : %s\n".
+                "🌐 Langue : %s\n\n".
+                "👉 Découvrez-le maintenant : %s",
+                $cour->getTitle(),
+                $cour->getDescription(),
+                $cour->getPrix() > 0 ? $cour->getPrix().' €' : 'Gratuit',
+                strtoupper($cour->getLangue()),
+                $this->generateUrl('app_cours_show', ['id' => $cour->getId()], UrlGeneratorInterface::ABSOLUTE_URL)
+            );
+
+            $response = $client->request('POST', "https://graph.facebook.com/v22.0/{$facebookPageId}/feed", [
+                'query' => [
+                    'message' => $postMessage,
+                    'access_token' => $accessToken
+                ]
+            ]);
+
+            $statusCode = $response->getStatusCode();
+            $content = $response->toArray();
+
+            if ($statusCode !== 200 || isset($content['error'])) {
+                $this->addFlash('warning', 'Le cours a été créé mais le partage Facebook a échoué');
+            } else {
+                $this->addFlash('success', 'Le cours a été créé et partagé sur Facebook !');
+            }
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors du partage Facebook : '.$e->getMessage());
+        }
+
+        return $this->redirectToRoute('app_chapitre_new', ['id' => $cour->getId()], Response::HTTP_SEE_OTHER);
     }
+
+    return $this->render('cours/new.html.twig', [
+        'form' => $form->createView(),
+    ]);
+}
+
+/**
+ * Ajouter un watermark à une image.
+ */
+private function addWatermark(string $imagePath, string $watermarkPath): void
+{
+    $imagine = new \Imagine\Gd\Imagine();
+
+    // Load the main image and the watermark
+    $image = $imagine->open($imagePath);
+    $watermark = $imagine->open($watermarkPath);
+
+    // Resize the watermark to make it smaller
+    $scaledWatermark = $watermark->resize(
+        $watermark->getSize()->scale(0.2) // Scale to 50% of the original size
+    );
+
+    // Get the sizes of the main image and scaled watermark
+    $size = $image->getSize();
+    $wSize = $scaledWatermark->getSize();
+
+    // Calculate the position of the watermark (bottom-right, closer to the edge)
+    $bottomRight = new \Imagine\Image\Point(
+        $size->getWidth() - $wSize->getWidth() - 2, // 5px margin from the right
+        $size->getHeight() - $wSize->getHeight() - 2 // 5px margin from the bottom
+    );
+
+    // Apply the watermark
+    $image->paste($scaledWatermark, $bottomRight, 50);
+    // Save the image with the watermark
+    $image->save($imagePath);
+}
+
+
     // enseignant
     #[Route('/{id}/edit', name: 'app_cours_edit', methods: ['GET', 'POST'])]
     public function edit(

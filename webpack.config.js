@@ -9,6 +9,7 @@ Encore
     .cleanupOutputBeforeBuild()
     .enableBuildNotifications()
     .enableSourceMaps(!Encore.isProduction())
-    .enableVersioning(Encore.isProduction());
+    .enableVersioning(Encore.isProduction())
+    .addEntry('joyride', './assets/react/components/JoyrideTour.jsx');
 
 module.exports = Encore.getWebpackConfig();

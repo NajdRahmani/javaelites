@@ -14,6 +14,13 @@
 {% endblock %}
 
 {% block body %}
+
+  <div id="joyride-root"></div>
+  <div id="premier-element">Contenu cible 1</div>
+  <div class="second-element">Contenu cible 2</div>
+
+
+
 <div class="container py-5">
     <h1 class="display-4 mb-4 text-center fw-bold">Explorez Nos Cours</h1>
 
@@ -157,4 +164,8 @@
         margin-right:10px;
     }
 </style>
+<script>{{ parent() }}
+  {{ encore_entry_script_tags('joyride') }}
+</script>
+
 {% endblock %}
