@@ -1,10 +1,10 @@
 <?php
 
 namespace App\Controller;
-use Symfony\Component\Form\FormInterface;
-use Symfony\UX\Chartjs\Builder\ChartBuilderInterface;
-use Symfony\UX\Chartjs\Model\Chart;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Entity\Events;
+use App\Entity\User;
+use App\Entity\Cours;
 use App\Form\EventsType;
 use App\Repository\EventsRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -30,9 +30,13 @@ final class EventsController extends AbstractController{
     #[Route(name: 'app_events_index', methods: ['GET'])]
     public function index(EventsRepository $eventsRepository, UserRepository $userRepository): Response
     {
-        
+        $session = $this->requestStack->getSession();
+        $user_id = $session->get('id');
+        $user = $userRepository->findOneById($user_id);
+        $recommendedEvents = $eventsRepository->findRecommendedEvents($user);   
         return $this->render('events/index.html.twig', [
             'events' => $eventsRepository->findAll(),
+            'recommendation' => $recommendedEvents,
         ]);
     }
 
@@ -188,6 +192,49 @@ final class EventsController extends AbstractController{
         return $this->render('events/show.html.twig', [
             'event' => $event,
             'user' => $user,
+        ]);
+    }
+
+    #[Route('/api/user/{id}/data', name: 'user_data', methods: ['GET'])]
+    public function getUserData($id, EntityManagerInterface $entityManager): JsonResponse
+    {
+        // Find the user
+        $user = $entityManager->getRepository(User::class)->find($id);
+        if (!$user) {
+            return new JsonResponse(['error' => 'User not found'], 404);
+        }
+
+        // Get the related courses
+        $courses = $entityManager->getRepository(Cours::class)->findBy(['enseignant' => $user]);
+
+        $eventsregistrations = $entityManager->getRepository(EventRegistration::class)->findBy(['user' => $user]);
+
+        $events = [];
+            foreach ($eventsregistrations as $registration) {
+                $event = $registration->getEvent();
+                if ($event !== null) {
+                    $events[] = $event;
+                }
+            }
+
+
+        // Convert data to an array
+        $courseData = array_map(fn($course) => [
+            'title' => $course->getTitle(),
+            'price' => $course->getPrix(),
+        ], $courses);
+
+        $eventData = array_map(fn($event) => [
+            'title' => $event->getTitle(),
+            'start_date' => $event->getStartDate()->format('Y-m-d H:i:s'),
+            'end_date' => $event->getEndDate()->format('Y-m-d H:i:s')
+        ], $events);
+
+        return new JsonResponse([
+            'username' => $user->getNom(),
+            'role' => $user->getRoles(),
+            'courses' => $courseData,
+            'events' => $eventData
         ]);
     }
 }

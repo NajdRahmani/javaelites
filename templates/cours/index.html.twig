@@ -14,16 +14,27 @@
 {% endblock %}
 
 {% block body %}
+
 <div class="container py-5">
     <h1 class="display-4 mb-4 text-center fw-bold">Explorez Nos Cours</h1>
 
-    <!-- Filtres améliorés -->
-    <div class="card shadow-lg mb-5 border-0">
-        <div class="card-body p-4">
-            <form action="{{ path('app_cours_filter') }}" method="get" class="row g-3 align-items-center">
-                <div class="col-md-8">
-                    <label for="matiere" class="form-label text-secondary mb-2">Filtrer par matière :</label>
-                    <select name="matiere" id="matiere" class="form-select form-select-lg shadow-sm">
+    <!-- Filtres et recherche -->
+    <!-- Filtres et recherche améliorés -->
+<div class="card shadow-lg mb-5 border-0 bg-light">
+    <div class="card-body p-4">
+        <form action="{{ path('app_cours_index2') }}" method="get" class="row g-3 align-items-center">
+            <div class="col-md-5 position-relative">
+                <input type="text" 
+                       name="search" 
+                       class="form-control ps-5" 
+                       placeholder="Rechercher un cours..."
+                       value="{{ app.request.query.get('search') }}">
+            </div>
+
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="fas fa-filter text-muted"></i></span>
+                    <select name="matiere" class="form-select form-select-lg shadow-sm border-start-0">
                         <option value="">Toutes les matières</option>
                         {% for matiere in matieres %}
                             <option value="{{ matiere.id }}" {{ app.request.query.get('matiere') == matiere.id ? 'selected' : '' }}>
@@ -32,28 +43,67 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-4 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary btn-lg w-100 shadow-lg">
-                        <i class="fas fa-filter me-2"></i>Filtrer
-                    </button>
-                </div>
-            </form>
-        </div>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-lg w-100 shadow-lg hover-scale">
+                    <i class="fas fa-sliders-h me-2"></i>Appliquer
+                </button>
+                <a href="{{ path('app_cours_index2') }}" class="btn btn-light btn-lg border hover-scale" title="Réinitialiser">
+                    <i class="fas fa-undo text-secondary"></i>
+                </a>
+            </div>
+        </form>
     </div>
+</div>
+
+    <!-- En-têtes de tri -->
+   <div class="d-flex justify-content-end mb-4">
+    <div class="btn-group shadow-sm rounded-pill overflow-hidden">
+        {% set current_sort = current_sort|default({'field': 'c.title', 'direction': 'asc'}) %}
+        
+        <a href="{{ path('app_cours_index2', app.request.query.all|merge({
+            'sort_by': 'c.title', 
+            'sort_order': (current_sort.field == 'c.title' and current_sort.direction == 'asc') ? 'desc' : 'asc'
+        })) }}" 
+           class="btn btn-sort {{ current_sort.field == 'c.title' ? 'active' : '' }}">
+            <i class="fas fa-font me-2"></i>Titre
+            <i class="fas fa-sort-{{ current_sort.field == 'c.title' ? current_sort.direction|lower : 'asc' }} ms-2"></i>
+        </a>
+        
+        <a href="{{ path('app_cours_index2', app.request.query.all|merge({
+            'sort_by': 'nbChapitres', 
+            'sort_order': (current_sort.field == 'nbChapitres' and current_sort.direction == 'asc') ? 'desc' : 'asc'
+        })) }}" 
+           class="btn btn-sort {{ current_sort.field == 'nbChapitres' ? 'active' : '' }}">
+            <i class="fas fa-list-ol me-2"></i>Chapitres
+            <i class="fas fa-sort-{{ current_sort.field == 'nbChapitres' ? current_sort.direction|lower : 'asc' }} ms-2"></i>
+        </a>
+        
+        <a href="{{ path('app_cours_index2', app.request.query.all|merge({
+            'sort_by': 'NbEtudiants', 
+            'sort_order': (current_sort.field == 'NbEtudiants' and current_sort.direction == 'asc') ? 'desc' : 'asc'
+        })) }}" 
+           class="btn btn-sort {{ current_sort.field == 'NbEtudiants' ? 'active' : '' }}">
+            <i class="fas fa-users me-2"></i>Étudiants
+            <i class="fas fa-sort-{{ current_sort.field == 'NbEtudiants' ? current_sort.direction|lower : 'asc' }} ms-2"></i>
+        </a>
+    </div>
+</div>
 
     <!-- Grille de cours -->
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        {% for cour in cours %}
-            <div class="col">
-                <div class="card h-100 course-card shadow-lg border-0 overflow-hidden transform-on-hover">
+        {% for cour in pagination %}
+            <div class="col course-card">
+                <div class="card h-100 shadow-lg border-0 overflow-hidden transform-on-hover">
                     <div class="card-header position-relative p-0 overflow-hidden" style="height: 180px;">
                         <img src="{{ asset('uploads/brochures/' ~ cour.urlImage) }}" 
                              class="card-img-top h-100 object-fit-cover" 
                              alt="{{ cour.title }}">
-                        <div class="image-overlay"><span class="badge bg-primary position-absolute top-0 end-0 m-3 shadow-sm" style="right: 5px;">{{cour.enseignant.nom}} {{cour.enseignant.prenom}}</span></div>
-                        <span class="badge bg-primary position-absolute top-0 end-0 m-3 shadow-sm">
-                            {{ cour.matiere.titre }}
-                        </span>
+                        <div class="image-overlay">
+                            <span class="badge bg-primary position-absolute top-0 end-0 m-3 shadow-sm">
+                                {{ cour.enseignant.nom }} {{ cour.enseignant.prenom }}
+                            </span>
+                        </div>
                     </div>
                     
                     <div class="card-body position-relative pt-4">
@@ -97,9 +147,54 @@
             </div>
         {% endfor %}
     </div>
+
+    <!-- Pagination -->
+    <div class="mt-5 d-flex justify-content-center">
+    {{ knp_pagination_render(pagination, '@KnpPaginator/Pagination/twitter_bootstrap_v4_pagination.html.twig', {
+        'align': 'center',
+        'size': 'large',
+        'rounded': true,
+    }) }}
+</div>
 </div>
 
 <style>
+    .navigation {
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .page-item.active .page-link {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+
+    .page-link {
+        color: #0d6efd;
+    }
+
+    .transform-on-hover {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .transform-on-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 1rem 3rem rgba(0,0,0,.15) !important;
+    }
+    
+    .image-overlay {
+        position: absolute;
+        color:white;    
+        top: 0;
+        left: 0;
+        right: 0;
+        padding-left: 39px;
+        padding-top: 10px;
+        font-family: ui-serif;
+        bottom: 0;
+        background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,0.6) 100%);
+    }
     .transform-on-hover {
         transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
@@ -156,5 +251,102 @@
         margin-left: 10px;
         margin-right:10px;
     }
+    
+    .course-avatar {
+        z-index: 2;
+        margin-top: -40px;
+    }
+    
+    .object-fit-cover {
+        object-fit: cover;
+        object-position: center;
+    }
+
+    .btn-hover {
+        background-color:rgb(123, 160, 216);
+        color:black !important;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-hover:hover {
+        background-color: #0d6efd;
+        color: white !important;
+    }
+     .pagination {
+        gap: 0.5rem;
+    }
+    
+    .page-link {
+        border-radius: 0.75rem !important;
+        min-width: 40px;
+        text-align: center;
+        transition: all 0.2s ease;
+        border: 1px solid #dee2e6;
+    }
+    
+    .page-link:hover {
+        background-color: #e9ecef;
+        transform: translateY(-1px);
+    }
+    
+    .page-item.active .page-link {
+        font-weight: 600;
+        box-shadow: 0 2px 6px rgba(13, 110, 253, 0.2);
+    }
+
+    /* Styles améliorés pour le tri */
+    .btn-sort {
+        background: #fff;
+        color: #6c757d;
+        border: 1px solid #dee2e6;
+        padding: 0.75rem 1.5rem;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-sort:hover {
+        background: #f8f9fa;
+        color: #0d6efd;
+    }
+    
+    .btn-sort.active {
+        background: #0d6efd !important;
+        color: white !important;
+        border-color: #0d6efd;
+    }
+
+    /* Améliorations pour la recherche/filtre */
+    .hover-scale {
+        transition: transform 0.2s ease;
+    }
+    
+    .hover-scale:hover {
+        transform: scale(1.05);
+    }
+    
+    .form-control:focus, .form-select:focus {
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .btn-sort {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .form-control, .form-select {
+            font-size: 1rem !important;
+        }
+        
+        .btn-group {
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+    }
 </style>
+
+<script>{{ parent() }}
+  {{ encore_entry_script_tags('joyride') }}
+</script>
+
 {% endblock %}

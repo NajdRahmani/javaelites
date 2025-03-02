@@ -1,6 +1,6 @@
 <?php
 namespace App\Entity;
-
+use Algolia\SearchBundle\Annotation\Property;
 use App\Repository\MatiereRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -8,6 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: MatiereRepository::class)]
+
 class Matiere
 {
     #[ORM\Id]

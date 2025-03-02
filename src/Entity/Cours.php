@@ -37,7 +37,8 @@ class Cours
     /**
      * @var Collection<int, Chapitre>
      */
-    #[ORM\OneToMany(mappedBy: 'cours', targetEntity: Chapitre::class, cascade: ['remove'], orphanRemoval: true)]    private Collection $chapitres;
+    #[ORM\OneToMany(mappedBy: 'cours', targetEntity: Chapitre::class, cascade: ['remove'], orphanRemoval: true)]    
+    private Collection $chapitres;
 
     #[ORM\ManyToOne(inversedBy: 'cours')]
     #[Assert\NotNull(message: "La matière ne peut pas être vide.")]
@@ -131,6 +132,13 @@ class Cours
     public function getTitle(): ?string
     {
         return $this->title;
+    }
+    public function getDureeTotale(): int {
+        return array_reduce(
+            $this->chapitres->toArray(), 
+            fn(int $total, Chapitre $chapitre) => $total + $chapitre->getDureeEstimee(), 
+            0
+        );
     }
 
     public function setTitle(string $title): static

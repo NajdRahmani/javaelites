@@ -67,12 +67,19 @@ class Events
     #[ORM\Column(nullable: true)]
     private ?float $latitude = null;
 
+    /**
+     * @var Collection<int, UserEventPreference>
+     */
+    #[ORM\OneToMany(targetEntity: UserEventPreference::class, mappedBy: 'event')]
+    private Collection $userEventPreferences;
+
     public function __construct()
     {
         if ($this->created_at === null) {
             $this->created_at = new \DateTime();
         }
         $this->registrations = new ArrayCollection();
+        $this->userEventPreferences = new ArrayCollection();
     }
 
     public function getId(): ?int { return $this->id; }
@@ -129,6 +136,36 @@ class Events
     public function setLatitude(?float $latitude): static
     {
         $this->latitude = $latitude;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, UserEventPreference>
+     */
+    public function getUserEventPreferences(): Collection
+    {
+        return $this->userEventPreferences;
+    }
+
+    public function addUserEventPreference(UserEventPreference $userEventPreference): static
+    {
+        if (!$this->userEventPreferences->contains($userEventPreference)) {
+            $this->userEventPreferences->add($userEventPreference);
+            $userEventPreference->setEvent($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUserEventPreference(UserEventPreference $userEventPreference): static
+    {
+        if ($this->userEventPreferences->removeElement($userEventPreference)) {
+            // set the owning side to null (unless already changed)
+            if ($userEventPreference->getEvent() === $this) {
+                $userEventPreference->setEvent(null);
+            }
+        }
 
         return $this;
     }

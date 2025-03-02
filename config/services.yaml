@@ -6,16 +6,21 @@
 parameters:
     event_images_directory: '%kernel.project_dir%/public/uploads/events'
     upload_directory: '%kernel.project_dir%/public/uploads/'
-
+    ml_endpoint: '%env(ML_ENDPOINT)%'
+    app_name: 'Knowlity'
 
 services:
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
-        
-    # makes classes in src/ available to be used as services
-    # this creates a service per class whose id is the fully-qualified class name
+    
+    App\Service\PdfGenerator:
+        arguments:
+            $twig: '@twig'
+            $parameterBag: '@parameter_bag'
+            $publicDir: '%kernel.project_dir%/public'
+             # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
         exclude:
@@ -29,3 +34,8 @@ services:
     App\Service\MailService:
         arguments:
             $mailer: '@mailer.mailer'
+
+
+    Knp\Component\Pager\PaginatorInterface:
+        alias: knp_paginator        
+    

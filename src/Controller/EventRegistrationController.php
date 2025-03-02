@@ -18,6 +18,7 @@ use Symfony\Component\Mime\Email;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Writer\SvgWriter;
+use App\Entity\UserEventPreference;
 
 #[Route('/event/registration')]
 final class EventRegistrationController extends AbstractController
@@ -39,15 +40,18 @@ final class EventRegistrationController extends AbstractController
     }
 
     #[Route('/new/{id}', name: 'app_event_registration_new', methods: ['GET', 'POST'])]
-    public function register( int $id, EntityManagerInterface $em,UserRepository $userRepository,  Request $request ): Response 
+    public function register(int $id, EntityManagerInterface $em, UserRepository $userRepository, Request $request): Response 
     {
-
         $session = $this->requestStack->getSession();
         $user_id = $session->get('id');
 
         $event = $em->getRepository(Events::class)->find($id);
-        $user = $userRepository->findOneById($user_id); // Replace with real user logic
-        
+        $user = $userRepository->findOneById($user_id); 
+
+        if (!$event || !$user) {
+            throw $this->createNotFoundException('Event or User not found.');
+        }
+
         $existingRegistration = $em->getRepository(EventRegistration::class)->findOneBy([
             'event' => $event,
             'user' => $user,
@@ -57,34 +61,48 @@ final class EventRegistrationController extends AbstractController
             $this->addFlash('info', 'You are already registered for this event.');
             return $this->redirectToRoute('app_events_show', ['id' => $event->getId()]);
         }
-        // Create form with empty Reservation object
+
         $reservation = new EventRegistration();
         $form = $this->createForm(EventRegistrationType::class, $reservation);
-    
-        // Handle form submission
         $form->handleRequest($request);
         
         if ($form->isSubmitted() && $form->isValid()) {
             // Associate entities
             $reservation->setEvent($event);
             $reservation->setUser($user);
-    
-            // Persist and flush
+
             $em->persist($reservation);
+
+            // ✅ Store or update user preference
+            $preference = $em->getRepository(UserEventPreference::class)->findOneBy([
+                'user' => $user,
+                'category' => $event->getCategory() // Assuming 'type' is the category
+            ]);
+
+            if ($preference) {
+                $preference->setPreferenceScore($preference->getPreferenceScore() + 1);
+            } else {
+                $preference = new UserEventPreference();
+                $preference->setUser($user);
+                $preference->setEvent($event);
+                $preference->setCategory($event->getCategory());
+                $preference->setPreferenceScore(1);
+                $em->persist($preference);
+            }
+
             $em->flush();
-    
-            // Redirect on success
+
             $this->addFlash('success', 'Reservation successful!');
             return $this->redirectToRoute('app_events_index');
         }
 
-        // Render form with errors
         return $this->render('event_registration/new.html.twig', [
             'event' => $event,
             'user' => $user,
             'form' => $form->createView(),
         ]);
     }
+
 
     #[Route('/{id}', name: 'app_event_registration_show', methods: ['GET'])]
     public function show(EventRegistration $eventRegistration): Response

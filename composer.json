@@ -11,8 +11,15 @@
         "doctrine/doctrine-bundle": "^2.13",
         "doctrine/doctrine-migrations-bundle": "^3.4",
         "doctrine/orm": "^3.3",
+<<<<<<< HEAD
         "endroid/qr-code-bundle": "^6.0",
+=======
+        "dompdf/dompdf": "^3.1",
+        "endroid/qr-code-bundle": "^6.0",
+        "imagine/imagine": "^1.5",
+>>>>>>> 7dc5d7d53a6346b8efa38f919daa976bf6c26cd3
         "jms/translation-bundle": "2.6",
+        "knplabs/knp-paginator-bundle": "^6.6",
         "liip/imagine-bundle": "^2.13",
         "phpdocumentor/reflection-docblock": "^5.6",
         "phpstan/phpdoc-parser": "^2.0",
@@ -59,6 +66,9 @@
             "symfony/runtime": true,
             "endroid/installer": true
         },
+        "platform": {
+        "php": "8.2.4"
+    },
         "sort-packages": true
     },
     "autoload": {

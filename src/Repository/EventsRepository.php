@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Events;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use App\Entity\User;
 
 /**
  * @extends ServiceEntityRepository<Events>
@@ -48,4 +49,18 @@ class EventsRepository extends ServiceEntityRepository
             ->getOneOrNullResult()
         ;
     }
+    
+
+    public function findRecommendedEvents(User $user)
+    {
+        return $this->createQueryBuilder('e')
+            ->innerJoin('App\Entity\UserEventPreference', 'p', 'WITH', 'p.category = e.category')
+            ->where('p.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('p.preference_score', 'DESC')
+            ->setMaxResults(5)
+            ->getQuery()
+            ->getResult();
+    }
+
 }
