@@ -19,8 +19,8 @@
 
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
         {% for cour in cours %}
-        <div class="col">
-            <div class="card h-100 shadow-lg course-card">
+        <div class="col course-card d-none">
+            <div class="card h-100 shadow-lg">
                 <div class="card-header position-relative p-0 overflow-hidden" style="height: 180px;">
                     <img src="{{ asset('uploads/brochures/' ~ cour.urlImage) }}" 
                          class="img-fluid h-100 w-100 object-fit-cover"
@@ -71,63 +71,105 @@
         </div>
         {% endfor %}
     </div>
+    
+    <div class="text-center mt-4">
+        <button id="loadMoreCourses" class="btn btn-link">
+            <i class="fas fa-arrow-down"></i> Afficher plus
+        </button>
+    </div>
 </div>
 
+<script>
+   document.addEventListener("DOMContentLoaded", () => {
+    const courses = document.querySelectorAll(".course-card");
+    const loadMoreButton = document.getElementById("loadMoreCourses");
+    let visibleCourses = 6;
+
+    // Afficher les premiers cours
+    courses.forEach((course, index) => {
+        if (index < visibleCourses) {
+            course.classList.remove("d-none");
+        }
+    });
+
+    // Cacher le bouton initialement si tous les cours sont visibles
+    if (visibleCourses >= courses.length) {
+        loadMoreButton.style.display = "none";
+    }
+
+    // Gérer le clic sur "Afficher plus"
+    loadMoreButton.addEventListener("click", () => {
+        visibleCourses += 6;
+        courses.forEach((course, index) => {
+            if (index < visibleCourses) {
+                course.classList.remove("d-none");
+            }
+        });
+
+        // Cacher le bouton si tous les cours sont visibles
+        if (visibleCourses >= courses.length) {
+            loadMoreButton.style.display = "none";
+        }
+    });
+});
+</script>
+
 <style>
-.text-center{
+.text-center {
       margin-top: 41px;
 }
-.col{margin-bottom:10px}
-.text-muted{
-   margin-left: 10px;
-        margin-right:10px;
+.col {
+    margin-bottom: 10px;
 }
-    .course-card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        border-radius: 1rem;
-        overflow: hidden;
-    }
-    
-    .course-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 1rem 2rem rgba(0,0,0,.15) !important;
-    }
-    
-    .image-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-         padding-left: 39px;
+.text-muted {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+.course-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.course-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 1rem 2rem rgba(0,0,0,.15) !important;
+}
+
+.image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding-left: 39px;
     padding-top: 10px;
     font-family: ui-serif;
-        bottom: 0;
-        background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,0.6) 100%);
-    }
-    
-    .course-avatar {
-        z-index: 2;
-        margin-top: -40px;
-    }
-    
-    .object-fit-cover {
-        object-fit: cover;
-        object-position: center;
-    }
-    
-    .btn-hover {
-        transition: all 0.3s ease;
-    }
-    
-    .btn-hover:hover {
-        background-color: #0d6efd;
-        color: white !important;
-    }
-    
-    .badge {
-        font-size: 0.9rem;
-        padding: 0.5rem 1rem;
-    }
-    
+    bottom: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,0.6) 100%);
+}
+
+.course-avatar {
+    z-index: 2;
+    margin-top: -40px;
+}
+
+.object-fit-cover {
+    object-fit: cover;
+    object-position: center;
+}
+
+.btn-hover {
+    transition: all 0.3s ease;
+}
+
+.btn-hover:hover {
+    background-color: #0d6efd;
+    color: white !important;
+}
+
+.badge {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+}
 </style>
 {% endblock %}

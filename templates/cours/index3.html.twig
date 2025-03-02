@@ -107,7 +107,7 @@
 </div>
 </div>
 <script>
-    document.addEventListener("DOMContentLoaded", () => {
+   document.addEventListener("DOMContentLoaded", () => {
     const courses = document.querySelectorAll(".course-card");
     const loadMoreButton = document.getElementById("loadMoreCourses");
     let visibleCourses = 6;
@@ -118,6 +118,11 @@
             course.classList.remove("d-none");
         }
     });
+
+    // Cacher le bouton initialement si tous les cours sont visibles
+    if (visibleCourses >= courses.length) {
+        loadMoreButton.style.display = "none";
+    }
 
     // Gérer le clic sur "Afficher plus"
     loadMoreButton.addEventListener("click", () => {

@@ -37,7 +37,8 @@ class Cours
     /**
      * @var Collection<int, Chapitre>
      */
-    #[ORM\OneToMany(mappedBy: 'cours', targetEntity: Chapitre::class, cascade: ['remove'], orphanRemoval: true)]    private Collection $chapitres;
+    #[ORM\OneToMany(mappedBy: 'cours', targetEntity: Chapitre::class, cascade: ['remove'], orphanRemoval: true)]    
+    private Collection $chapitres;
 
     #[ORM\ManyToOne(inversedBy: 'cours')]
     #[Assert\NotNull(message: "La matière ne peut pas être vide.")]

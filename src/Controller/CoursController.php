@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Controller;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 use Symfony\Component\HttpClient\HttpClient;
 use App\Entity\Cours;
 use App\Entity\Matiere;
@@ -13,6 +15,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use App\Service\PdfGenerator;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -173,6 +176,47 @@ final class CoursController extends AbstractController
         ]);
     }
     
+#[Route('/filter2', name: 'app_filter2', methods: ['GET'])]
+public function filter2(
+    Request $request,
+    CoursRepository $coursRepository,
+    MatiereRepository $matiereRepository,
+    UserRepository $userRepository
+): Response {
+    $session = $request->getSession();
+    $userId = $session->get('id'); // Récupère l'ID de l'utilisateur connecté
+
+    if (!$userId) {
+        throw $this->createAccessDeniedException('Utilisateur non connecté.');
+    }
+
+    $user = $userRepository->find($userId);
+
+    if (!$user) {
+        throw $this->createNotFoundException('Utilisateur introuvable.');
+    }
+
+    // Filtre pour la matière
+    $matiereId = $request->query->get('matiere');
+
+    // Récupération des cours auxquels l'utilisateur est inscrit, avec un filtre par matière (si fourni)
+    $queryBuilder = $coursRepository->createQueryBuilder('c')
+        ->innerJoin('c.etudiantsfavoris', 'e') // Joindre la relation "etudiants"
+        ->where('e.id = :userId') // Filtrer par l'utilisateur connecté
+        ->setParameter('userId', $userId);
+
+    if ($matiereId) {
+        $queryBuilder->andWhere('c.matiere = :matiereId') // Ajouter le filtre par matière
+            ->setParameter('matiereId', $matiereId);
+    }
+
+    $cours = $queryBuilder->getQuery()->getResult();
+
+    return $this->render('cours/index1.html.twig', [
+        'cours' => $cours,
+        'matieres' => $matiereRepository->findAll(),
+    ]);
+}
       // etudiant
       #[Route('/filter', name: 'app_cours_filter', methods: ['GET'])]
       public function filter(Request $request, CoursRepository $coursRepository, MatiereRepository $matiereRepository): Response
@@ -221,48 +265,7 @@ public function filter1(
 
     $cours = $queryBuilder->getQuery()->getResult();
 
-    return $this->render('cours/index.html.twig', [
-        'cours' => $cours,
-        'matieres' => $matiereRepository->findAll(),
-    ]);
-}
-#[Route('/filter2', name: 'app_cours_filter2', methods: ['GET'])]
-public function filter2(
-    Request $request,
-    CoursRepository $coursRepository,
-    MatiereRepository $matiereRepository,
-    UserRepository $userRepository
-): Response {
-    $session = $request->getSession();
-    $userId = $session->get('id'); // Récupère l'ID de l'utilisateur connecté
-
-    if (!$userId) {
-        throw $this->createAccessDeniedException('Utilisateur non connecté.');
-    }
-
-    $user = $userRepository->find($userId);
-
-    if (!$user) {
-        throw $this->createNotFoundException('Utilisateur introuvable.');
-    }
-
-    // Filtre pour la matière
-    $matiereId = $request->query->get('matiere');
-
-    // Récupération des cours auxquels l'utilisateur est inscrit, avec un filtre par matière (si fourni)
-    $queryBuilder = $coursRepository->createQueryBuilder('c')
-        ->innerJoin('c.etudiantsfavoris', 'e') // Joindre la relation "etudiants"
-        ->where('e.id = :userId') // Filtrer par l'utilisateur connecté
-        ->setParameter('userId', $userId);
-
-    if ($matiereId) {
-        $queryBuilder->andWhere('c.matiere = :matiereId') // Ajouter le filtre par matière
-            ->setParameter('matiereId', $matiereId);
-    }
-
-    $cours = $queryBuilder->getQuery()->getResult();
-
-    return $this->render('cours/index1.html.twig', [
+    return $this->render('cours/index3.html.twig', [
         'cours' => $cours,
         'matieres' => $matiereRepository->findAll(),
     ]);
@@ -318,6 +321,32 @@ public function confirmationAction(int $id, Request $request, EntityManagerInter
         'id' => $cour->getId()
     ], Response::HTTP_SEE_OTHER);
 }
+#[Route('/generate-pdf/{userId}/{coursId}', name: 'generate_pdf')]
+    public function generatePdf(
+        int $userId, 
+        int $coursId, 
+        PdfGenerator $pdfGenerator, EntityManagerInterface $entityManager
+    ): Response {
+        // Récupérez vos entités (exemple avec Doctrine)
+        $user = $entityManager->getRepository(User::class)->find($userId);
+        $cours = $entityManager->getRepository(Cours::class)->find($coursId);
+        if (!$user || !$cours) {
+            throw $this->createNotFoundException('Utilisateur ou cours non trouvé');
+        }
+
+        // Génération du PDF
+        $pdfContent = $pdfGenerator->generateRegistrationPdf($user, $cours);
+
+        // Réponse avec le PDF
+        return new Response(
+            $pdfContent,
+            200,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="confirmation_inscription.pdf"'
+            ]
+        );
+    }
      // enseignant
      #[Route('/enseignant/{id}', name: 'app_cours', methods: ['GET'])]     
      public function show1(int $id, Request $request, EntityManagerInterface $entityManager): Response
