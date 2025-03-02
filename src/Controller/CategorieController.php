@@ -96,12 +96,44 @@ final class CategorieController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'app_categorie_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Categorie $categorie, EntityManagerInterface $entityManager): Response
+    public function edit(Request $request, Categorie $categorie, EntityManagerInterface $entityManager, SluggerInterface $slugger,
+    #[Autowire('%kernel.project_dir%/public/uploads/brochures')] string $brochuresDirectory,
+    FilterManager $filterManager): Response
     {
         $form = $this->createForm(CategorieType::class, $categorie);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $brochureFile = $form->get('brochure')->getData();
+            if ($brochureFile) {
+                $originalFilename = pathinfo($brochureFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename.'-'.uniqid().'.jpg'; // Force output to JPEG
+            
+                // Convert to a supported format using Imagine
+                $imagine = new Imagine();
+                $image = $imagine->open($brochureFile->getPathname());
+                $imageContent = $image->get('jpeg', ['quality' => 80]); // Convert to JPEG
+            
+                // Create Binary with correct MIME type
+                $binary = new Binary($imageContent, 'image/jpeg');
+            
+                // Apply filter
+                $filteredImage = $filterManager->applyFilter($binary, 'my_filter');
+            
+                // Save the filtered image
+                try {
+                    file_put_contents(
+                        $brochuresDirectory . '/' . $newFilename,
+                        $filteredImage->getContent()
+                    );
+                } catch (FileException $e) {
+                    // Gérer l'exception si le fichier ne peut pas être déplacé
+                }
+    
+                // Mettez à jour l'entité avec le nouveau nom de fichier de l'image
+                $categorie->setIcone($newFilename);
+            }
             $entityManager->flush();
 
             return $this->redirectToRoute('app_categorie_index', [], Response::HTTP_SEE_OTHER);

@@ -47,6 +47,7 @@
                                 <i class="fas fa-book-open me-2"></i>{{ cour.nbChapitres }} Chapitres
                             </h5>
                         </div>
+                        
                        
                             <div class="bg-light p-3 rounded">
     <h2 class="text-primary mb-0">
@@ -82,8 +83,14 @@
         {% endif %}
     </form>
 </div>
-
-
+<div style="
+    margin-bottom: 25px;
+" class=" w-100 text-center py-3">
+<a href="{{ path('generate_pdf', {'userId': app.session.get('id'), 'coursId': cour.id}) }}" 
+   class="alert alert-primary w-100 text-center py-3">
+    Télécharger le reçu (PDF)
+</a>
+</div>
     <div class="alert alert-success w-100 text-center py-3">
     
         <i class="fas fa-check-circle me-2"></i>Vous êtes déjà inscrit à ce cours
@@ -201,9 +208,9 @@ function hideVerification() {
     to { opacity: 1; transform: translateY(0); }
 }
     .object-fit-cover {
-        object-fit: cover;
-            height: 342px;
-    width: 568px;
+        object-fit: contain;
+            height: 100%;
+    width: %;
     }
     .btn-outline-secondary{
       color:black;
