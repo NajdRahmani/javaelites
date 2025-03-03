@@ -1,23 +1,195 @@
 {# templates/evaluation/answer.html.twig #}
-
 {% extends 'base3.html.twig' %}
 
 {% block title %}Répondre à l'évaluation{% endblock %}
 
-{% block body %}
-    <h1>Répondre à l'évaluation: {{ evaluation.title }}</h1>
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .question-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .question-header {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px 8px 0 0;
+            border-bottom: 1px solid #ddd;
+        }
+        .question-body {
+            padding: 20px;
+        }
+        .pagination-info {
+            margin: 20px 0;
+            text-align: center;
+            color: #6c757d;
+        }
+        .evaluation-header {
+            background: linear-gradient(45deg, #2b5876, #4e4376);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .deadline-badge {
+            background-color: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+    </style>
+{% endblock %}
 
-    <form method="POST">
-        {% for question in questions %}
-            <div>
-                <h3>{{ question.title }}</h3>
-                <p>{{ question.description }}</p>
-                
-                {# Le champ de réponse, par exemple une zone de texte ou un champ à choix multiple #}
-                <input type="text" name="answer_{{ loop.index0 }}" placeholder="Répondez à la question...">
+{% block body %}
+<div class="container py-4">
+    <div class="evaluation-header">
+        <h1 class="mb-3">{{ evaluation.title }}</h1>
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="deadline-badge">
+                <i class="fas fa-clock me-2"></i>
+                Date limite : {{ evaluation.deadline|date('d/m/Y H:i') }}
+            </span>
+        </div>
+        <p class="text-light mt-3 mb-0">
+            <i class="fas fa-info-circle me-2"></i>
+            Vous pouvez naviguer entre les pages et répondre aux questions. Toutes vos réponses seront sauvegardées lorsque vous cliquerez sur "Soumettre mes réponses" sur la dernière page.
+        </p>
+    </div>
+
+    <form method="POST" action="{{ path('etudiant_evaluation_answer', {'id': evaluation.id}) }}" id="evaluationForm">
+        <div class="pagination-info">
+            Page {{ pagination.currentPageNumber }} sur {{ pagination.pageCount }} 
+            ({{ pagination.totalItemCount }} questions au total)
+        </div>
+
+        {% for question in pagination %}
+            <div class="question-card">
+                <div class="question-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        Question {{ question.ordreQuestion }}
+                        {% if question.point > 1 %}
+                            <span class="badge bg-primary">{{ question.point }} points</span>
+                        {% else %}
+                            <span class="badge bg-primary">{{ question.point }} point</span>
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="question-body">
+                    <div class="mb-4">
+                        <p class="question-text">{{ question.enonce }}</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="reponse_{{ question.id }}" class="form-label">Votre réponse :</label>
+                        <textarea 
+                            class="form-control" 
+                            id="reponse_{{ question.id }}" 
+                            name="reponses[{{ question.id }}]" 
+                            rows="4"
+                            placeholder="Votre réponse (facultative)"
+                        >{{ existingResponses[question.id] is defined ? existingResponses[question.id].text : '' }}</textarea>
+                    </div>
+                </div>
             </div>
         {% endfor %}
-        
-        <button type="submit">Soumettre vos réponses</button>
+
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            {% if pagination.currentPageNumber > 1 %}
+                <a href="{{ path('etudiant_evaluation_answer', {'id': evaluation.id, 'page': pagination.currentPageNumber - 1}) }}" 
+                   class="btn btn-secondary save-responses">
+                    <i class="fas fa-arrow-left me-2"></i>Page précédente
+                </a>
+            {% else %}
+                <a href="{{ path('app_evaluation_showetudiant', {'id': evaluation.id}) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Retour
+                </a>
+            {% endif %}
+
+            {% if pagination.currentPageNumber < pagination.pageCount %}
+                <a href="{{ path('etudiant_evaluation_answer', {'id': evaluation.id, 'page': pagination.currentPageNumber + 1}) }}" 
+                   class="btn btn-primary save-responses">
+                    Page suivante<i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            {% else %}
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-paper-plane me-2"></i>Soumettre mes réponses
+                </button>
+            {% endif %}
+        </div>
+
+        <div class="navigation d-flex justify-content-center mt-4">
+            {{ knp_pagination_render(pagination) }}
+        </div>
     </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('evaluationForm');
+    const textareas = form.querySelectorAll('textarea');
+
+    // Charger les réponses sauvegardées au chargement de la page
+    textareas.forEach(textarea => {
+        const questionId = textarea.name.match(/\[(\d+)\]/)[1];
+        const savedValue = localStorage.getItem(`evaluation_{{ evaluation.id }}_question_${questionId}`);
+        
+        if (savedValue && !textarea.value) {
+            textarea.value = savedValue;
+        }
+
+        // Sauvegarder la réponse quand l'utilisateur tape
+        textarea.addEventListener('input', function() {
+            localStorage.setItem(`evaluation_{{ evaluation.id }}_question_${questionId}`, this.value);
+        });
+    });
+
+    // Sauvegarder les réponses lors du changement de page
+    document.querySelectorAll('.save-responses').forEach(link => {
+        link.addEventListener('click', function(e) {
+            textareas.forEach(textarea => {
+                const questionId = textarea.name.match(/\[(\d+)\]/)[1];
+                if (textarea.value.trim() !== '') {
+                    localStorage.setItem(`evaluation_{{ evaluation.id }}_question_${questionId}`, textarea.value);
+                }
+            });
+        });
+    });
+
+    // Lors de la soumission du formulaire
+    form.addEventListener('submit', function(e) {
+        // Ajouter toutes les réponses sauvegardées au formulaire
+        const allResponses = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith(`evaluation_{{ evaluation.id }}_question_`)) {
+                const questionId = key.split('_').pop();
+                const value = localStorage.getItem(key);
+                if (value.trim() !== '') {
+                    allResponses[questionId] = value;
+                }
+            }
+        }
+
+        // Créer des champs cachés pour toutes les réponses
+        Object.entries(allResponses).forEach(([questionId, value]) => {
+            if (!form.querySelector(`[name="reponses[${questionId}]"]`)) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = `reponses[${questionId}]`;
+                input.value = value;
+                form.appendChild(input);
+            }
+        });
+
+        // Nettoyer le localStorage après soumission réussie
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+            const key = localStorage.key(i);
+            if (key.startsWith(`evaluation_{{ evaluation.id }}_question_`)) {
+                localStorage.removeItem(key);
+            }
+        }
+    });
+});
+</script>
 {% endblock %}

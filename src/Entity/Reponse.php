@@ -28,8 +28,6 @@ class Reponse
     #[ORM\JoinColumn(nullable: true)]
     private ?Resultat $resultat = null;
 
-    
-
     #[ORM\Column(type: 'integer', nullable: true)]
     private ?int $note = null;
 
@@ -53,6 +51,12 @@ class Reponse
 
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $commentaire = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $status = 'non_corrige';
+
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?\DateTime $correctedAt = null;
 
     public function getId(): ?int
     {
@@ -199,6 +203,28 @@ class Reponse
     public function setCommentaire(?string $commentaire): self
     {
         $this->commentaire = $commentaire;
+        return $this;
+    }
+
+    public function getStatus(): ?string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): self
+    {
+        $this->status = $status;
+        return $this;
+    }
+
+    public function getCorrectedAt(): ?\DateTime
+    {
+        return $this->correctedAt;
+    }
+
+    public function setCorrectedAt(?\DateTime $correctedAt): self
+    {
+        $this->correctedAt = $correctedAt;
         return $this;
     }
 }

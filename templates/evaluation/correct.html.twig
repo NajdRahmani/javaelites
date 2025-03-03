@@ -18,6 +18,16 @@
 
             <div class="mb-4">
                 <h4>Réponse de l'étudiant</h4>
+                {% if reponse.plagiatSuspect %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Attention :</strong> Cette réponse contient du contenu inapproprié
+                        <p class="mb-0"><small>Détecté le : {{ reponse.submitTime|date('d/m/Y H:i:s') }}</small></p>
+                        {% if reponse.plagiatDetails %}
+                            <p class="mb-0"><small>Détails : {{ reponse.plagiatDetails }}</small></p>
+                        {% endif %}
+                    </div>
+                {% endif %}
                 <div class="bg-light p-3 rounded">
                     {{ reponse.text }}
                 </div>

@@ -1,158 +1,75 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Résultats de l'évaluation{% endblock %}
+{% block title %}Résultat de l'évaluation{% endblock %}
 
 {% block body %}
-<div class="container mt-4">
-    <div class="evaluation-header bg-primary text-white p-3 mb-4">
-        <h2>{{ evaluation.title }}</h2>
-        <p class="mb-0">{{ evaluation.description }}</p>
-    </div>
+    <div class="container mt-4">
+        <h1>Résultat de l'évaluation : {{ evaluation.title }}</h1>
 
-    <div class="score-summary card mb-4">
-        <div class="card-body text-center">
-            <h3>Score total</h3>
-            <div class="display-4 mb-0">{{ totalScore }} / {{ evaluation.maxScore }}</div>
-            {% set percentage = (totalScore / evaluation.maxScore) * 100 %}
-            <div class="progress mt-3" style="height: 20px;">
-                <div class="progress-bar {% if percentage >= 70 %}bg-success{% elseif percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
-                     role="progressbar" 
-                     style="width: {{ percentage }}%;" 
-                     aria-valuenow="{{ percentage }}" 
-                     aria-valuemin="0" 
-                     aria-valuemax="100">
-                    {{ percentage|number_format(1) }}%
-                </div>
+        {% if evaluation.isCompleted %}
+            <div class="alert {% if hasInappropriateContent %}alert-danger{% else %}alert-success{% endif %} mt-4">
+                <h4 class="alert-heading">
+                    {% if hasInappropriateContent %}
+                        ⚠️ Attention : Contenu inapproprié détecté !
+                    {% else %}
+                        ✅ Évaluation corrigée
+                    {% endif %}
+                </h4>
+                <p>Votre note finale : {{ totalScore }}/{{ maxScore }} ({{ (totalScore/maxScore * 100)|number_format(1) }}%)</p>
             </div>
-        </div>
-    </div>
 
-    {% if statistics is defined %}
-    <div class="statistics-summary card mb-4">
-        <div class="card-header bg-info text-white">
-            <h3 class="mb-0">Statistiques de l'évaluation</h3>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <table class="table table-hover">
-                        <tbody>
-                            <tr>
-                                <th>Nombre de participants</th>
-                                <td>{{ statistics.nombre_participants }}</td>
-                            </tr>
-                            <tr>
-                                <th>Score moyen</th>
-                                <td>{{ statistics.moyenne }} / {{ evaluation.maxScore }}</td>
-                            </tr>
-                            <tr>
-                                <th>Score médian</th>
-                                <td>{{ statistics.mediane }} / {{ evaluation.maxScore }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="col-md-6">
-                    <table class="table table-hover">
-                        <tbody>
-                            <tr>
-                                <th>Écart-type</th>
-                                <td>{{ statistics.ecart_type }}</td>
-                            </tr>
-                            <tr>
-                                <th>Score min/max</th>
-                                <td>{{ statistics.min }} - {{ statistics.max }} / {{ evaluation.maxScore }}</td>
-                            </tr>
-                            <tr>
-                                <th>Taux de réussite</th>
-                                <td>{{ statistics.taux_reussite }}%</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    {% if reponses|length > 0 %}
-        <div class="responses-list">
             {% for reponse in reponses %}
-                <div class="response-card card mb-4">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Question {{ loop.index }}</h5>
-                        {% if reponse.note is not null %}
-                            <span class="badge {% if (reponse.note / evaluation.maxScore) >= 0.7 %}bg-success{% elseif (reponse.note / evaluation.maxScore) >= 0.5 %}bg-warning{% else %}bg-danger{% endif %}">
-                                {{ reponse.note }} / {{ evaluation.maxScore }}
-                            </span>
-                        {% else %}
-                            <span class="badge bg-secondary">En attente de correction</span>
-                        {% endif %}
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center {% if reponse.note == 0 and reponse.commentaire starts with 'AVERTISSEMENT' %}bg-danger text-white{% endif %}">
+                        <h5>Question {{ reponse.question.ordreQuestion }}</h5>
+                        <span class="badge {% if reponse.note == 0 %}bg-danger{% else %}bg-success{% endif %} bg-opacity-75">
+                            {{ reponse.note }}/{{ reponse.question.point }}
+                        </span>
                     </div>
                     <div class="card-body">
-                        <div class="question-text mb-3">
-                            <strong>Question :</strong>
-                            <p class="mb-0">{{ reponse.question.enonce }}</p>
+                        <h6>Votre réponse :</h6>
+                        <div class="p-3 bg-light {% if reponse.note == 0 and reponse.commentaire starts with 'AVERTISSEMENT' %}border border-danger{% endif %}">
+                            {{ reponse.text }}
                         </div>
-                        <div class="answer-section">
-                            <strong>Votre réponse :</strong>
-                            <p class="response-text mb-0">{{ reponse.text }}</p>
-                        </div>
+
+                        {% if reponse.commentaire starts with 'AVERTISSEMENT' %}
+                            <div class="alert alert-danger mt-3">
+                                <h6 class="alert-heading">⚠️ Avertissement - Contenu inapproprié</h6>
+                                <p>{{ reponse.commentaire[13:] }}</p>
+                                <hr>
+                                <p class="mb-0"><strong>Conséquence :</strong> Note attribuée : 0/{{ reponse.question.point }}</p>
+                            </div>
+                        {% else %}
+                            {% if reponse.commentaire %}
+                                <div class="alert alert-info mt-3">
+                                    <h6>Commentaire de l'enseignant :</h6>
+                                    <p>{{ reponse.commentaire }}</p>
+                                </div>
+                            {% endif %}
+                        {% endif %}
                     </div>
                 </div>
             {% endfor %}
-        </div>
-    {% else %}
-        <div class="alert alert-info">
-            Vous n'avez pas encore répondu à cette évaluation.
-        </div>
-    {% endif %}
 
-    <div class="text-right mb-4">
-        <a href="{{ path('app_evaluation_pdf', {'id': evaluation.id}) }}" 
-           class="btn btn-primary">
-            <i class="fas fa-file-pdf"></i> Télécharger en PDF
-        </a>
+            {% if hasInappropriateContent %}
+                <div class="alert alert-warning mt-4">
+                    <h5>⚠️ Important - Sanctions pour contenu inapproprié</h5>
+                    <p>Une ou plusieurs de vos réponses ont été identifiées comme contenant du contenu inapproprié. 
+                    Ces réponses ont automatiquement reçu une note de 0 et cet incident peut entraîner des sanctions disciplinaires supplémentaires.</p>
+                    <p class="mb-0">Veuillez prendre connaissance des avertissements ci-dessus et vous assurer de respecter le code de conduite dans vos futures réponses.</p>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="alert alert-info">
+                <h4 class="alert-heading">En attente de correction</h4>
+                <p>Votre évaluation n'a pas encore été corrigée. Veuillez patienter.</p>
+            </div>
+        {% endif %}
+
+        <div class="mt-4">
+            <a href="{{ path('app_evaluation_list') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Retour à la liste
+            </a>
+        </div>
     </div>
-
-    <a href="{{ path('app_evaluation_indexetudiant') }}" class="btn btn-secondary">
-        <i class="fas fa-arrow-left"></i> Retour aux évaluations
-    </a>
-</div>
-
-<style>
-    .evaluation-header {
-        border-radius: 5px;
-    }
-    .score-summary {
-        background-color: #f8f9fa;
-    }
-    .response-card {
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-    }
-    .response-card .card-header {
-        background-color: #f8f9fa;
-        border-bottom: 1px solid #dee2e6;
-    }
-    .question-text, .answer-section {
-        padding: 15px;
-        background-color: #f8f9fa;
-        border-radius: 5px;
-        margin-bottom: 15px;
-    }
-    .response-text {
-        white-space: pre-wrap;
-    }
-    .progress {
-        border-radius: 10px;
-    }
-    .progress-bar {
-        transition: width 0.6s ease;
-    }
-    .badge {
-        font-size: 1rem;
-        padding: 8px 12px;
-    }
-</style>
 {% endblock %}

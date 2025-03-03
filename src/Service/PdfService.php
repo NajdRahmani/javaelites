@@ -33,11 +33,19 @@ class PdfService
             'user' => $student
         ]);
 
-        // Calculer le score total
+        // Calculer le score total et maximal
         $totalScore = 0;
+        $maxScore = 0;
+        $hasProfanity = false;
         foreach ($responses as $response) {
             if ($response->getNote() !== null) {
                 $totalScore += $response->getNote();
+            }
+            $maxScore += $response->getQuestion()->getPoint();
+            
+            // Vérifier si une réponse contient un avertissement pour contenu inapproprié
+            if ($response->getCommentaire() && str_starts_with($response->getCommentaire(), 'AVERTISSEMENT')) {
+                $hasProfanity = true;
             }
         }
 
@@ -47,11 +55,21 @@ class PdfService
             'student' => $student,
             'responses' => $responses,
             'totalScore' => $totalScore,
-            'date' => $evaluation->getCreateAt() // Ajout de la date de création
+            'maxScore' => $maxScore,
+            'hasProfanity' => $hasProfanity,
+            'badgeThreshold' => 70 // Seuil pour obtenir un badge
         ]);
 
         // Générer le PDF
         $pdf = $this->pdf->getOutputFromHtml($html);
+
+        // Créer un nom de fichier descriptif
+        $filename = sprintf(
+            'evaluation_%s_%s_%s.pdf',
+            $evaluation->getId(),
+            $student->getId(),
+            (new \DateTime())->format('Y-m-d')
+        );
 
         // Retourner la réponse
         return new Response(
@@ -59,7 +77,7 @@ class PdfService
             200,
             [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'attachment; filename="evaluation.pdf"'
+                'Content-Disposition' => sprintf('attachment; filename="%s"', $filename)
             ]
         );
     }

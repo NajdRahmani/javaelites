@@ -62,6 +62,38 @@ class Evaluation
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?Cours $cours = null;
 
+    #[ORM\Column(nullable: true)]
+    #[Assert\Range(
+        min: 0,
+        max: 20,
+        notInRangeMessage: 'Le score minimum doit être entre {{ min }} et {{ max }}',
+    )]
+    private ?int $badgeThreshold = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Assert\Length(
+        min: 3,
+        max: 50,
+        minMessage: 'Le titre du badge doit contenir au moins {{ limit }} caractères',
+        maxMessage: 'Le titre du badge ne peut pas dépasser {{ limit }} caractères'
+    )]
+    #[Assert\When(
+        expression: 'this.getBadgeThreshold() !== null',
+        constraints: [
+            new Assert\NotBlank(message: 'Le titre du badge est obligatoire si un seuil est défini')
+        ]
+    )]
+    private ?string $badgeTitle = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    #[Assert\When(
+        expression: 'this.getBadgeThreshold() !== null',
+        constraints: [
+            new Assert\NotBlank(message: 'L\'icône du badge est obligatoire si un seuil est défini')
+        ]
+    )]
+    private ?string $badgeImage = null;
+
     public function __construct()
     {
         $this->questions = new ArrayCollection();
@@ -206,6 +238,39 @@ class Evaluation
     {
         $this->cours = $cours;
 
+        return $this;
+    }
+
+    public function getBadgeThreshold(): ?int
+    {
+        return $this->badgeThreshold;
+    }
+
+    public function setBadgeThreshold(?int $badgeThreshold): self
+    {
+        $this->badgeThreshold = $badgeThreshold;
+        return $this;
+    }
+
+    public function getBadgeImage(): ?string
+    {
+        return $this->badgeImage;
+    }
+
+    public function setBadgeImage(?string $badgeImage): static
+    {
+        $this->badgeImage = $badgeImage;
+        return $this;
+    }
+
+    public function getBadgeTitle(): ?string
+    {
+        return $this->badgeTitle;
+    }
+
+    public function setBadgeTitle(?string $badgeTitle): self
+    {
+        $this->badgeTitle = $badgeTitle;
         return $this;
     }
 }

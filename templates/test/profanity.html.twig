@@ -1,0 +1,41 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Test Vérification Mots Inappropriés{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <h2>Test de la vérification des mots inappropriés</h2>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            Test avec texte normal
+        </div>
+        <div class="card-body">
+            <p><strong>Texte testé:</strong> {{ texteNormal }}</p>
+            <p><strong>Résultat:</strong> 
+                {% if resultatNormal %}
+                    <span class="text-danger">Contient des mots inappropriés</span>
+                {% else %}
+                    <span class="text-success">Texte approprié</span>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            Test avec texte inapproprié
+        </div>
+        <div class="card-body">
+            <p><strong>Texte testé:</strong> {{ texteInapproprie }}</p>
+            <p><strong>Résultat:</strong> 
+                {% if resultatInapproprie %}
+                    <span class="text-danger">Contient des mots inappropriés</span>
+                {% else %}
+                    <span class="text-success">Texte approprié</span>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

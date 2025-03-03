@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        .warning-header {
+            background-color: #dc3545;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        .warning-content {
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .warning-message {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            padding: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="warning-header">
+        <h2>⚠️ Avertissement : Contenu inapproprié détecté</h2>
+    </div>
+
+    <div class="warning-content">
+        <p>Cher(e) {{ student.prenom }} {{ student.nom }},</p>
+
+        <p>Nous avons détecté un contenu inapproprié dans votre réponse à l'évaluation "{{ evaluation.title }}".</p>
+
+        <p><strong>Question concernée :</strong> {{ question.enonce }}</p>
+
+        <div class="warning-message">
+            <p><strong>Message de l'enseignant :</strong></p>
+            <p>{{ warningMessage }}</p>
+        </div>
+
+        <p><strong>Conséquence :</strong> Votre réponse a reçu une note de 0.</p>
+
+        <p>Nous vous rappelons que l'utilisation d'un langage inapproprié n'est pas tolérée dans les réponses aux évaluations. 
+        Veuillez faire preuve de professionnalisme dans vos futures réponses.</p>
+
+        <p>Cordialement,<br>
+        L'équipe pédagogique</p>
+    </div>
+</body>
+</html> 

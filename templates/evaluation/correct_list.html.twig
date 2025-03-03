@@ -1,139 +1,120 @@
-{% extends 'base3.html.twig' %}
+{% extends 'base.html.twig' %}
 
 {% block title %}Correction de l'évaluation{% endblock %}
 
 {% block body %}
-<div class="container mt-4">
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h2 class="mb-0">{{ evaluation.title }}</h2>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-8">
-                    <p><strong>Description :</strong></p>
-                    <p class="mb-3">{{ evaluation.description }}</p>
-                </div>
-                <div class="col-md-4">
-                    <p><strong>Date de création :</strong> {{ evaluation.createAt|date('d/m/Y') }}</p>
-                    <p><strong>Date limite :</strong> {{ evaluation.deadline|date('d/m/Y') }}</p>
-                    <p><strong>Total des points :</strong> {{ scoreMaxTotal }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="container mt-4">
+        <h1>Correction de l'évaluation : {{ evaluation.title }}</h1>
+        <h3>Étudiant : {{ student.prenom }} {{ student.nom }}</h3>
 
-    <form method="post" action="{{ path('evaluation_save_correctionenseignant', {
-        'evaluationId': evaluation.id,
-        'studentId': student.id
-    }) }}">
-    {% for item in questionResponses %}
-        <div class="card mb-4">
-            <div class="card-header">
-                <h3 class="h4 mb-0">Question {{ loop.index }}</h3>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="question-content mb-4">
-                            <h4 class="h5">Énoncé</h4>
-                            <p class="mb-4">{{ item.question.enonce }}</p>
-                            
-                            <h4 class="h5">Réponse de l'étudiant</h4>
-                            <div class="student-response p-3 bg-light rounded">
-                                {{ item.reponse.text|nl2br }}
+        <form action="{{ path('evaluation_save_correctionenseignant', {'evaluationId': evaluation.id, 'studentId': student.id}) }}" method="POST">
+            {% for questionResponse in questionResponses %}
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center {% if questionResponse.reponse.plagiatSuspect %}bg-warning{% endif %}">
+                        <h5>
+                            Question {{ questionResponse.question.ordreQuestion }}
+                            {% if questionResponse.reponse.plagiatSuspect %}
+                                <span class="badge bg-danger">Contenu inapproprié détecté</span>
+                            {% endif %}
+                        </h5>
+                        <span class="badge bg-primary">{{ questionResponse.question.point }} points</span>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Énoncé :</strong> {{ questionResponse.question.enonce }}</p>
+                        <p><strong>Réponse de l'étudiant :</strong></p>
+                        <div class="p-3 bg-light {% if questionResponse.reponse.plagiatSuspect %}border border-warning{% endif %}">
+                            {{ questionResponse.reponse.text }}
+                        </div>
+                        
+                        {% if questionResponse.reponse.plagiatSuspect %}
+                            <div class="alert alert-warning mt-3">
+                                <h6 class="alert-heading">⚠️ Contenu inapproprié détecté</h6>
+                                <p>{{ questionResponse.reponse.plagiatDetails }}</p>
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" 
+                                           class="form-check-input" 
+                                           id="confirmInappropriate_{{ questionResponse.reponse.id }}" 
+                                           name="confirm_inappropriate[{{ questionResponse.reponse.id }}]"
+                                           {% if questionResponse.reponse.note == 0 and questionResponse.reponse.commentaire starts with 'AVERTISSEMENT' %}checked{% endif %}
+                                           onchange="handleInappropriateConfirmation(this, {{ questionResponse.reponse.id }})">
+                                    <label class="form-check-label" for="confirmInappropriate_{{ questionResponse.reponse.id }}">
+                                        <strong>Confirmer le contenu inapproprié</strong> (mettra automatiquement la note à 0)
+                                    </label>
+                                </div>
+                                <div class="form-group warning-message-group" id="warningMessage_{{ questionResponse.reponse.id }}">
+                                    <label><strong>Message d'avertissement pour l'étudiant :</strong></label>
+                                    <textarea 
+                                        name="warning_messages[{{ questionResponse.reponse.id }}]" 
+                                        class="form-control" 
+                                        rows="3" 
+                                        placeholder="Expliquez pourquoi ce contenu est inapproprié et quelles sont les conséquences..."
+                                    >{{ questionResponse.reponse.commentaire starts with 'AVERTISSEMENT' ? questionResponse.reponse.commentaire[13:] }}</textarea>
+                                </div>
                             </div>
+                        {% endif %}
+
+                        <div class="form-group mt-3">
+                            <label><strong>Note (sur {{ questionResponse.question.point }} points) :</strong></label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   name="notes[{{ questionResponse.reponse.id }}]" 
+                                   min="0" 
+                                   max="{{ questionResponse.question.point }}" 
+                                   step="0.5" 
+                                   value="{{ questionResponse.reponse.note }}"
+                                   {% if questionResponse.reponse.plagiatSuspect and questionResponse.reponse.note == 0 %}readonly{% endif %}>
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <label><strong>Commentaire :</strong></label>
+                            <textarea 
+                                name="commentaires[{{ questionResponse.reponse.id }}]" 
+                                class="form-control" 
+                                rows="3"
+                                {% if questionResponse.reponse.plagiatSuspect and questionResponse.reponse.note == 0 %}readonly{% endif %}
+                            >{{ questionResponse.reponse.commentaire starts with 'AVERTISSEMENT' ? '' : questionResponse.reponse.commentaire }}</textarea>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="correction-panel p-3 bg-light rounded">
-                            <div class="form-group mb-3">
-                                <label class="form-label">
-                                    <strong>Note :</strong>
-                                    <span class="text-muted">(sur {{ item.question.point }} points)</span>
-                                </label>
-                                <input type="number" 
-                                       class="form-control"
-                                       name="notes[{{ item.question.id }}]"
-                                       min="0"
-                                       max="{{ item.question.point }}"
-                                       value="{{ item.reponse.note }}"
-                                       required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label"><strong>Commentaire :</strong></label>
-                                <textarea class="form-control"
-                                          name="commentaires[{{ item.question.id }}]"
-                                          rows="3">{{ item.reponse.commentaire }}</textarea>
-                            </div>
-                        </div>
-                    </div>
                 </div>
-            </div>
-        </div>
-    {% endfor %}
+            {% endfor %}
 
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
-                <h4 class="mb-0">Score total : <span id="totalScore">0</span>/{{ scoreMaxTotal }}</h4>
-                <div>
-                    <a href="{{ path('app_evaluation_showenseignant', {'id': evaluation.id}) }}" class="btn btn-secondary me-2">
-                        <i class="fas fa-arrow-left"></i> Retour à l'évaluation
-                    </a>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Enregistrer les corrections
-                    </button>
-                </div>
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{{ path('app_evaluation_student_list', {'evaluationId': evaluation.id}) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Retour à la liste
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Enregistrer les corrections
+                </button>
             </div>
-        </div>
+        </form>
     </div>
-    </form>
-</div>
 
-<style>
-.question-content {
-    background-color: #fff;
-    border-radius: 0.25rem;
-}
-
-.student-response {
-    border: 1px solid #dee2e6;
-    background-color: #f8f9fa;
-}
-
-.correction-panel {
-    border: 1px solid #dee2e6;
-    background-color: #f8f9fa;
-    height: 100%;
-}
-
-.form-label {
-    font-weight: 500;
-    color: #495057;
-}
-</style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const noteInputs = document.querySelectorAll('input[type="number"]');
-    const totalScoreDisplay = document.getElementById('totalScore');
-    
-    function updateTotalScore() {
-        let total = 0;
-        noteInputs.forEach(input => {
-            total += parseInt(input.value) || 0;
-        });
-        totalScoreDisplay.textContent = total;
+    <script>
+    function handleInappropriateConfirmation(checkbox, reponseId) {
+        const noteInput = document.querySelector(`input[name="notes[${reponseId}]"]`);
+        const commentInput = document.querySelector(`textarea[name="commentaires[${reponseId}]"]`);
+        const warningGroup = document.querySelector(`#warningMessage_${reponseId}`);
+        
+        if (checkbox.checked) {
+            noteInput.value = 0;
+            noteInput.readOnly = true;
+            commentInput.readOnly = true;
+            warningGroup.style.display = 'block';
+        } else {
+            noteInput.readOnly = false;
+            commentInput.readOnly = false;
+            warningGroup.style.display = 'none';
+        }
     }
-    
-    noteInputs.forEach(input => {
-        input.addEventListener('change', updateTotalScore);
-        input.addEventListener('input', updateTotalScore);
+
+    // Initialiser l'état des champs au chargement
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('input[name^="confirm_inappropriate"]');
+        checkboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                handleInappropriateConfirmation(checkbox, checkbox.id.split('_')[1]);
+            }
+        });
     });
-    
-    // Calculer le score total initial
-    updateTotalScore();
-});
-</script>
+    </script>
 {% endblock %}

@@ -4,7 +4,6 @@ namespace App\Controller;
 
 use App\Entity\Cours;
 use App\Entity\CoursType;
-
 use App\Entity\Evaluation;
 use App\Entity\Question;
 use App\Entity\Reponse;
@@ -18,12 +17,17 @@ use App\Repository\ReponseRepository;
 use App\Service\MailService;
 use App\Service\StatisticsService;
 use App\Service\PdfService;
+use App\Service\ProfanityCheckerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Knp\Component\Pager\PaginatorInterface;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
+use Psr\Log\LoggerInterface;
 
 #[Route('/evaluation')]
 final class EvaluationController extends AbstractController
@@ -238,6 +242,8 @@ final class EvaluationController extends AbstractController
                         if ($reponse && $reponse->getEvaluation()->getId() === $evaluation->getId()) {
                             $reponse->setNote((int)$note);
                             $reponse->setCommentaire($data['commentaires'][$reponseId] ?? null);
+                            $reponse->setStatus('corrige');  // Ajout du statut corrigé
+                            $reponse->setCorrectedAt(new \DateTime());  // Ajout de la date de correction
                         }
                     }
 
@@ -315,6 +321,10 @@ final class EvaluationController extends AbstractController
         // Organiser les réponses par étudiant
         $studentData = [];
         foreach ($responses as $response) {
+            if (!$response->getUser()) {
+                continue; // Ignorer les réponses sans utilisateur
+            }
+            
             $studentId = $response->getUser()->getId();
             if (!isset($studentData[$studentId])) {
                 $studentData[$studentId] = [
@@ -327,9 +337,9 @@ final class EvaluationController extends AbstractController
                 ];
             }
 
-            // Si la réponse a une note, on l'ajoute au score total
-            if ($response->getNote() !== null) {
-                $studentData[$studentId]['totalScore'] += $response->getNote();
+            // Si la réponse a une note ou est marquée comme corrigée
+            if ($response->getNote() !== null || $response->getStatus() === 'corrige') {
+                $studentData[$studentId]['totalScore'] += $response->getNote() ?? 0;
                 $studentData[$studentId]['correctedCount']++;
             }
 
@@ -396,6 +406,8 @@ final class EvaluationController extends AbstractController
                         if ($reponse) {
                             $reponse->setNote((int)$note);
                             $reponse->setCommentaire($data['commentaires'][$questionId] ?? null);
+                            $reponse->setStatus('corrige');  // Ajout du statut corrigé
+                            $reponse->setCorrectedAt(new \DateTime());  // Ajout de la date de correction
                         }
                     }
 
@@ -454,31 +466,96 @@ final class EvaluationController extends AbstractController
         int $evaluationId,
         int $studentId,
         EntityManagerInterface $entityManager,
-        ReponseRepository $reponseRepository
+        ReponseRepository $reponseRepository,
+        EvaluationRepository $evaluationRepository,
+        UserRepository $userRepository
     ): Response {
-        $data = $request->request->all();
-        $notes = $data['notes'] ?? [];
-        $commentaires = $data['commentaires'] ?? [];
+        try {
+            $evaluation = $evaluationRepository->find($evaluationId);
+            if (!$evaluation) {
+                throw $this->createNotFoundException('Évaluation non trouvée');
+            }
 
-        if (!is_array($notes) || !is_array($commentaires)) {
-            throw new \InvalidArgumentException('Les notes et commentaires doivent être des tableaux');
-        }
+            $student = $userRepository->find($studentId);
+            if (!$student) {
+                throw $this->createNotFoundException('Étudiant non trouvé');
+            }
 
-        foreach ($notes as $questionId => $note) {
-            $reponse = $reponseRepository->findOneBy([
-                'question' => $questionId,
-                'user' => $studentId
+            $data = $request->request->all();
+            $notes = $data['notes'] ?? [];
+            $commentaires = $data['commentaires'] ?? [];
+            $confirmInappropriate = $data['confirm_inappropriate'] ?? [];
+            $warningMessages = $data['warning_messages'] ?? [];
+
+            // Récupérer toutes les réponses de l'étudiant pour cette évaluation
+            $allResponses = $reponseRepository->findBy([
+                'evaluation' => $evaluation,
+                'user' => $student
             ]);
-            
-            if ($reponse) {
-                $reponse->setNote((float)$note);
-                $reponse->setCommentaire($commentaires[$questionId] ?? '');
+
+            if (empty($allResponses)) {
+                throw new \Exception('Aucune réponse trouvée pour cet étudiant');
+            }
+
+            foreach ($allResponses as $reponse) {
+                $reponseId = $reponse->getId();
+                
+                // Vérifier si la réponse contient du contenu inapproprié
+                if ($reponse->isPlagiatSuspect()) {
+                    // Si l'enseignant confirme le contenu inapproprié
+                    if (isset($confirmInappropriate[$reponseId])) {
+                        $warningMessage = $warningMessages[$reponseId] ?? 'Contenu inapproprié détecté dans votre réponse. Cette violation entraîne une note de 0.';
+                        $reponse->setNote(0);
+                        $reponse->setCommentaire("AVERTISSEMENT: " . $warningMessage);
+                        $reponse->setStatus('corrige');
+                        $reponse->setCorrectedAt(new \DateTime());
+                    }
+                    // Si l'enseignant ne confirme pas, traiter comme une réponse normale
+                    elseif (isset($notes[$reponseId])) {
+                        $reponse->setNote((float)$notes[$reponseId]);
+                        $reponse->setCommentaire($commentaires[$reponseId] ?? '');
+                        $reponse->setStatus('corrige');
+                        $reponse->setCorrectedAt(new \DateTime());
+                    }
+                }
+                // Correction normale pour les réponses sans suspicion
+                elseif (isset($notes[$reponseId])) {
+                    $reponse->setNote((float)$notes[$reponseId]);
+                    $reponse->setCommentaire($commentaires[$reponseId] ?? '');
+                    $reponse->setStatus('corrige');
+                    $reponse->setCorrectedAt(new \DateTime());
+                }
+                
                 $entityManager->persist($reponse);
             }
-        }
 
-        $entityManager->flush();
-        $this->addFlash('success', 'Les corrections ont été enregistrées avec succès.');
+            $entityManager->flush();
+            
+            // Vérifier les résultats de la correction
+            $nonCorrigeCount = 0;
+            $inappropriateCount = 0;
+            foreach ($allResponses as $reponse) {
+                if ($reponse->getNote() === null || $reponse->getStatus() !== 'corrige') {
+                    $nonCorrigeCount++;
+                }
+                if (isset($confirmInappropriate[$reponse->getId()])) {
+                    $inappropriateCount++;
+                }
+            }
+
+            if ($inappropriateCount > 0) {
+                $this->addFlash('warning', 'Des contenus inappropriés ont été détectés et sanctionnés.');
+            }
+            if ($nonCorrigeCount === 0) {
+                $this->addFlash('success', 'Toutes les réponses ont été corrigées avec succès.');
+            } else {
+                $this->addFlash('info', 'Certaines réponses n\'ont pas été corrigées.');
+            }
+
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Une erreur est survenue lors de la correction : ' . $e->getMessage());
+            throw $e;
+        }
 
         return $this->redirectToRoute('app_evaluation_student_list', ['evaluationId' => $evaluationId]);
     }
@@ -631,8 +708,69 @@ final class EvaluationController extends AbstractController
             throw $this->createNotFoundException('Aucune réponse trouvée pour cette évaluation.');
         }
     
-        return $this->pdfService->generateEvaluationPdf($evaluation, $user);
+        return $this->pdfService->generatePdf($evaluation, $user);
     }
+
+    #[Route('/etudiant/{id}/export-pdf', name: 'evaluation_export_pdf', methods: ['GET'])]
+    public function exportPdf(
+        Evaluation $evaluation,
+        ReponseRepository $reponseRepository,
+        QuestionRepository $questionRepository,
+        UserRepository $userRepository,
+        PdfService $pdfService,
+        Request $request
+    ): Response {
+        // Récupérer l'utilisateur connecté
+        $session = $request->getSession();
+        $userId = $session->get('id');
+        $user = $userRepository->find($userId);
+
+        if (!$user) {
+            throw $this->createNotFoundException('Utilisateur introuvable.');
+        }
+
+        // Récupérer les questions et réponses
+        $questions = $questionRepository->findBy(
+            ['evaluation' => $evaluation],
+            ['ordreQuestion' => 'ASC']
+        );
+
+        $existingResponses = $reponseRepository->findBy([
+            'evaluation' => $evaluation,
+            'user' => $user
+        ]);
+
+        // Préparer les données pour le PDF
+        $reponses = [];
+        $totalScore = 0;
+        $maxScore = 0;
+        $allCorrected = true;
+
+        foreach ($existingResponses as $reponse) {
+            $reponses[$reponse->getQuestion()->getId()] = $reponse;
+            if ($reponse->getNote() === null) {
+                $allCorrected = false;
+            } else {
+                $totalScore += $reponse->getNote();
+            }
+        }
+
+        foreach ($questions as $question) {
+            $maxScore += $question->getPoint();
+        }
+
+        if (!$allCorrected) {
+            throw $this->createAccessDeniedException('L\'évaluation n\'est pas encore corrigée.');
+        }
+
+        $percentage = $maxScore > 0 ? ($totalScore / $maxScore) * 100 : 0;
+        $hasBadge = $percentage >= 70;
+        $badgeType = $percentage >= 80 ? 'excellence' : 'distinction';
+
+        // Générer le PDF
+        return $pdfService->generateEvaluationPdf($evaluation, $user);
+    }
+
     #[Route('/etudiant/{id}', name: 'app_evaluation_showetudiant', methods: ['GET', 'POST'])]
     public function showEtudiant(
         UserRepository $userRepository,
@@ -642,13 +780,7 @@ final class EvaluationController extends AbstractController
         EntityManagerInterface $entityManager,
         ReponseRepository $reponseRepository
     ): Response {
-        $questionsArray = $questionRepository->findBy(['evaluation' => $evaluation], ['ordreQuestion' => 'ASC']);
-        
-        if (empty($questionsArray)) {
-            throw $this->createNotFoundException('Aucune question trouvée pour cette évaluation.');
-        }
-
-        // Vérifier si l'étudiant a déjà répondu
+        // Récupérer l'utilisateur connecté
         $session = $request->getSession();
         $userId = $session->get('id');
         $user = $userRepository->find($userId);
@@ -657,94 +789,191 @@ final class EvaluationController extends AbstractController
             throw $this->createNotFoundException('Utilisateur introuvable.');
         }
 
-        // Vérifier si l'étudiant a déjà des réponses pour cette évaluation
+        // Vérifier si l'étudiant a déjà répondu
         $existingResponses = $reponseRepository->findBy([
             'evaluation' => $evaluation,
             'user' => $user
         ]);
 
-        if (!empty($existingResponses)) {
-            $this->addFlash('error', 'Vous avez déjà répondu à cette évaluation.');
-            return $this->redirectToRoute('app_evaluation_indexetudiant');
+        $hasResponded = !empty($existingResponses);
+        $isCorrected = true;
+        $hasInappropriateContent = false;
+        $totalScore = 0;
+        $maxScore = 0;
+
+        // Récupérer les questions
+        $questions = $questionRepository->findBy(
+            ['evaluation' => $evaluation],
+            ['ordreQuestion' => 'ASC']
+        );
+
+        if (empty($questions)) {
+            throw $this->createNotFoundException('Aucune question trouvée pour cette évaluation.');
         }
 
-        if ($request->isMethod('POST')) {
-            $responses = $request->request->all()['responses'] ?? [];
-            
-            // Récupérer l'utilisateur connecté
-            $session = $request->getSession();
-            $userId = $session->get('id'); // Récupère l'ID de l'utilisateur depuis la session
-        
-            if (!$userId) {
-                throw $this->createAccessDeniedException('Utilisateur non connecté.');
-            }
-        
-            $user = $userRepository->find($userId);
-        
-            if (!$user) {
-                throw $this->createNotFoundException('Utilisateur introuvable.');
-            }
-        
-            
-            foreach ($questionsArray as $question) {
-                $responseContent = $responses[$question->getId()] ?? null;
-                if ($responseContent) {
-                    $reponse = new Reponse();
-                    $reponse->setQuestion($question);
-                    $reponse->setText($responseContent);
-                    $reponse->setEvaluation($evaluation);
-                    $reponse->setUser($user);
-                    $entityManager->persist($reponse);
+        // Si l'étudiant a déjà répondu, préparer les réponses pour l'affichage
+        $reponses = [];
+        if ($hasResponded) {
+            foreach ($existingResponses as $reponse) {
+                $reponses[$reponse->getQuestion()->getId()] = $reponse;
+                if ($reponse->getNote() === null) {
+                    $isCorrected = false;
+                } else {
+                    $totalScore += $reponse->getNote();
+                    $maxScore += $reponse->getQuestion()->getPoint();
+                    
+                    // Vérifier si la réponse contient du contenu inapproprié
+                    if ($reponse->getNote() === 0 && str_starts_with($reponse->getCommentaire(), 'AVERTISSEMENT')) {
+                        $hasInappropriateContent = true;
+                    }
                 }
             }
-
-            $entityManager->flush();
-
-            // Envoyer l'email de confirmation de soumission
-            $this->mailService->sendEvaluationSubmittedToStudent($user, $evaluation);
-
-            $this->addFlash('success', 'Vos réponses ont été enregistrées avec succès.');
-            return $this->redirectToRoute('app_evaluation_indexetudiant');
         }
 
         return $this->render('evaluation/showEtudiant.html.twig', [
             'evaluation' => $evaluation,
-            'questions' => $questionsArray,
+            'questions' => $questions,
+            'hasResponded' => $hasResponded,
+            'reponses' => $reponses,
+            'isCorrected' => $isCorrected,
+            'hasInappropriateContent' => $hasInappropriateContent,
+            'totalScore' => $totalScore,
+            'maxScore' => $maxScore
         ]);
     }
 
     #[Route('/etudiant/{id}/repondre', name: 'etudiant_evaluation_answer', methods: ['GET', 'POST'])]
-    public function answerEtudiant(int $evaluationId, Request $request, EntityManagerInterface $entityManager): Response
-    {
-        $evaluation = $entityManager->getRepository(Evaluation::class)->find($evaluationId);
-        $questions = $entityManager->getRepository(Question::class)->findBy(['evaluation' => $evaluation]);
-
+    public function answerEtudiant(
+        int $id, 
+        Request $request, 
+        EntityManagerInterface $entityManager,
+        PaginatorInterface $paginator,
+        ProfanityCheckerService $profanityChecker,
+        MailerInterface $mailer,
+        UserRepository $userRepository,
+        LoggerInterface $logger
+    ): Response {
+        // Récupérer l'évaluation
+        $evaluation = $entityManager->getRepository(Evaluation::class)->find($id);
         if (!$evaluation) {
             throw $this->createNotFoundException('Évaluation non trouvée');
         }
 
-        $responses = [];
-        foreach ($questions as $question) {
-            $response = new Reponse();
-            $response->setQuestion($question);
-            $responses[] = $response;
+        // Log pour déboguer
+        $logger->info('Début de la soumission d\'une réponse', [
+            'evaluation_id' => $id
+        ]);
+
+        // Vérifier si la date limite est dépassée
+        if ($evaluation->getDeadline() < new \DateTime()) {
+            $this->addFlash('error', 'Le délai pour répondre à cette évaluation est dépassé.');
+            return $this->redirectToRoute('app_evaluation_indexetudiant');
         }
 
-        $form = $this->createForm(ReponseType::class, $responses);
-        $form->handleRequest($request);
+        // Récupérer l'utilisateur connecté
+        $session = $request->getSession();
+        $userId = $session->get('id');
+        $user = $userRepository->find($userId);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            foreach ($responses as $response) {
-                $entityManager->persist($response);
+        if (!$user) {
+            throw $this->createNotFoundException('Utilisateur non trouvé');
+        }
+
+        // Log l'utilisateur
+        $logger->info('Utilisateur identifié', [
+            'user_id' => $userId,
+            'user_email' => $user->getEmail()
+        ]);
+
+        // Traiter la soumission du formulaire
+        if ($request->isMethod('POST')) {
+            $data = $request->request->all();
+            $hasInappropriateContent = false;
+            
+            if (isset($data['reponses'])) {
+                foreach ($data['reponses'] as $questionId => $reponseText) {
+                    // Log la réponse à vérifier
+                    $logger->info('Vérification d\'une réponse', [
+                        'question_id' => $questionId,
+                        'reponse_text' => $reponseText
+                    ]);
+
+                    // Vérifier les mots inappropriés
+                    if ($profanityChecker->containsProfanity($reponseText)) {
+                        $hasInappropriateContent = true;
+                        $question = $entityManager->getRepository(Question::class)->find($questionId);
+                        
+                        // Log la détection
+                        $logger->warning('Contenu inapproprié détecté', [
+                            'question_id' => $questionId,
+                            'reponse_text' => $reponseText
+                        ]);
+
+                        // Notification à l'enseignant via MailService
+                        $teacher = $evaluation->getCours()->getEnseignant();
+                        if ($teacher) {
+                            $this->mailService->sendInappropriateContentAlert(
+                                $user,
+                                $evaluation,
+                                $question,
+                                $reponseText,
+                                $teacher
+                            );
+                        }
+
+                        // Créer la réponse avec marquage suspect
+                        $reponse = new Reponse();
+                        $reponse->setQuestion($question)
+                               ->setText($reponseText)
+                               ->setUser($user)
+                               ->setEvaluation($evaluation)
+                               ->setPlagiatSuspect(true)
+                               ->setPlagiatDetails('Contenu inapproprié détecté le ' . (new \DateTime())->format('Y-m-d H:i:s'))
+                               ->setSubmitTime(new \DateTime());
+                        
+                        $entityManager->persist($reponse);
+                        
+                        // Notification à l'étudiant
+                        $this->addFlash('warning', 'Attention : Une de vos réponses contient un langage inapproprié.');
+                    } else {
+                        // Log réponse normale
+                        $logger->info('Réponse normale enregistrée');
+                        
+                        // Créer une réponse normale
+                        $question = $entityManager->getRepository(Question::class)->find($questionId);
+                        $reponse = new Reponse();
+                        $reponse->setQuestion($question)
+                               ->setText($reponseText)
+                               ->setUser($user)
+                               ->setEvaluation($evaluation)
+                               ->setSubmitTime(new \DateTime());
+                        
+                        $entityManager->persist($reponse);
+                    }
+                }
+                
+                $entityManager->flush();
+                
+                if ($hasInappropriateContent) {
+                    $this->addFlash('info', 'Vos réponses ont été enregistrées, mais certaines contiennent un langage inapproprié.');
+                } else {
+                    $this->addFlash('success', 'Vos réponses ont été enregistrées avec succès.');
+                }
+                
+                return $this->redirectToRoute('app_evaluation_showetudiant', ['id' => $id]);
             }
-            $entityManager->flush();
-            return $this->redirectToRoute('etudiant_evaluation_results', ['evaluationId' => $evaluationId]);
         }
+
+        // Paginer les questions - 5 questions par page
+        $pagination = $paginator->paginate(
+            $evaluation->getQuestions(),
+            $request->query->getInt('page', 1),
+            5
+        );
 
         return $this->render('evaluation/answer.html.twig', [
             'evaluation' => $evaluation,
-            'questions' => $questions,
-            'form' => $form->createView(),
+            'pagination' => $pagination
         ]);
     }
 
@@ -822,9 +1051,20 @@ final class EvaluationController extends AbstractController
         $evaluationsData = [];
         foreach ($evaluations as $evaluation) {
             $hasResponded = false;
+            $isCorrected = true;
             $reponses = $reponseRepository->findBy(['evaluation' => $evaluation]);
+            
             if (!empty($reponses)) {
                 $hasResponded = true;
+                // Vérifier si toutes les réponses ont une note
+                foreach ($reponses as $reponse) {
+                    if ($reponse->getNote() === null) {
+                        $isCorrected = false;
+                        break;
+                    }
+                }
+            } else {
+                $isCorrected = false;
             }
             
             $evaluationsData[] = [
@@ -833,7 +1073,8 @@ final class EvaluationController extends AbstractController
                 'description' => $evaluation->getDescription(),
                 'maxScore' => $evaluation->getMaxScore(),
                 'deadline' => $evaluation->getDeadline(),
-                'hasResponded' => $hasResponded
+                'hasResponded' => $hasResponded,
+                'isCorrected' => $isCorrected
             ];
         }
         
@@ -935,5 +1176,84 @@ final class EvaluationController extends AbstractController
         return $passing / count($scores);
     }
 
-    
+    #[Route('/evaluation/confirm-inappropriate/{evaluationId}/{reponseId}', name: 'app_evaluation_confirm_inappropriate', methods: ['POST'])]
+    public function confirmInappropriateContent(
+        Request $request,
+        int $evaluationId,
+        int $reponseId,
+        EntityManagerInterface $entityManager,
+        LoggerInterface $logger
+    ): Response {
+        $reponse = $entityManager->getRepository(Reponse::class)->find($reponseId);
+        
+        if (!$reponse) {
+            throw $this->createNotFoundException('Réponse non trouvée');
+        }
+
+        // Mettre la note à 0
+        $reponse->setNote(0);
+        
+        // Ajouter le message d'avertissement
+        $warningMessage = $request->request->get('warning_message');
+        $reponse->setCommentaire(sprintf(
+            "AVERTISSEMENT : Contenu inapproprié confirmé.\n%s\nNote automatiquement mise à 0.",
+            $warningMessage
+        ));
+
+        // Envoyer un email d'avertissement à l'étudiant via MailService
+        $this->mailService->sendInappropriateContentWarningToStudent(
+            $reponse->getUser(),
+            $reponse->getEvaluation(),
+            $reponse->getQuestion(),
+            $warningMessage
+        );
+
+        $entityManager->flush();
+
+        $this->addFlash('warning', 'La réponse a été marquée comme inappropriée et la note a été mise à 0.');
+        
+        return $this->redirectToRoute('evaluation_correctenseignant', [
+            'id' => $evaluationId
+        ]);
+    }
+
+    #[Route('/etudiant/{evaluationId}', name: 'app_evaluation_show_student_result')]
+    public function showStudentResult(
+        int $evaluationId,
+        EvaluationRepository $evaluationRepository,
+        ReponseRepository $reponseRepository
+    ): Response {
+        $evaluation = $evaluationRepository->find($evaluationId);
+        if (!$evaluation) {
+            throw $this->createNotFoundException('Évaluation non trouvée');
+        }
+
+        $user = $this->getUser();
+        $reponses = $reponseRepository->findBy([
+            'evaluation' => $evaluation,
+            'user' => $user
+        ]);
+
+        $hasInappropriateContent = false;
+        $totalScore = 0;
+        $maxScore = 0;
+
+        foreach ($reponses as $reponse) {
+            $maxScore += $reponse->getQuestion()->getPoint();
+            if ($reponse->getStatus() === 'corrige') {
+                $totalScore += $reponse->getNote();
+                if ($reponse->getNote() === 0 && str_starts_with($reponse->getCommentaire(), 'AVERTISSEMENT')) {
+                    $hasInappropriateContent = true;
+                }
+            }
+        }
+
+        return $this->render('evaluation/show_result.html.twig', [
+            'evaluation' => $evaluation,
+            'reponses' => $reponses,
+            'totalScore' => $totalScore,
+            'maxScore' => $maxScore,
+            'hasInappropriateContent' => $hasInappropriateContent
+        ]);
+    }
 }
