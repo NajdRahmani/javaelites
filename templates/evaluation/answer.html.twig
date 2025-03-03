@@ -5,81 +5,203 @@
 
 {% block stylesheets %}
     {{ parent() }}
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        .question-card {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .question-header {
+        body {
             background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px 8px 0 0;
-            border-bottom: 1px solid #ddd;
+            font-family: 'Poppins', sans-serif;
         }
-        .question-body {
-            padding: 20px;
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 1rem;
         }
-        .pagination-info {
-            margin: 20px 0;
-            text-align: center;
-            color: #6c757d;
-        }
-        .evaluation-header {
-            background: linear-gradient(45deg, #2b5876, #4e4376);
+        .main-header {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
             color: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .deadline-badge {
-            background-color: rgba(255,255,255,0.2);
-            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
             border-radius: 20px;
-            font-size: 0.9em;
+            font-size: 0.9rem;
+        }
+        .question-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        .question-header {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .question-number {
+            background: #0d6efd;
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-right: 1rem;
+        }
+        .points-badge {
+            background: #e9ecef;
+            color: #495057;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        .question-content {
+            padding: 2rem;
+        }
+        .question-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #495057;
+            margin-bottom: 1.5rem;
+        }
+        .code-block {
+            background: #2d2d2d;
+            color: #fff;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+        }
+        .answer-box {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 1rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+        }
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            border: none;
+            box-shadow: 0 4px 6px rgba(13, 110, 253, 0.2);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(13, 110, 253, 0.3);
+        }
+        .alert {
+            border-radius: 10px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .pagination {
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            justify-content: center;
+        }
+        .pagination .page-link {
+            border-radius: 10px;
+            margin: 0 0.2rem;
+            border: none;
+            padding: 0.8rem 1.2rem;
+            color: #495057;
+            transition: all 0.3s ease;
+        }
+        .pagination .page-link:hover {
+            background-color: #e9ecef;
+            color: #0d6efd;
+            transform: translateY(-1px);
+        }
+        .pagination .page-item.active .page-link {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            color: white;
+            box-shadow: 0 2px 4px rgba(13, 110, 253, 0.2);
+        }
+        .pagination-info {
+            text-align: center;
+            color: #6c757d;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
         }
     </style>
 {% endblock %}
 
 {% block body %}
-<div class="container py-4">
-    <div class="evaluation-header">
-        <h1 class="mb-3">{{ evaluation.title }}</h1>
+<div class="container">
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endfor %}
+
+    <div class="main-header">
         <div class="d-flex justify-content-between align-items-center">
+            <h1 class="h2 mb-0">{{ evaluation.title }}</h1>
             <span class="deadline-badge">
                 <i class="fas fa-clock me-2"></i>
                 Date limite : {{ evaluation.deadline|date('d/m/Y H:i') }}
             </span>
         </div>
-        <p class="text-light mt-3 mb-0">
-            <i class="fas fa-info-circle me-2"></i>
-            Vous pouvez naviguer entre les pages et répondre aux questions. Toutes vos réponses seront sauvegardées lorsque vous cliquerez sur "Soumettre mes réponses" sur la dernière page.
-        </p>
     </div>
 
-    <form method="POST" action="{{ path('etudiant_evaluation_answer', {'id': evaluation.id}) }}" id="evaluationForm">
+    <form method="POST">
         <div class="pagination-info">
             Page {{ pagination.currentPageNumber }} sur {{ pagination.pageCount }} 
             ({{ pagination.totalItemCount }} questions au total)
         </div>
 
         {% for question in pagination %}
-            <div class="question-card">
-                <div class="question-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        Question {{ question.ordreQuestion }}
-                        {% if question.point > 1 %}
-                            <span class="badge bg-primary">{{ question.point }} points</span>
-                        {% else %}
-                            <span class="badge bg-primary">{{ question.point }} point</span>
-                        {% endif %}
-                    </h5>
-                </div>
-                <div class="question-body">
-                    <div class="mb-4">
-                        <p class="question-text">{{ question.enonce }}</p>
+            <div class="question-container">
+                <div class="question-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <span class="question-number">Question {{ loop.index + (pagination.currentPageNumber - 1) * pagination.itemNumberPerPage }}</span>
+                            <h2 class="h5 mb-0">{{ question.title }}</h2>
+                        </div>
+                        <span class="points-badge">{{ question.point }} points</span>
                     </div>
+                </div>
+
+                <div class="question-content">
+                    <div class="question-text">
+                        {{ question.enonce|nl2br }}
+                    </div>
+                        
+                        {% if question.codeSnippet %}
+                            <div class="code-block">
+                            <code>{{ question.codeSnippet }}</code>
+                            </div>
+                        {% endif %}
+
+                    {% if question.hasMathFormula and question.mathFormula %}
+                        <div class="math-block">
+                            {{ question.mathFormula }}
+                    </div>
+                    {% endif %}
+
+                    <div class="answer-box">
                     <div class="form-group">
                         <label for="reponse_{{ question.id }}" class="form-label">Votre réponse :</label>
                         <textarea 
@@ -87,35 +209,21 @@
                             id="reponse_{{ question.id }}" 
                             name="reponses[{{ question.id }}]" 
                             rows="4"
-                            placeholder="Votre réponse (facultative)"
-                        >{{ existingResponses[question.id] is defined ? existingResponses[question.id].text : '' }}</textarea>
+                                required
+                            ></textarea>
+                        </div>
                     </div>
                 </div>
             </div>
         {% endfor %}
 
         <div class="d-flex justify-content-between align-items-center mt-4">
-            {% if pagination.currentPageNumber > 1 %}
-                <a href="{{ path('etudiant_evaluation_answer', {'id': evaluation.id, 'page': pagination.currentPageNumber - 1}) }}" 
-                   class="btn btn-secondary save-responses">
-                    <i class="fas fa-arrow-left me-2"></i>Page précédente
-                </a>
-            {% else %}
                 <a href="{{ path('app_evaluation_showetudiant', {'id': evaluation.id}) }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left me-2"></i>Retour
                 </a>
-            {% endif %}
-
-            {% if pagination.currentPageNumber < pagination.pageCount %}
-                <a href="{{ path('etudiant_evaluation_answer', {'id': evaluation.id, 'page': pagination.currentPageNumber + 1}) }}" 
-                   class="btn btn-primary save-responses">
-                    Page suivante<i class="fas fa-arrow-right ms-2"></i>
-                </a>
-            {% else %}
-                <button type="submit" class="btn btn-success">
+            <button type="submit" class="btn btn-primary">
                     <i class="fas fa-paper-plane me-2"></i>Soumettre mes réponses
                 </button>
-            {% endif %}
         </div>
 
         <div class="navigation d-flex justify-content-center mt-4">
@@ -123,73 +231,4 @@
         </div>
     </form>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('evaluationForm');
-    const textareas = form.querySelectorAll('textarea');
-
-    // Charger les réponses sauvegardées au chargement de la page
-    textareas.forEach(textarea => {
-        const questionId = textarea.name.match(/\[(\d+)\]/)[1];
-        const savedValue = localStorage.getItem(`evaluation_{{ evaluation.id }}_question_${questionId}`);
-        
-        if (savedValue && !textarea.value) {
-            textarea.value = savedValue;
-        }
-
-        // Sauvegarder la réponse quand l'utilisateur tape
-        textarea.addEventListener('input', function() {
-            localStorage.setItem(`evaluation_{{ evaluation.id }}_question_${questionId}`, this.value);
-        });
-    });
-
-    // Sauvegarder les réponses lors du changement de page
-    document.querySelectorAll('.save-responses').forEach(link => {
-        link.addEventListener('click', function(e) {
-            textareas.forEach(textarea => {
-                const questionId = textarea.name.match(/\[(\d+)\]/)[1];
-                if (textarea.value.trim() !== '') {
-                    localStorage.setItem(`evaluation_{{ evaluation.id }}_question_${questionId}`, textarea.value);
-                }
-            });
-        });
-    });
-
-    // Lors de la soumission du formulaire
-    form.addEventListener('submit', function(e) {
-        // Ajouter toutes les réponses sauvegardées au formulaire
-        const allResponses = {};
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key.startsWith(`evaluation_{{ evaluation.id }}_question_`)) {
-                const questionId = key.split('_').pop();
-                const value = localStorage.getItem(key);
-                if (value.trim() !== '') {
-                    allResponses[questionId] = value;
-                }
-            }
-        }
-
-        // Créer des champs cachés pour toutes les réponses
-        Object.entries(allResponses).forEach(([questionId, value]) => {
-            if (!form.querySelector(`[name="reponses[${questionId}]"]`)) {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = `reponses[${questionId}]`;
-                input.value = value;
-                form.appendChild(input);
-            }
-        });
-
-        // Nettoyer le localStorage après soumission réussie
-        for (let i = localStorage.length - 1; i >= 0; i--) {
-            const key = localStorage.key(i);
-            if (key.startsWith(`evaluation_{{ evaluation.id }}_question_`)) {
-                localStorage.removeItem(key);
-            }
-        }
-    });
-});
-</script>
 {% endblock %}

@@ -19,7 +19,7 @@ class QuestionType extends AbstractType
         $builder
             ->add('title', TextType::class, [
                 'label' => 'Titre de la question',
-                'required' => true,
+                'required' => false,
                 'attr' => [
                     'class' => 'form-control',
                     'placeholder' => 'Entrez le titre de la question'
@@ -38,7 +38,7 @@ class QuestionType extends AbstractType
             ])
             ->add('enonce', TextareaType::class, [
                 'label' => 'Énoncé de la question',
-                'required' => true,
+                'required' => false,
                 'attr' => [
                     'class' => 'form-control',
                     'rows' => 6,
@@ -56,7 +56,7 @@ class QuestionType extends AbstractType
             ])
             ->add('point', IntegerType::class, [
                 'label' => 'Points',
-                'required' => true,
+                'required' => false,
                 'attr' => [
                     'class' => 'form-control',
                     'min' => 0,
@@ -76,7 +76,7 @@ class QuestionType extends AbstractType
             ])
             ->add('ordreQuestion', IntegerType::class, [
                 'label' => 'Ordre de la question',
-                'required' => true,
+                'required' => false,
                 'attr' => [
                     'class' => 'form-control',
                     'min' => 1,

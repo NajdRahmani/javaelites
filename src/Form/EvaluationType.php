@@ -11,6 +11,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\NotBlank;
 
 class EvaluationType extends AbstractType
 {
@@ -19,16 +20,47 @@ class EvaluationType extends AbstractType
         $builder
             ->add('title', TextType::class, [
                 'label' => 'Titre',
-                'attr' => ['class' => 'form-control']
+                'required' => false,
+                'attr' => [
+                    'class' => 'form-control',
+                    'placeholder' => 'Entrez le titre de l\'évaluation (ex: Contrôle de Java - Chapitre 3)'
+                ],
+                'constraints' => [
+                    new NotBlank([
+                        'message' => 'Le titre est obligatoire'
+                    ])
+                ]
             ])
             ->add('description', TextareaType::class, [
                 'label' => 'Description',
-                'attr' => ['class' => 'form-control', 'rows' => 5]
+                'required' => false,
+                'attr' => [
+                    'class' => 'form-control',
+                    'rows' => 5,
+                    'placeholder' => 'Décrivez le contenu et les objectifs de l\'évaluation'
+                ],
+                'constraints' => [
+                    new NotBlank([
+                        'message' => 'La description est obligatoire'
+                    ])
+                ]
             ])
             ->add('deadline', DateTimeType::class, [
-                'label' => 'Date limite',
+                'label' => 'Date et heure limite',
                 'widget' => 'single_text',
-                'attr' => ['class' => 'form-control']
+                'html5' => true,
+                'required' => false,
+                'attr' => [
+                    'class' => 'form-control',
+                    'placeholder' => 'JJ/MM/AAAA HH:mm'
+                ],
+                'constraints' => [
+                    new NotBlank([
+                        'message' => 'La date limite est obligatoire'
+                    ])
+                ],
+                'input' => 'datetime',
+                'empty_data' => null
             ])
             ->add('badgeThreshold', IntegerType::class, [
                 'label' => 'Score minimum pour obtenir un badge (sur 20)',

@@ -173,13 +173,8 @@
                                                 <a href="{{ path('app_question_edit', {'id': question.id}) }}" class="btn btn-sm btn-warning">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
-                                                <form method="post" action="{{ path('app_question_delete', {'id': question.id}) }}" style="display: inline-block"
-                                                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette question ?');">
-                                                    <input type="hidden" name="token" value="{{ csrf_token('delete' ~ question.id) }}">
-                                                    <button class="btn btn-sm btn-danger">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
+                                                    {{ include('question/_delete_form.html.twig') }}
+
                                             </div>
                                         </td>
                                     </tr>
@@ -227,12 +222,8 @@
                     <i class="fas fa-chart-bar"></i> Statistiques
                 </a>
 
-                <form method="post" action="{{ path('app_evaluation_deleteenseignant', {'id': evaluation.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette évaluation ?');">
-                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ evaluation.id) }}">
-                    <button class="btn btn-danger btn-block">
-                        <i class="fas fa-trash"></i> Supprimer
-                    </button>
-                </form>
+                                                    {{ include('evaluation/_delete_form.html.twig') }}
+
             </div>
         </div>
     </div>
