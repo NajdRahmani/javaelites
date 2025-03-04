@@ -3,77 +3,226 @@
 {% block title %}Quiz: {{ quiz.titre }}{% endblock %}
 
 {% block body %}
-<div class="container">
-    <h2>{{ quiz.titre }}</h2>
+<div class="container py-4 quiz-container">
+    <!-- Header Section -->
+    <div class="text-center mb-5">
+        <h1 class="display-4 text-primary fw-bold mb-3">{{ quiz.titre }}</h1>
+        <div class="timer-container mb-4">
+            <div class="card border-primary shadow-lg">
+                <div class="card-body py-3">
+                    <h3 class="mb-0 text-danger fw-bold">
+                        <i class="fas fa-hourglass-half me-2"></i>
+                        <span id="timer">10:00</span>
+                    </h3>
+                    <div class="progress mt-2" style="height: 4px;">
+                        <div id="timer-progress" class="progress-bar bg-danger" role="progressbar" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <form method="post" action="{{ path('quiz_submit', {'id': quiz.id}) }}">
+    <!-- Quiz Form -->
+    <form method="post" action="{{ path('quiz_submit', {'id': quiz.id}) }}" id="quiz-form">
         {% for question in quiz.questions %}
-            <div class="mb-3 question-container" id="question-{{ question.id }}" {% if not loop.first %}style="display: none;"{% endif %}>
-                <label class="form-label">{{ question.texte }}</label>
-
-                {# Debugging: Check if responses exist #}
-                {% if question.reponses is empty %}
-                    <p class="text-danger">No responses available.</p>
-                {% endif %}
-
-                {# If it's a text-based question #}
-                {% if question.type == 'text' %}
-                    <input type="text" name="responses[{{ question.id }}]" class="form-control" placeholder="Your answer here">
-                {% endif %}
-
-                {# If it's a multiple-choice question #}
-                {% if question.type == 'multiple_choice' %}
-                    <div class="form-group">
-                        <select name="responses[{{ question.id }}][]" class="form-control" multiple>
-                            {% for response in question.reponses %}
-                                <option value="{{ response.id }}">{{ response.texte }}</option>
-                            {% else %}
-                                <option disabled>Aucune option disponible</option>
-                            {% endfor %}
-                        </select>
+            <div class="card question-container mb-4 shadow-lg" id="question-{{ question.id }}" {% if not loop.first %}style="display: none;"{% endif %}>
+                <div class="card-body p-4">
+                    <!-- Question Header -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="card-title text-muted mb-0">Question {{ loop.index }}</h4>
+                        <span class="badge bg-primary fs-6">{{ question.type|replace({'_': ' '})|title }}</span>
                     </div>
-                {% endif %}
 
-                {# If it's a single-choice (radio) question #}
-                {% if question.type == 'single_choice' %}
-                    <div class="form-group">
-                        <select name="responses[{{ question.id }}]" class="form-control">
-                            {% for response in question.reponses %}
-                                <option value="{{ response.id }}">{{ response.texte }}</option>
-                            {% else %}
-                                <option disabled>Aucune option disponible</option>
-                            {% endfor %}
-                        </select>
+                    <!-- Question Content -->
+                    <div class="question-content">
+                        <h3 class="fw-bold mb-4">{{ question.texte }}</h3>
+
+                        {% if question.reponses is empty %}
+                            <div class="alert alert-danger">No responses available</div>
+                        {% endif %}
+
+                        <!-- Response Types -->
+                        {% if question.type == 'text' %}
+                            <div class="form-floating">
+                                <input type="text" name="responses[{{ question.id }}]" 
+                                       class="form-control form-control-lg" 
+                                       placeholder="Your answer here"
+                                       style="font-size: 1.1rem">
+                                <label>Type your answer here</label>
+                            </div>
+
+                        {% elseif question.type == 'multiple_choice' %}
+                            <div class="choices-container">
+                                {% for response in question.reponses %}
+                                    <div class="form-check choice-card mb-3">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               name="responses[{{ question.id }}][]" 
+                                               value="{{ response.id }}" 
+                                               id="response-{{ response.id }}">
+                                        <label class="form-check-label w-100 p-3 rounded" for="response-{{ response.id }}">
+                                            {{ response.texte }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                        {% elseif question.type == 'single_choice' %}
+                            <div class="choices-container">
+                                {% for response in question.reponses %}
+                                    <div class="form-check choice-card mb-3">
+                                        <input class="form-check-input" 
+                                               type="radio" 
+                                               name="responses[{{ question.id }}]" 
+                                               value="{{ response.id }}" 
+                                               id="response-{{ response.id }}">
+                                        <label class="form-check-label w-100 p-3 rounded" for="response-{{ response.id }}">
+                                            {{ response.texte }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                     </div>
-                {% endif %}
 
-                {# Next button for all questions except the last one #}
-                {% if not loop.last %}
-                    <button type="button" class="btn btn-primary next-question" data-next="question-{{ quiz.questions[loop.index].id }}">Next</button>
-                {% else %}
-                    <button type="submit" class="btn btn-success">Submit Quiz</button>
-                {% endif %}
+                    <!-- Navigation Buttons -->
+                    <div class="d-flex justify-content-between mt-4">
+                        {% if not loop.first %}
+                            <button type="button" class="btn btn-outline-secondary prev-question">
+                                <i class="fas fa-arrow-left me-2"></i>Previous
+                            </button>
+                        {% endif %}
+                        
+                        {% if not loop.last %}
+                            <button type="button" class="btn btn-primary next-question ms-auto">
+                                Next Question <i class="fas fa-arrow-right ms-2"></i>
+                            </button>
+                        {% else %}
+                            <button type="submit" class="btn btn-success btn-lg ms-auto">
+                                <i class="fas fa-paper-plane me-2"></i>Submit Quiz
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         {% endfor %}
     </form>
 </div>
 
+<!-- Timer Script -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const nextButtons = document.querySelectorAll('.next-question');
+    const timerElement = document.getElementById('timer');
+    const progressBar = document.getElementById('timer-progress');
+    const quizForm = document.getElementById('quiz-form');
+    let timeLeft = 600; // 10 minutes in seconds
+    const totalTime = timeLeft;
 
-    nextButtons.forEach(button => {
+    function updateTimer() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        // Update progress bar
+        const progressPercentage = (timeLeft / totalTime) * 100;
+        progressBar.style.width = `${progressPercentage}%`;
+
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            quizForm.submit();
+        } else {
+            timeLeft--;
+        }
+    }
+
+    const timerInterval = setInterval(updateTimer, 1000);
+
+    // Enhanced navigation logic
+    document.querySelectorAll('.next-question').forEach(button => {
         button.addEventListener('click', function() {
             const currentQuestion = this.closest('.question-container');
-            const nextQuestionId = this.getAttribute('data-next');
-            const nextQuestion = document.getElementById(nextQuestionId);
-
-            if (currentQuestion && nextQuestion) {
+            const nextId = currentQuestion.nextElementSibling?.id;
+            if (nextId) {
                 currentQuestion.style.display = 'none';
-                nextQuestion.style.display = 'block';
+                document.getElementById(nextId).style.display = 'block';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+    });
+
+    document.querySelectorAll('.prev-question').forEach(button => {
+        button.addEventListener('click', function() {
+            const currentQuestion = this.closest('.question-container');
+            const prevId = currentQuestion.previousElementSibling?.id;
+            if (prevId) {
+                currentQuestion.style.display = 'none';
+                document.getElementById(prevId).style.display = 'block';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         });
     });
 });
 </script>
+
+<!-- Custom CSS -->
+<style>
+.quiz-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.question-container {
+    border-radius: 15px;
+    border: 2px solid #e9ecef;
+    transition: transform 0.2s;
+}
+
+.question-container:hover {
+    transform: translateY(-3px);
+}
+
+.choices-container .choice-card {
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+    transition: all 0.2s;
+}
+
+.choices-container .choice-card:hover {
+    background-color: #f8f9fa;
+    border-color: #0d6efd;
+}
+
+.choices-container .form-check-input {
+    transform: scale(1.2);
+    margin-top: 1.1rem;
+    margin-left: 0.5rem;
+}
+
+.choices-container .form-check-label {
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+
+.timer-container {
+    max-width: 250px;
+    margin: 0 auto 2rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+    border: none;
+    padding: 0.8rem 1.5rem;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #198754, #157347);
+    border: none;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+}
+
+.progress {
+    border-radius: 2px;
+}
+</style>
 {% endblock %}

@@ -21,7 +21,19 @@
                 <div class="col-md-4">
                     <div class="alert alert-success">
                         <h5 class="alert-heading"><i class="fas fa-star me-2"></i>Score</h5>
-                        <p class="mb-0">{{ user_quiz_selection.score|default('N/A') }}%</p>
+                        <div class="d-flex align-items-center">
+                            <span class="score-percentage">{{ user_quiz_selection.score|default('N/A') }}%</span>
+                            {% if user_quiz_selection.score is not null %}
+                                <span class="score-emoji ms-2">
+                                    {% set score = user_quiz_selection.score %}
+                                    {% if score < 25 %}😢
+                                    {% elseif score < 50 %}😟
+                                    {% elseif score < 70 %}🙂
+                                    {% else %}😃
+                                    {% endif %}
+                                </span>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
                 
@@ -145,6 +157,20 @@
     }
     .alert {
         border-radius: 10px;
+    }
+    /* Emoji styling */
+    .score-emoji {
+        font-size: 1.8rem;
+        line-height: 1;
+        margin-left: 0.8rem;
+        vertical-align: middle;
+    }
+    .score-percentage {
+        font-size: 1.4rem;
+        font-weight: bold;
+    }
+    .d-flex.align-items-center {
+        min-height: 40px;
     }
 </style>
 {% endblock %}
