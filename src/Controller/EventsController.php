@@ -50,9 +50,12 @@ final class EventsController extends AbstractController{
         foreach($registrations as $registration){
             $events[]=$registration->getEvent();
         }
+        $user = $userRepository->findOneById($user_id);
+        $recommendedEvents = $eventsRepository->findRecommendedEvents($user); 
         return $this->render('events/my_events.html.twig', [
             'events' => $events,
             'registrations'=>$registrations,
+            'recommendation' => $recommendedEvents
         ]);
     }
 

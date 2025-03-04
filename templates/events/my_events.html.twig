@@ -104,7 +104,7 @@
 									{% endif %}
 									<span class="location"><strong>Location:</strong>{{ location }}</span>
 								</td>
-								<td class="product-category"><span class="categories">{{ event.category[0] }}</span></td>
+								<td class="product-category"><span class="categories">{{ event.category }}</span></td>
 								<td class="action" data-title="Action">
 									<div class="">
 										<ul class="list-inline justify-content-center">
@@ -134,6 +134,61 @@
 	</div>
 	<!-- Container End -->
 </section>
+
+
+
+
+<section class="popular-deals section bg-gray">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="section-title">
+                    <h2>Recommended Events</h2>
+                    <p>Check out these top events tailored for you.</p>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="trending-ads-slide">
+                    {% for event in recommendation|slice(0,5) %} {# Limit to 5 events #}
+                    <div class="col-sm-12 col-lg-4">
+                        <div class="product-item bg-light">
+                            <div class="card">
+                                <div class="thumb-content">
+                                    <a href="{{ path('app_events_show', {'id': event.id}) }}">
+                                        <img class="card-img-top img-fluid" src="{{ asset('uploads/events/' ~ event.image) }}" alt="{{ event.title }}">
+                                    </a>
+                                </div>
+                                <div class="card-body">
+                                    <h4 class="card-title">
+                                        <a href="{{ path('app_events_show', {'id': event.id}) }}">{{ event.title }}</a>
+                                    </h4>
+                                    <ul class="list-inline product-meta">
+                                        <li class="list-inline-item">
+                                            <i class="fa fa-calendar"></i> {{ event.startDate|date('Y-m-d ') }}
+                                        </li>
+                                        <li class="list-inline-item">
+                                            <i class="fa fa-map-marker"></i> {{ event.location }}
+                                        </li>
+                                    </ul>
+                                    <p class="card-text">{{ event.description }}</p>
+                                    <div class="product-ratings">
+                                        <ul class="list-inline">
+										   <i class="fa fa-map-eye"></i> {{ event.category }}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 {% endblock %}
 
 {% block javascripts %}
