@@ -8,10 +8,13 @@ use App\Repository\EvaluationRepository;
 
 use App\Repository\ReponseRepository;
 use App\Repository\QuestionRepository;
+use App\Service\ProfanityCheckerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/reponse')]
@@ -26,7 +29,7 @@ final class ReponseController extends AbstractController
     }
 
     #[Route('/new/{questionId}', name: 'app_reponse_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager, QuestionRepository $questionRepository, $questionId): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, QuestionRepository $questionRepository, ProfanityCheckerService $profanityChecker, MailerInterface $mailer, $questionId): Response
     {
         // Récupérer la question par ID
         $question = $questionRepository->find($questionId);
@@ -60,6 +63,34 @@ final class ReponseController extends AbstractController
         }
     
         if ($form->isSubmitted() && $form->isValid()) {
+            // Vérification des mots inappropriés
+            if ($profanityChecker->containsProfanity($reponse->getText())) {
+                // Notifier l'enseignant par email
+                $email = (new Email())
+                    ->from('votre-app@domaine.com')
+                    ->to('enseignant@email.com')  // À remplacer par l'email de l'enseignant
+                    ->subject('Contenu inapproprié détecté')
+                    ->html(sprintf(
+                        'Un contenu inapproprié a été détecté dans une réponse:<br>
+                        Question: %s<br>
+                        Réponse: %s<br>
+                        Étudiant ID: %s',
+                        $question->getText(),
+                        $reponse->getText(),
+                        $userId
+                    ));
+
+                try {
+                    $mailer->send($email);
+                } catch (\Exception $e) {
+                    // Log l'erreur silencieusement
+                }
+
+                // Marquer la réponse comme suspecte
+                $reponse->setPlagiatSuspect(true);
+                $reponse->setPlagiatDetails('Contenu inapproprié détecté');
+            }
+
             // Persist la réponse
             $entityManager->persist($reponse);
             $entityManager->flush();

@@ -52,14 +52,14 @@
                                     <td>{{ evaluation.deadline ? evaluation.deadline|date('Y-m-d H:i:s') : '' }}</td>
                                     <td>{{ evaluation.cours }}</td>
                                     <td>
-                                        <a href="{{ path('app_evaluation_showenseignant', {'id': evaluation.id}) }}" class="btn btn-info">
+                                        <a href="{{ path('app_evaluation_detailsenseignant', {'id': evaluation.id}) }}" class="btn btn-info">
                                             <i class="fas fa-eye"></i> Voir
                                         </a>
                                         <a href="{{ path('app_evaluation_editenseignant', {'id': evaluation.id}) }}" class="btn btn-warning">
                                             <i class="fas fa-edit"></i> Modifier
                                         </a>
-                                        <a href="{{ path('evaluation_correctenseignant', {'id': evaluation.id}) }}" class="btn btn-success">
-                                            <i class="fas fa-check-circle"></i> Corriger
+                                        <a href="{{ path('app_evaluation_student_list', {'evaluationId': evaluation.id}) }}" class="btn btn-success">
+                                            <i class="fas fa-check"></i> Corriger
                                         </a>
                                         {{ include('evaluation/_delete_form.html.twig') }}
                                     </td>

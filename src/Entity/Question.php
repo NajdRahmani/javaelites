@@ -18,14 +18,22 @@ class Question
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(message: "Le texte de la question est obligatoire")]
+    #[Assert\NotBlank(message: "Le titre de la question est obligatoire")]
+    #[Assert\Length(
+        min: 4,
+        max: 255,
+        minMessage: "Le titre de la question doit contenir au moins {{ limit }} caractères",
+        maxMessage: "Le titre de la question ne peut pas dépasser {{ limit }} caractères"
+    )]
+    private ?string $title = null;
+
+    #[ORM\Column(type: 'text')]
+    #[Assert\NotBlank(message: "L'énoncé de la question est obligatoire")]
     #[Assert\Length(
         min: 10,
-        max: 255,
-        minMessage: "Le texte de la question doit contenir au moins {{ limit }} caractères",
-        maxMessage: "Le texte de la question ne peut pas dépasser {{ limit }} caractères"
+        minMessage: "L'énoncé doit contenir au moins {{ limit }} caractères"
     )]
-    private ?string $text = null;
+    private ?string $enonce = null;
 
     #[ORM\Column]
     #[Assert\NotBlank(message: "Le nombre de points est obligatoire")]
@@ -41,15 +49,24 @@ class Question
     #[Assert\Positive(message: "L'ordre doit être un nombre positif")]
     private ?int $ordreQuestion = null;
 
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $codeSnippet = null;
+
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
+    private ?string $programmingLanguage = null;
+
+    #[ORM\Column(type: 'boolean')]
+    private bool $hasMathFormula = false;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $mathFormula = null;
+
     #[ORM\ManyToOne(inversedBy: 'questions')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Evaluation $evaluation = null;
 
     #[ORM\OneToMany(targetEntity: Reponse::class, mappedBy: 'question', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $reponses;
-
-    #[ORM\Column(length: 255, nullable: true)]  // Marquer comme nullable
-    private ?string $title = null;
 
     public function __construct()
     {
@@ -62,14 +79,25 @@ class Question
         return $this->id;
     }
 
-    public function getText(): ?string
+    public function getTitle(): ?string
     {
-        return $this->text;
+        return $this->title;
     }
 
-    public function setText(?string $text): static
+    public function setTitle(?string $title): static
     {
-        $this->text = $text;
+        $this->title = $title;
+        return $this;
+    }
+
+    public function getEnonce(): ?string
+    {
+        return $this->enonce;
+    }
+
+    public function setEnonce(?string $enonce): static
+    {
+        $this->enonce = $enonce;
         return $this;
     }
 
@@ -84,11 +112,6 @@ class Question
         return $this;
     }
 
-    public function getPoints(): ?int
-    {
-        return $this->point;
-    }
-
     public function getOrdreQuestion(): ?int
     {
         return $this->ordreQuestion;
@@ -97,6 +120,50 @@ class Question
     public function setOrdreQuestion(int $ordreQuestion): static
     {
         $this->ordreQuestion = $ordreQuestion;
+        return $this;
+    }
+
+    public function getCodeSnippet(): ?string
+    {
+        return $this->codeSnippet;
+    }
+
+    public function setCodeSnippet(?string $codeSnippet): self
+    {
+        $this->codeSnippet = $codeSnippet;
+        return $this;
+    }
+
+    public function getProgrammingLanguage(): ?string
+    {
+        return $this->programmingLanguage;
+    }
+
+    public function setProgrammingLanguage(?string $programmingLanguage): self
+    {
+        $this->programmingLanguage = $programmingLanguage;
+        return $this;
+    }
+
+    public function getHasMathFormula(): bool
+    {
+        return $this->hasMathFormula;
+    }
+
+    public function setHasMathFormula(bool $hasMathFormula): self
+    {
+        $this->hasMathFormula = $hasMathFormula;
+        return $this;
+    }
+
+    public function getMathFormula(): ?string
+    {
+        return $this->mathFormula;
+    }
+
+    public function setMathFormula(?string $mathFormula): self
+    {
+        $this->mathFormula = $mathFormula;
         return $this;
     }
 
@@ -135,21 +202,9 @@ class Question
         return $this;
     }
 
-    // Ajout de la méthode getTitle et setTitle
-    public function getTitle(): ?string
-    {
-        return $this->title;
-    }
-
-    public function setTitle(string $title): static
-    {
-        $this->title = $title;
-        return $this;
-    }
-
     public function __toString(): string
     {
-        return $this->text ?? '';
+        return $this->title ?? '';
     }
 
     // Méthode pour définir l'ordre des questions
