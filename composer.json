@@ -52,9 +52,6 @@
             "symfony/runtime": true,
             "endroid/installer": true
         },
-        "platform": {
-        "php": "8.2.4"
-    },
         "sort-packages": true
     },
     "autoload": {
@@ -92,12 +89,12 @@
     "conflict": {
         "symfony/symfony": "*"
     },
-   "extra": {
+    "extra": {
         "symfony": {
-            "allow-contrib": true
+            "allow-contrib": false,
+            "require": "6.4.*"
         }
-    }
-    ,
+    },
     "require-dev": {
         "doctrine/doctrine-bundle": "*",
         "doctrine/doctrine-migrations-bundle": "*",

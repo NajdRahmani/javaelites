@@ -134,7 +134,12 @@ class Chapitre
     {
         return $this->nbr_vues;
     }
+    public function incrementNbrVues(): self
+    {
+        $this->nbr_vues ++;
 
+        return $this;
+    }
     public function setNbrVues(int $nbr_vues): static
     {
         $this->nbr_vues = $nbr_vues;

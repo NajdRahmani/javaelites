@@ -3,7 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AdminLTE 3 | Dashboard</title>
+      <link rel="icon" href="{{ asset('assets/images/145.png') }}" type="image/x-icon">
+
+  <title>Admin {% block title %}Knowlity{% endblock %}</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -265,7 +267,7 @@
             </a>
           </li>
           <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="{{path('app_blog_index')}}" class="nav-link">
               <i class="nav-icon fas fa-columns"></i>
               <p>
                 Blog
@@ -281,6 +283,12 @@
               </p>
             </a>
             <ul class="nav nav-treeview" style="display: none;">
+              <li class="nav-item">
+                  <a href="{{ path('app_admin_event_charts') }}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>General Info</p>
+                  </a>
+                </li>
               <li class="nav-item">
                 <a href="{{ path('app_admin_event') }}" class="nav-link">
                   <i class="far fa-circle nav-icon"></i>

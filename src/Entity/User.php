@@ -525,3 +525,4 @@ class User  implements PasswordAuthenticatedUserInterface
     }
 
    }
+

@@ -3,6 +3,8 @@
 namespace App\Controller;
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\HttpClient\HttpClient;
 use App\Entity\Cours;
 use App\Entity\Matiere;
@@ -25,7 +27,7 @@ use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Knp\Bundle\PaginatorBundle\Pagination\SlidingPagination;
-     
+
 #[Route('/cours')]
 final class CoursController extends AbstractController
 {
@@ -157,7 +159,7 @@ final class CoursController extends AbstractController
         }
     
         $user = $userRepository->find($userId);
-    
+     
         if (!$user) {
             throw $this->createNotFoundException('Utilisateur introuvable.');
         }
@@ -285,42 +287,53 @@ public function filter1(
     }
     
     #[Route('/votre-route-confirmation/{id}', name: 'route2')]
-public function confirmationAction(int $id, Request $request, EntityManagerInterface $entityManager): Response
-{
-    // Récupération de l'utilisateur
-    $userId = $request->getSession()->get('id');
-    $user = $entityManager->getRepository(User::class)->find($userId);
-    
-    if (!$user) {
-        $this->addFlash('error', 'Utilisateur non trouvé');
-        return $this->redirectToRoute('login_route');
-    }
-
-    // Récupération du cours
-    $cour = $entityManager->getRepository(Cours::class)->find($id);
-    
-    if (!$cour) {
-        $this->addFlash('error', 'Cours non trouvé');
-        return $this->redirectToRoute('cours_list_route');
-    }
-
-    try {
-        // Ajout de l'étudiant
-        $cour->addEtudiant($user);
+    public function confirmationAction(int $id, Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): Response
+    {
+        // Récupération de l'utilisateur
+        $userId = $request->getSession()->get('id');
+        $user = $entityManager->getRepository(User::class)->find($userId);
         
-        // Pas besoin de persist() pour les entités existantes
-        $entityManager->flush();
-
-        $this->addFlash('success', 'Inscription réussie !');
+        if (!$user) {
+            $this->addFlash('error', 'Utilisateur non trouvé');
+            return $this->redirectToRoute('login_route');
+        }
+    
+        // Récupération du cours
+        $cour = $entityManager->getRepository(Cours::class)->find($id);
         
-    } catch (\Exception $e) {
-        $this->addFlash('error', 'Erreur lors de l\'inscription : '.$e->getMessage());
+        if (!$cour) {
+            $this->addFlash('error', 'Cours non trouvé');
+            return $this->redirectToRoute('cours_list_route');
+        }
+    
+        try {
+            // Ajout de l'étudiant
+            $cour->addEtudiant($user);
+            
+            // Pas besoin de persist() pour les entités existantes
+            $entityManager->flush();
+    
+            // Envoi de l'email de confirmation
+            $emailAddress = $user->getEmail();
+            $email = (new Email())
+    ->from('projetknowlity@gmail.com')
+    ->to($emailAddress)
+    ->subject('Confirmation of Course Enrollment')
+    ->text('You have successfully enrolled in the course: "' . $cour->getTitle() . '". Thank you for joining us!')
+    ->html('<p>You have successfully enrolled in the course: <strong>"' . htmlspecialchars($cour->getTitle(), ENT_QUOTES) . '"</strong>. Thank you for joining us!</p>');
+            // Envoyer l'email
+            $mailer->send($email);
+    
+            $this->addFlash('success', 'Inscription réussie et email envoyé !');
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors de l\'inscription : '.$e->getMessage());
+        }
+    
+        return $this->redirectToRoute('app_cours_show', [
+            'id' => $cour->getId()
+        ], Response::HTTP_SEE_OTHER);
     }
-
-    return $this->redirectToRoute('app_cours_show', [
-        'id' => $cour->getId()
-    ], Response::HTTP_SEE_OTHER);
-}
+    
 #[Route('/generate-pdf/{userId}/{coursId}', name: 'generate_pdf')]
     public function generatePdf(
         int $userId, 
@@ -346,6 +359,14 @@ public function confirmationAction(int $id, Request $request, EntityManagerInter
                 'Content-Disposition' => 'attachment; filename="confirmation_inscription.pdf"'
             ]
         );
+    }
+    // enseignant
+    #[Route('/cours/{id}/stats', name: 'app_cours_stats', methods: ['GET'])]
+    public function stats(Cours $cours): Response
+    {
+        return $this->render('cours/stats.html.twig', [
+            'cours' => $cours,
+        ]);
     }
      // enseignant
      #[Route('/enseignant/{id}', name: 'app_cours', methods: ['GET'])]     
@@ -435,7 +456,7 @@ public function new(
                 "👉 Découvrez-le maintenant : %s",
                 $cour->getTitle(),
                 $cour->getDescription(),
-                $cour->getPrix() > 0 ? $cour->getPrix().' €' : 'Gratuit',
+                $cour->getPrix() > 0 ? $cour->getPrix().' DT' : 'Gratuit',
                 strtoupper($cour->getLangue()),
                 $this->generateUrl('app_cours_show', ['id' => $cour->getId()], UrlGeneratorInterface::ABSOLUTE_URL)
             );

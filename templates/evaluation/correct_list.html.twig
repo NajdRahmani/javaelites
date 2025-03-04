@@ -1,88 +1,120 @@
-{% extends 'base3.html.twig' %}
+{% extends 'base.html.twig' %}
 
-{% block title %}Liste des réponses à corriger{% endblock %}
+{% block title %}Correction de l'évaluation{% endblock %}
 
 {% block body %}
-<div class="container mt-4">
-    <div class="evaluation-header bg-primary text-white p-3 mb-4">
-        <h2>{{ evaluation.title }}</h2>
-        <p class="mb-0">{{ evaluation.description }}</p>
-        <p class="mb-0">Score maximum total : {{ scoreMaxTotal }} points</p>
-    </div>
+    <div class="container mt-4">
+        <h1>Correction de l'évaluation : {{ evaluation.title }}</h1>
+        <h3>Étudiant : {{ student.prenom }} {{ student.nom }}</h3>
 
-    <div class="questions-list">
-        {% for questionData in questionResponses %}
-            <div class="question-section card mb-4">
-                <div class="card-header bg-light">
-                    <h4 class="mb-0">Question : {{ questionData.question.text }}</h4>
-                    <p class="text-muted mb-0">Points : {{ questionData.question.points }}</p>
-                </div>
-                
-                <div class="card-body">
-                    {% if questionData.responses|length > 0 %}
-                        {% for responseData in questionData.responses %}
-                            <div class="response-item border-bottom py-3">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div class="response-content flex-grow-1">
-                                        <p class="mb-2"><strong>Réponse de l'étudiant :</strong></p>
-                                        <p class="response-text bg-light p-3 rounded">{{ responseData.reponse.text }}</p>
-                                    </div>
-                                    <div class="ms-3">
-                                        {% if responseData.isCorrected %}
-                                            <span class="badge bg-success">Note : {{ responseData.reponse.note }}/{{ questionData.question.points }}</span>
-                                        {% else %}
-                                            <span class="badge bg-warning">En attente de correction</span>
-                                        {% endif %}
-                                    </div>
+        <form action="{{ path('evaluation_save_correctionenseignant', {'evaluationId': evaluation.id, 'studentId': student.id}) }}" method="POST">
+            {% for questionResponse in questionResponses %}
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center {% if questionResponse.reponse.plagiatSuspect %}bg-warning{% endif %}">
+                        <h5>
+                            Question {{ questionResponse.question.ordreQuestion }}
+                            {% if questionResponse.reponse.plagiatSuspect %}
+                                <span class="badge bg-danger">Contenu inapproprié détecté</span>
+                            {% endif %}
+                        </h5>
+                        <span class="badge bg-primary">{{ questionResponse.question.point }} points</span>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Énoncé :</strong> {{ questionResponse.question.enonce }}</p>
+                        <p><strong>Réponse de l'étudiant :</strong></p>
+                        <div class="p-3 bg-light {% if questionResponse.reponse.plagiatSuspect %}border border-warning{% endif %}">
+                            {{ questionResponse.reponse.text }}
+                        </div>
+                        
+                        {% if questionResponse.reponse.plagiatSuspect %}
+                            <div class="alert alert-warning mt-3">
+                                <h6 class="alert-heading">⚠️ Contenu inapproprié détecté</h6>
+                                <p>{{ questionResponse.reponse.plagiatDetails }}</p>
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" 
+                                           class="form-check-input" 
+                                           id="confirmInappropriate_{{ questionResponse.reponse.id }}" 
+                                           name="confirm_inappropriate[{{ questionResponse.reponse.id }}]"
+                                           {% if questionResponse.reponse.note == 0 and questionResponse.reponse.commentaire starts with 'AVERTISSEMENT' %}checked{% endif %}
+                                           onchange="handleInappropriateConfirmation(this, {{ questionResponse.reponse.id }})">
+                                    <label class="form-check-label" for="confirmInappropriate_{{ questionResponse.reponse.id }}">
+                                        <strong>Confirmer le contenu inapproprié</strong> (mettra automatiquement la note à 0)
+                                    </label>
                                 </div>
-                                
-                                <div class="mt-2">
-                                    <a href="{{ path('evaluation_correctenseignant_student', {
-                                        'evaluationId': evaluation.id,
-                                        'reponseId': responseData.reponse.id
-                                    }) }}" class="btn btn-sm btn-primary">
-                                        {% if responseData.isCorrected %}
-                                            <i class="fas fa-edit"></i> Modifier la correction
-                                        {% else %}
-                                            <i class="fas fa-check"></i> Corriger la réponse
-                                        {% endif %}
-                                    </a>
+                                <div class="form-group warning-message-group" id="warningMessage_{{ questionResponse.reponse.id }}">
+                                    <label><strong>Message d'avertissement pour l'étudiant :</strong></label>
+                                    <textarea 
+                                        name="warning_messages[{{ questionResponse.reponse.id }}]" 
+                                        class="form-control" 
+                                        rows="3" 
+                                        placeholder="Expliquez pourquoi ce contenu est inapproprié et quelles sont les conséquences..."
+                                    >{{ questionResponse.reponse.commentaire starts with 'AVERTISSEMENT' ? questionResponse.reponse.commentaire[13:] }}</textarea>
                                 </div>
                             </div>
-                        {% endfor %}
-                    {% else %}
-                        <p class="text-muted mb-0">Aucune réponse pour cette question.</p>
-                    {% endif %}
+                        {% endif %}
+
+                        <div class="form-group mt-3">
+                            <label><strong>Note (sur {{ questionResponse.question.point }} points) :</strong></label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   name="notes[{{ questionResponse.reponse.id }}]" 
+                                   min="0" 
+                                   max="{{ questionResponse.question.point }}" 
+                                   step="0.5" 
+                                   value="{{ questionResponse.reponse.note }}"
+                                   {% if questionResponse.reponse.plagiatSuspect and questionResponse.reponse.note == 0 %}readonly{% endif %}>
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <label><strong>Commentaire :</strong></label>
+                            <textarea 
+                                name="commentaires[{{ questionResponse.reponse.id }}]" 
+                                class="form-control" 
+                                rows="3"
+                                {% if questionResponse.reponse.plagiatSuspect and questionResponse.reponse.note == 0 %}readonly{% endif %}
+                            >{{ questionResponse.reponse.commentaire starts with 'AVERTISSEMENT' ? '' : questionResponse.reponse.commentaire }}</textarea>
+                        </div>
+                    </div>
                 </div>
+            {% endfor %}
+
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{{ path('app_evaluation_student_list', {'evaluationId': evaluation.id}) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Retour à la liste
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Enregistrer les corrections
+                </button>
             </div>
-        {% endfor %}
+        </form>
     </div>
 
-    <a href="{{ path('app_evaluation_indexenseignant') }}" class="btn btn-secondary mt-3">
-        <i class="fas fa-arrow-left"></i> Retour à la liste des évaluations
-    </a>
-</div>
+    <script>
+    function handleInappropriateConfirmation(checkbox, reponseId) {
+        const noteInput = document.querySelector(`input[name="notes[${reponseId}]"]`);
+        const commentInput = document.querySelector(`textarea[name="commentaires[${reponseId}]"]`);
+        const warningGroup = document.querySelector(`#warningMessage_${reponseId}`);
+        
+        if (checkbox.checked) {
+            noteInput.value = 0;
+            noteInput.readOnly = true;
+            commentInput.readOnly = true;
+            warningGroup.style.display = 'block';
+        } else {
+            noteInput.readOnly = false;
+            commentInput.readOnly = false;
+            warningGroup.style.display = 'none';
+        }
+    }
 
-<style>
-    .evaluation-header {
-        border-radius: 5px;
-    }
-    .questions-list {
-        max-width: 900px;
-        margin: 0 auto;
-    }
-    .response-text {
-        white-space: pre-wrap;
-    }
-    .badge {
-        font-size: 0.9rem;
-        padding: 0.5em 1em;
-    }
-    .question-section {
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .response-item:last-child {
-        border-bottom: none !important;
-    }
-</style>
+    // Initialiser l'état des champs au chargement
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('input[name^="confirm_inappropriate"]');
+        checkboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                handleInappropriateConfirmation(checkbox, checkbox.id.split('_')[1]);
+            }
+        });
+    });
+    </script>
 {% endblock %}

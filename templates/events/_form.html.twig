@@ -42,9 +42,19 @@
    </div>
 
    <div class="form-field col-lg-6">
-        {{ form_widget(form.category, {'attr': {'class': 'form-select', 'multiple': 'multiple'}}) }}
+        {{ form_widget(form.category, {'attr': {'class': 'form-select'}}) }}
         <div class="text-danger">{{ form_errors(form.category) }}</div>
     </div>
+
+    <div class="form-field col-lg-6">
+      {{ form_widget(form.latitude, {'attr': {'class': 'input-text js-input', 'placeholder': 'latitude'}}) }}
+      <div class="text-danger">{{ form_errors(form.latitude) }}</div>
+   </div>
+
+   <div class="form-field col-lg-6">
+      {{ form_widget(form.longitude, {'attr': {'class': 'input-text js-input', 'placeholder': 'longitude'}}) }}
+      <div class="text-danger">{{ form_errors(form.longitude) }}</div>
+   </div>
 
 
    <div class="form-field col-lg-12">
