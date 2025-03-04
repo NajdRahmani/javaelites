@@ -120,9 +120,23 @@ class EventsType extends AbstractType
                 'constraints' => [
                     new Assert\NotBlank()
                 ]
-            ]);
+            ])
 
-            
+            ->add('latitude', null, [
+                'required' => false,
+                'constraints' => [
+                    new Assert\NotBlank(),
+                    new Assert\Positive()
+                ]
+            ])
+
+            ->add('longitude', null, [
+                'required' => false,
+                'constraints' => [
+                    new Assert\NotBlank(),
+                    new Assert\Positive()
+                ]
+            ]);
             
     }
 
