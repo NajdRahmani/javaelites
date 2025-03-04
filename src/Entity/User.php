@@ -136,12 +136,20 @@ class User  implements PasswordAuthenticatedUserInterface
     #[ORM\ManyToMany(targetEntity: Cours::class, mappedBy: 'etudiantsfavoris')]
     private Collection $coursFavoris;
 
+    /**
+     * @var Collection<int, Blog>
+     */
+ 
+    #[ORM\ManyToMany(targetEntity: Blog::class, mappedBy: 'likedBy')]
+    private Collection $likedBlogs;
+
     public function __construct()
     { $this->cours = new ArrayCollection();
         $this->coursFavoris = new ArrayCollection();
         $this->date_naissance = new \DateTime();
         $this->eventRegistrations = new ArrayCollection();
-        $this->userEventPreferences = new ArrayCollection(); 
+        $this->userEventPreferences = new ArrayCollection();
+        $this->likedBlogs = new ArrayCollection(); 
        
     }
 
@@ -487,4 +495,35 @@ class User  implements PasswordAuthenticatedUserInterface
         return $this;
     }
 
+<<<<<<< Updated upstream
    }
+=======
+    /**
+     * @return Collection<int, Blog>
+     */
+    public function getBlogs(): Collection
+    {
+        return $this->likedBlogs;
+    }
+
+    public function addBlog(Blog $blog): static
+    {
+        if (!$this->likedBlogs->contains($blog)) {
+            $this->likedBlogs->add($blog);
+            $blog->addLike($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBlog(Blog $blog): static
+    {
+        if ($this->likedBlogs->removeElement($blog)) {
+            $blog->removeLike($this);
+        }
+
+        return $this;
+    }
+
+   }
+>>>>>>> Stashed changes
