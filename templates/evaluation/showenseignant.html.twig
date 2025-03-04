@@ -1,88 +1,270 @@
 {% extends 'base3.html.twig' %}
 
-{% block title %}Evaluation{% endblock %}
+{% block title %}{{ evaluation.title }}{% endblock %}
 
 {% block stylesheets %}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{{ asset('assets/css/showevaluation.css') }}">
+    {{ parent() }}
+    <style>
+        .page-header {
+            background: #0066cc;
+            color: white;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        .info-section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .countdown-card {
+            background: linear-gradient(135deg, #20B2AA, #2F4F4F);
+            color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .countdown-title {
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+        }
+        .countdown-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .countdown-item {
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .countdown-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .countdown-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+        .status-badge {
+            background-color: #ffeeba;
+            color: #856404;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-action {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.25rem;
+        }
+        .btn-primary { background: #0066cc; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-info { background: #17a2b8; color: white; }
+    </style>
 {% endblock %}
 
 {% block body %}
-    <div class="form-container">
-        <h1>Evaluation</h1>
-
-        <table class="table">
-            <tbody>
-                <tr>
-                    <th>Id</th>
-                    <td>{{ evaluation.id }}</td>
-                </tr>
-                <tr>
-                    <th>Title</th>
-                    <td>{{ evaluation.title }}</td>
-                </tr>
-                <tr>
-                    <th>Description</th>
-                    <td>{{ evaluation.description }}</td>
-                </tr>
-                <tr>
-                    <th>Max Score</th>
-                    <td>{{ evaluation.maxScore }}</td>
-                </tr>
-                <tr>
-                    <th>Create At</th>
-                    <td>{{ evaluation.createAt ? evaluation.createAt|date('Y-m-d H:i:s') : '' }}</td>
-                </tr>
-                <tr>
-                    <th>Deadline</th>
-                    <td>{{ evaluation.deadline ? evaluation.deadline|date('Y-m-d H:i:s') : '' }}</td>
-                </tr>
-                <tr>
-                    <th>Number of Courses</th>
-                    <td>{{ evaluation.cours }}</td>
-                </tr>
-            </tbody>
-        </table>
-
-        <h3>Questions for this Evaluation</h3>
-        <ul class="list-group">
-            {% for question in questions %}
-                <li class="list-group-item">
-                    <strong>Question {{ question.ordreQuestion }}:</strong> {{ question.text }}
-
-                    <a href="{{ path('app_question_show', {'id': question.id}) }}" class="btn btn-primary btn-sm">👀 Voir</a>
-                    <a href="{{ path('app_question_edit', {'id': question.id}) }}" class="btn btn-warning btn-sm">✏️ Modifier</a>
-                    {{ include('question/_delete_form.html.twig') }}
-
-                    <h5 class="mt-3">Réponses des étudiants :</h5>
-                    {% if responsesByQuestion[question.id] is not empty %}
-                        <ul class="list-group">
-                            {% for reponse in responsesByQuestion[question.id] %}
-                                <li class="list-group-item">
-                                    <strong>Étudiant :</strong> {{ reponse.etudiant.nom }} <br>
-                                    <strong>Réponse :</strong> {{ reponse.texte }}
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>Aucune réponse pour cette question.</p>
-                    {% endif %}
-                </li>
-            {% else %}
-                <li class="list-group-item">No questions available for this evaluation.</li>
-            {% endfor %}
-        </ul>
-
-        <div class="form-group text-center mt-3">
-            <a href="{{ path('app_evaluation_indexenseignant') }}" class="btn btn-secondary">Back to List</a>
-            <a href="{{ path('app_evaluation_edit', {'id': evaluation.id}) }}" class="btn btn-warning">Edit</a>
+    <div class="page-header">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h3 mb-0">{{ evaluation.title }}</h1>
+                <a href="{{ path('coursEnseignant') }}" class="btn btn-light btn-sm">
+                    <i class="fas fa-arrow-left"></i> Retour au cours
+                </a>
+            </div>
         </div>
+    </div>
 
-{{ include('evaluation/_delete_form.html.twig') }}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="info-section">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4>Informations générales</h4>
+                            <table class="table">
+                                <tr>
+                                    <th>Score Maximum:</th>
+                                    <td>{{ evaluation.maxScore }} points</td>
+                                </tr>
+                                <tr>
+                                    <th>Date de Création:</th>
+                                    <td>{{ evaluation.createAt|date('d/m/Y H:i:s') }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Date Limite:</th>
+                                    <td>{{ evaluation.deadline|date('d/m/Y H:i') }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Cours:</th>
+                                    <td>{{ evaluation.cours.title }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h4>Statistiques</h4>
+                            <table class="table">
+                                <tr>
+                                    <th>Nombre de réponses:</th>
+                                    <td>{{ evaluation.reponses|length }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Status:</th>
+                                    <td>
+                                        <span class="status-badge">
+                                            <i class="fas fa-clock"></i> En attente de correction
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
 
+                <div class="info-section">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="mb-0">Questions</h4>
+                        <div>
+                            <a href="{{ path('app_question_new', {'evaluationId': evaluation.id}) }}" class="btn-action btn-primary">
+                                <i class="fas fa-plus"></i> Ajouter
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Points</th>
+                                    <th>Ordre</th>
+                                    <th>Énoncé</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for question in evaluation.questions %}
+                                    <tr>
+                                        <td>{{ question.id }}</td>
+                                        <td>{{ question.point }}</td>
+                                        <td>{{ question.ordreQuestion }}</td>
+                                        <td>{{ question.enonce }}</td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a href="{{ path('app_question_show', {'id': question.id}) }}" class="btn btn-sm btn-info">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{{ path('app_question_edit', {'id': question.id}) }}" class="btn btn-sm btn-warning">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                    {{ include('question/_delete_form.html.twig') }}
+
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="countdown-card">
+                    <h5 class="countdown-title">
+                        <i class="fas fa-hourglass-half"></i> TEMPS RESTANT
+                    </h5>
+                    <div class="countdown-grid" id="countdown">
+                        <div class="countdown-item">
+                            <div class="countdown-number" id="days">00</div>
+                            <div class="countdown-label">JOURS</div>
+                        </div>
+                        <div class="countdown-item">
+                            <div class="countdown-number" id="hours">00</div>
+                            <div class="countdown-label">HEURES</div>
+                        </div>
+                        <div class="countdown-item">
+                            <div class="countdown-number" id="minutes">00</div>
+                            <div class="countdown-label">MINUTES</div>
+                        </div>
+                        <div class="countdown-item">
+                            <div class="countdown-number" id="seconds">00</div>
+                            <div class="countdown-label">SECONDES</div>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="{{ path('app_evaluation_editenseignant', {'id': evaluation.id}) }}" class="btn btn-primary btn-block mb-2">
+                    <i class="fas fa-edit"></i> Modifier Évaluation
+                </a>
+
+                <a href="{{ path('app_evaluation_student_list', {'evaluationId': evaluation.id}) }}" class="btn btn-success btn-block mb-2">
+                    <i class="fas fa-check"></i> Corriger
+                </a>
+
+                <a href="{{ path('app_evaluation_statistics', {'id': evaluation.id}) }}" class="btn btn-info btn-block mb-2">
+                    <i class="fas fa-chart-bar"></i> Statistiques
+                </a>
+
+                                                    {{ include('evaluation/_delete_form.html.twig') }}
+
+            </div>
+        </div>
     </div>
 {% endblock %}
 
 {% block javascripts %}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    {{ parent() }}
+    <script>
+        function updateCountdown() {
+            const deadline = new Date("{{ evaluation.deadline|date('Y-m-d H:i:s') }}").getTime();
+            
+            function update() {
+                const now = new Date().getTime();
+                const distance = deadline - now;
+                
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                
+                document.getElementById("days").textContent = String(days).padStart(2, '0');
+                document.getElementById("hours").textContent = String(hours).padStart(2, '0');
+                document.getElementById("minutes").textContent = String(minutes).padStart(2, '0');
+                document.getElementById("seconds").textContent = String(seconds).padStart(2, '0');
+                
+                if (distance < 0) {
+                    clearInterval(countdownInterval);
+                    const countdown = document.getElementById("countdown");
+                    countdown.innerHTML = `
+                        <div class="countdown-item" style="grid-column: span 4;">
+                            <div class="countdown-number">--</div>
+                            <div class="countdown-label">TERMINÉ</div>
+                        </div>
+                    `;
+                }
+            }
+            
+            update();
+            const countdownInterval = setInterval(update, 1000);
+        }
+        
+        document.addEventListener('DOMContentLoaded', updateCountdown);
+    </script>
 {% endblock %}

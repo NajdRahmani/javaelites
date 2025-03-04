@@ -1,44 +1,121 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Détails de l'évaluation{% endblock %}
+{% block title %}{{ evaluation.title }}{% endblock %}
 
 {% block body %}
-    <div class="container mt-4">
-        <h1>Détails de l'évaluation</h1>
+<div class="container mt-4">
+    <h1 class="mb-4">{{ evaluation.title }}</h1>
 
-        <table class="table">
-            <tbody>
-                <tr>
-                    <th>Titre</th>
-                    <td>{{ evaluation.title }}</td>
-                </tr>
-                <tr>
-                    <th>Description</th>
-                    <td>{{ evaluation.description }}</td>
-                </tr>
-                <tr>
-                    <th>Score Maximum</th>
-                    <td>{{ evaluation.maxScore }}</td>
-                </tr>
-                <tr>
-                    <th>Date limite</th>
-                    <td>{{ evaluation.deadline ? evaluation.deadline|date('Y-m-d') : '' }}</td>
-                </tr>
-            </tbody>
-        </table>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Informations générales</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Score Maximum:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            {{ stats.scoreMaximum }} points
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Date de Création:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            {{ evaluation.dateCreation|date('d/m/Y H:i:s') }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Date Limite:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            {{ evaluation.dateLimite|date('d/m/Y H:i') }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <strong>Cours:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            {{ evaluation.cours }}
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-        <div class="mt-4">
-            <a href="{{ path('app_evaluation_statistics', {'id': evaluation.id}) }}" class="btn btn-primary">
-                <i class="fas fa-chart-bar"></i> Voir les statistiques
-            </a>
-            
-            <a href="{{ path('app_evaluation_editenseignant', {'id': evaluation.id}) }}" class="btn btn-warning">
-                <i class="fas fa-edit"></i> Modifier
-            </a>
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Statistiques</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Nombre de réponses:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            {{ stats.nombreReponses }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <strong>Status:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            <span class="badge bg-warning">{{ stats.status }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            <a href="{{ path('app_evaluation_indexenseignant') }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Retour à la liste
-            </a>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Actions</h5>
+                    <div class="d-grid gap-2">
+                        <a href="{{ path('app_evaluation_student_list', {'evaluationId': evaluation.id}) }}" class="btn btn-primary">
+                            <i class="fas fa-users"></i> Liste des étudiants
+                        </a>
+                        <a href="{{ path('app_evaluation_edit', {'id': evaluation.id}) }}" class="btn btn-secondary">
+                            <i class="fas fa-edit"></i> Modifier l'évaluation
+                        </a>
+                        <a href="{{ path('app_evaluation_statistics', {'id': evaluation.id}) }}" class="btn btn-info">
+                            <i class="fas fa-chart-bar"></i> Statistiques
+                        </a>
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="fas fa-trash"></i> Supprimer
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirmer la suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Êtes-vous sûr de vouloir supprimer cette évaluation ? Cette action est irréversible.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form method="post" action="{{ path('app_evaluation_delete', {'id': evaluation.id}) }}" style="display: inline-block;">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ evaluation.id) }}">
+                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

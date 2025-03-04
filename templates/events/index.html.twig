@@ -31,7 +31,6 @@
 {% endblock %}
 
 {% block body %}
-{{ dump(recommendation) }}
 
 <section class="hero-area bg-1 text-center overly">
     <div class="container">
@@ -89,40 +88,104 @@
     </div>
 </section>
 
+<br>
+<br>
+<br>
+
+<div class="text-center my-4">
+    <button class="btn btn-primary" id="showNormal">Recent Events</button>
+    <button class="btn btn-secondary" id="showRecommended">Recommended Events</button>
+</div>
+
 <section class="light">
     <div class="container py-2">
         <div class="h1 text-center text-dark" id="pageHeaderTitle">Our Events</div>
 
-        <div id="eventList">
-            {% for event in events %}
-            <article class="postcard light blue event-card" 
-                    data-title="{{ event.title|lower }}" 
-                    data-category="{{ event.category is iterable ? event.category|join(',')|lower : event.category|lower }}"
-                    data-location="{{ event.location|lower }}">
-                <a class="postcard__img_link" href="{{ path('app_events_show', {'id': event.id}) }}">
-                    {% if event.image %}
-                        <img class="postcard__img" src="{{ asset('uploads/events/' ~ event.image) }}" alt="{{ event.title }}">
-                    {% else %}
-                        <p>No image available</p>
-                    {% endif %}
-                </a>
-                <div class="postcard__text t-dark">
-                    <h1 class="postcard__title blue">
-                        <a href="{{ path('app_events_show', {'id': event.id}) }}">{{ event.title }}</a>
-                    </h1>
-                    <div class="postcard__subtitle small">
-                        <time datetime="{{ event.startDate|date('Y-m-d H:i:s') }}">
-                            <i class="fas fa-calendar-alt mr-2"></i>{{ event.startDate|date('D, M jS Y') }}
-                        </time>
-                    </div>
-                    <div class="postcard__bar"></div>
-                    <div class="postcard__preview-txt">{{ event.description }}</div>
+        <div id="normalEvents">
+    <h5>Our Events</h5>
+    <div id="eventList">
+        {% for event in events %}
+        <article class="postcard light blue event-card"
+                data-title="{{ event.title|lower }}" 
+                data-category="{{ event.category }}"
+                data-location="{{ event.location|lower }}">
+            <a class="postcard__img_link" href="{{ path('app_events_show', {'id': event.id}) }}">
+                {% if event.image %}
+                    <img class="postcard__img" src="{{ asset('uploads/events/' ~ event.image) }}" alt="{{ event.title }}">
+                {% else %}
+                    <p>No image available</p>
+                {% endif %}
+            </a>
+            <div class="postcard__text t-dark">
+                <h1 class="postcard__title blue">
+                    <a href="{{ path('app_events_show', {'id': event.id}) }}">{{ event.title }}</a>
+                </h1>
+                <div class="postcard__subtitle small">
+                    <time datetime="{{ event.startDate|date('Y-m-d H:i:s') }}">
+                        <i class="fas fa-calendar-alt mr-2"></i>{{ event.startDate|date('D, M jS Y') }}
+                    </time>
                 </div>
-            </article>
-            {% else %}
-            <p>No events found.</p>
-            {% endfor %}
-        </div>
+                <div class="postcard__bar"></div>
+                <div class="postcard__preview-txt">{{ event.description }}
+                <ul class="postcard__tagbox">
+					<li class="tag__item"><i class="fas fa-tag mr-2"></i>{{ event.category }}</li>
+					<li class="tag__item"><i class="fas fa-money mr-2"></i>FREE</li>
+					<li class="tag__item play red">
+						<a href="{{ path('app_events_show', {'id': event.id}) }}"><i class="fas fa-link mr-2"></i>Reserve</a>
+					</li>
+				</ul>
+                </div>
+            </div>
+        </article>
+        {% else %}
+        <p>No events found.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="recommendedEvents" style="display: none;">
+    <h5>Recommended Events</h5>
+    <div id="recommendedList">
+        {% for recommended in recommendation %}
+        <article class="postcard light blue event-card"
+                data-title="{{ recommended.title|lower }}" 
+                data-category="{{ recommended.category is iterable ? recommended.category|join(',')|lower : recommended.category|lower }}"
+                data-location="{{ recommended.location|lower }}">
+            <a class="postcard__img_link" href="{{ path('app_events_show', {'id': recommended.id}) }}">
+                {% if recommended.image %}
+                    <img class="postcard__img" src="{{ asset('uploads/events/' ~ recommended.image) }}" alt="{{ recommended.title }}">
+                {% else %}
+                    <p>No image available</p>
+                {% endif %}
+            </a>
+            <div class="postcard__text t-dark">
+                <h1 class="postcard__title blue">
+                    <a href="{{ path('app_events_show', {'id': recommended.id}) }}">{{ recommended.title }}</a>
+                </h1>
+                <div class="postcard__subtitle small">
+                    <time datetime="{{ recommended.startDate|date('Y-m-d H:i:s') }}">
+                        <i class="fas fa-calendar-alt mr-2"></i>{{ recommended.startDate|date('D, M jS Y') }}
+                    </time>
+                </div>
+                <div class="postcard__bar"></div>
+                <div class="postcard__preview-txt">{{ recommended.description }}
+                <ul class="postcard__tagbox">
+					<li class="tag__item"><i class="fas fa-tag mr-2"></i>{{ recommended.category }}</li>
+					<li class="tag__item"><i class="fas fa-money mr-2"></i>FREE</li>
+					<li class="tag__item play red">
+						<a href="{{ path('app_events_show', {'id': recommended.id}) }}"><i class="fas fa-link mr-2"></i>Reserve</a>
+					</li>
+				</ul>
+                </div>
+                </div>
+            </div>
+        </article>
+        {% else %}
+        <p>No recommended events found.</p>
+        {% endfor %}
+    </div>
+</div>
+
     </div>
 
 </section>
@@ -207,6 +270,32 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
         console.error("Location input not found"); // Log if the input is missing
     }
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const normalEventsSection = document.getElementById("normalEvents");
+    const recommendedEventsSection = document.getElementById("recommendedEvents");
+    const showNormalBtn = document.getElementById("showNormal");
+    const showRecommendedBtn = document.getElementById("showRecommended");
+
+    showNormalBtn.addEventListener("click", function () {
+        normalEventsSection.style.display = "block";
+        recommendedEventsSection.style.display = "none";
+        showNormalBtn.classList.add("btn-primary");
+        showNormalBtn.classList.remove("btn-secondary");
+        showRecommendedBtn.classList.add("btn-secondary");
+        showRecommendedBtn.classList.remove("btn-primary");
+    });
+
+    showRecommendedBtn.addEventListener("click", function () {
+        normalEventsSection.style.display = "none";
+        recommendedEventsSection.style.display = "block";
+        showRecommendedBtn.classList.add("btn-primary");
+        showRecommendedBtn.classList.remove("btn-secondary");
+        showNormalBtn.classList.add("btn-secondary");
+        showNormalBtn.classList.remove("btn-primary");
+    });
 });
 </script>
 

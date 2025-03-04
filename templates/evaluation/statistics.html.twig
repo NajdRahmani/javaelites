@@ -1,57 +1,284 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Statistiques de l'évaluation{% endblock %}
+{% block title %}Statistiques - {{ evaluation.title }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .stats-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #0066cc, #0052a3);
+            border-radius: 12px;
+            padding: 25px;
+            color: white;
+            text-align: center;
+            height: 100%;
+            transition: transform 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        .progress {
+            height: 8px;
+            background-color: rgba(255,255,255,0.2);
+            margin-top: 15px;
+        }
+        .progress-bar {
+            background-color: rgba(255,255,255,0.8);
+        }
+        .ranking-table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .ranking-table th {
+            background: #f8f9fa;
+            border: none;
+            padding: 15px;
+        }
+        .ranking-table td {
+            padding: 15px;
+            vertical-align: middle;
+        }
+        .sort-btn {
+            background: none;
+            border: none;
+            color: #0066cc;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+        .sort-btn:hover {
+            color: #0052a3;
+        }
+        .chart-container {
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .rank-badge {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .rank-1 { background: #ffd700; color: #000; }
+        .rank-2 { background: #c0c0c0; color: #000; }
+        .rank-3 { background: #cd7f32; color: #fff; }
+    </style>
+{% endblock %}
 
 {% block body %}
-    <div class="container mt-4">
-        <h1>Statistiques de l'évaluation : {{ evaluation.title }}</h1>
-        
-        <div class="row mt-4">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Statistiques générales</h3>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ evaluation.title }}</h1>
+        <div class="text-muted">
+            <i class="fas fa-clock"></i> Échéance: {{ evaluation.deadline|date('d/m/Y H:i') }}
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <span class="stat-label">Participants</span>
+                <div class="stat-value">{{ totalStudents }}</div>
+                <div class="progress">
+                    <div class="progress-bar" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <span class="stat-label">Score Moyen</span>
+                <div class="stat-value">{{ averageScore|number_format(2) }}/{{ scoreMaxTotal }}</div>
+                <div class="progress">
+                    <div class="progress-bar" style="width: {{ scoreMaxTotal > 0 ? (averageScore / scoreMaxTotal * 100)|number_format(0) : 0 }}%"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <span class="stat-label">Taux de Réussite</span>
+                <div class="stat-value">{{ passRate|number_format(1) }}%</div>
+                <div class="progress">
+                    <div class="progress-bar" style="width: {{ passRate }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="stats-container">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3>Classement des Étudiants</h3>
+                    <div class="d-flex gap-3">
+                        <form class="d-flex" method="get" action="{{ path('app_evaluation_statistics', {'id': evaluation.id}) }}">
+                            <input type="hidden" name="sort" value="{{ currentSort }}">
+                            <input type="hidden" name="order" value="{{ currentOrder }}">
+                            <div class="input-group">
+                                <input type="text" name="search" class="form-control" placeholder="Rechercher un étudiant..." value="{{ currentSearch }}">
+                                <button class="btn btn-outline-primary" type="submit">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </form>
+                        <div class="btn-group">
+                            <a href="{{ path('app_evaluation_statistics', {
+                                'id': evaluation.id,
+                                'sort': 'score',
+                                'order': 'DESC',
+                                'search': currentSearch
+                            }) }}" class="btn btn-outline-primary {{ currentSort == 'score' and currentOrder == 'DESC' ? 'active' : '' }}">
+                                Score ↓
+                            </a>
+                            <a href="{{ path('app_evaluation_statistics', {
+                                'id': evaluation.id,
+                                'sort': 'score',
+                                'order': 'ASC',
+                                'search': currentSearch
+                            }) }}" class="btn btn-outline-primary {{ currentSort == 'score' and currentOrder == 'ASC' ? 'active' : '' }}">
+                                Score ↑
+                            </a>
+                        </div>
+                        <div class="btn-group">
+                            <a href="{{ path('app_evaluation_statistics', {
+                                'id': evaluation.id,
+                                'sort': 'name',
+                                'order': 'ASC',
+                                'search': currentSearch
+                            }) }}" class="btn btn-outline-primary {{ currentSort == 'name' and currentOrder == 'ASC' ? 'active' : '' }}">
+                                A-Z
+                            </a>
+                            <a href="{{ path('app_evaluation_statistics', {
+                                'id': evaluation.id,
+                                'sort': 'name',
+                                'order': 'DESC',
+                                'search': currentSearch
+                            }) }}" class="btn btn-outline-primary {{ currentSort == 'name' and currentOrder == 'DESC' ? 'active' : '' }}">
+                                Z-A
+                            </a>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <table class="table">
-                            <tbody>
+                </div>
+                <div class="table-responsive ranking-table">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>
+                                    <a href="{{ path('app_evaluation_statistics', {
+                                        'id': evaluation.id,
+                                        'sort': 'name',
+                                        'order': currentSort == 'name' and currentOrder == 'ASC' ? 'DESC' : 'ASC'
+                                    }) }}" class="text-decoration-none">
+                                        Nom
+                                        <i class="fas fa-sort{{ currentSort == 'name' ? '-' ~ (currentOrder|lower) : '' }}"></i>
+                                    </a>
+                                </th>
+                                <th>Email</th>
+                                <th>
+                                    <a href="{{ path('app_evaluation_statistics', {
+                                        'id': evaluation.id,
+                                        'sort': 'score',
+                                        'order': currentSort == 'score' and currentOrder == 'ASC' ? 'DESC' : 'ASC'
+                                    }) }}" class="text-decoration-none">
+                                        Score
+                                        <i class="fas fa-sort{{ currentSort == 'score' ? '-' ~ (currentOrder|lower) : '' }}"></i>
+                                    </a>
+                                </th>
+                                <th>Progression</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in studentRankings %}
                                 <tr>
-                                    <th>Nombre de participants</th>
-                                    <td>{{ statistics.nombre_participants }}</td>
+                                    <td>
+                                        <div class="rank-badge {{ loop.index <= 3 ? 'rank-' ~ loop.index : '' }}">
+                                            {{ loop.index }}
+                                        </div>
+                                    </td>
+                                    <td>{{ student.nom }} {{ student.prenom }}</td>
+                                    <td>{{ student.email }}</td>
+                                    <td>{{ student.totalScore }}/{{ scoreMaxTotal }}</td>
+                                    <td>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-primary" 
+                                                 style="width: {{ (student.gradedAnswers / totalQuestions * 100)|number_format(0) }}%">
+                                                {{ student.gradedAnswers }}/{{ totalQuestions }} questions corrigées
+                                            </div>
+                                        </div>
+                                    </td>
                                 </tr>
-                                <tr>
-                                    <th>Score moyen</th>
-                                    <td>{{ statistics.moyenne }} / {{ evaluation.maxScore }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Score médian</th>
-                                    <td>{{ statistics.mediane }} / {{ evaluation.maxScore }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Écart-type</th>
-                                    <td>{{ statistics.ecart_type }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Score minimum</th>
-                                    <td>{{ statistics.min }} / {{ evaluation.maxScore }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Score maximum</th>
-                                    <td>{{ statistics.max }} / {{ evaluation.maxScore }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Taux de réussite</th>
-                                    <td>{{ statistics.taux_reussite }}%</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="stats-container">
+                <h3 class="mb-4">Distribution des Scores</h3>
+                <div class="chart-container">
+                    <div class="row">
+                        {% for range, count in scoreRanges %}
+                            <div class="col">
+                                <div class="text-center mb-2">{{ range }}</div>
+                                <div class="progress" style="height: 100px; transform: rotate(180deg);">
+                                    <div class="progress-bar bg-primary" 
+                                         style="width: 100%; height: {{ totalStudents > 0 ? (count / totalStudents * 100)|number_format(0) : 0 }}%"
+                                         data-bs-toggle="tooltip" 
+                                         title="{{ count }} étudiant(s)">
+                                    </div>
+                                </div>
+                                <div class="text-center mt-2">{{ count }}</div>
+                            </div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
         </div>
-
-        <div class="mt-4">
-            <a href="{{ path('app_evaluation_showenseignant', {'id': evaluation.id}) }}" class="btn btn-secondary">Retour aux détails</a>
-        </div>
     </div>
+
+    <div class="mt-4">
+        <a href="{{ path('app_evaluation_showenseignant', {'id': evaluation.id}) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Retour à l'évaluation
+        </a>
+    </div>
+</div>
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+        });
+    </script>
+{% endblock %}
 {% endblock %}

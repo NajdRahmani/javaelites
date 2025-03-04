@@ -7,6 +7,7 @@
     <meta name="author" content="">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:100,200,300,400,500,600,700,800,900" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,1,0" />
+    <link rel="icon" href="{{ asset('assets/images/145.png') }}" type="image/x-icon">
 
     <title>{% block title %}Knowlity{% endblock %}</title>
 
@@ -50,19 +51,19 @@
     {% endblock %}
 </head>
 <body>
-    <!-- ***** Header Area Start ***** -->
+    <!-- *** Header Area Start *** -->
     <header class="header-area header-sticky background-header">
         <div class="container">
             <div class="row">
                 <div class="col-12">
                     <nav class="main-nav">
-                        <!-- ***** Logo Start ***** -->
+                        <!-- *** Logo Start *** -->
                        <a href="{{ path('app_home_index') }}" class="logo">
                             <img src="{{ asset('assets/images/145.png') }}" alt="Knowlity Template" style="position: relative;top: -9px;width: 69px;">
                             Knowlity
                         </a>
-                        <!-- ***** Logo End ***** -->
-                        <!-- ***** Menu Start ***** -->
+                        <!-- *** Logo End *** -->
+                        <!-- *** Menu Start *** -->
                         <ul class="nav">
                             <li ><a href="{{ path('app_home_index') }}" class="active">Home</a></li>
 
@@ -94,13 +95,13 @@
                         <a class='menu-trigger'>
                             <span>Menu</span>
                         </a>
-                        <!-- ***** Menu End ***** -->
+                        <!-- *** Menu End *** -->
                     </nav>
                 </div>
             </div>
         </div>
     </header>
-    <!-- ***** Header Area End ***** -->
+    <!-- *** Header Area End *** -->
     {% block body %}
     
     
@@ -118,7 +119,7 @@
       <div class="header-info">
         <img class="chatbot-logo" src="{{ asset('assets/images/robotic.png') }}" alt="Chatbot Logo" width="50" height="50">
         </img>
-        <h2 class="logo-text">Knowlity Chatbot</h2>
+        <h2 class="logo-text">Chatbot</h2>
       </div>
       <button id="close-chatbot" class="material-symbols-rounded">keyboard_arrow_down</button>
     </div>
@@ -154,7 +155,7 @@
   <!-- Linking Emoji Mart script for emoji picker -->
   <script src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js"></script>
 
-    <!-- ***** Footer Area Start ***** -->
+    <!-- *** Footer Area Start *** -->
     <!-- Footer -->
     <footer class="text-center text-lg-start bg-body-tertiary text-muted" style="background-color: rgba(197, 0, 167, 0.05);">
       <!-- Section: Social media -->
@@ -280,16 +281,7 @@
 
 
 
-    <!-- ***** Footer Area End ***** -->
-<script>
-    var userinfo = {
-        id: "{{ app.session.get('id') }}",
-        name: "{{ app.session.get('user_prenom') }}",
-        email: "{{ app.session.get('email') }}",
-        role: "{{ app.session.get('roles') }}"
-    };
-</script>
-
+    <!-- *** Footer Area End *** -->
 
     <!-- Scripts -->
     <script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
