@@ -140,8 +140,10 @@ class User  implements PasswordAuthenticatedUserInterface
      * @var Collection<int, Blog>
      */
  
-    #[ORM\ManyToMany(targetEntity: Blog::class, mappedBy: 'likedBy')]
-    private Collection $likedBlogs;
+     #[ORM\ManyToMany(targetEntity: Blog::class, inversedBy: 'likedBy')] // Ligne ~260
+     #[ORM\JoinTable(name: "user_blog_likes")]
+     private Collection $likedBlogs;
+     
 
     public function __construct()
     { $this->cours = new ArrayCollection();
@@ -498,11 +500,11 @@ class User  implements PasswordAuthenticatedUserInterface
     /**
      * @return Collection<int, Blog>
      */
-    public function getBlogs(): Collection
+    public function getBlogs(): Collection  // Ligne ~390
     {
         return $this->likedBlogs;
     }
-
+    
     public function addBlog(Blog $blog): static
     {
         if (!$this->likedBlogs->contains($blog)) {
@@ -523,34 +525,6 @@ class User  implements PasswordAuthenticatedUserInterface
     }
 
 
-   }
 
-    /**
-     * @return Collection<int, Blog>
-     */
-    public function getBlogs(): Collection
-    {
-        return $this->likedBlogs;
-    }
-
-    public function addBlog(Blog $blog): static
-    {
-        if (!$this->likedBlogs->contains($blog)) {
-            $this->likedBlogs->add($blog);
-            $blog->addLike($this);
-        }
-
-        return $this;
-    }
-
-    public function removeBlog(Blog $blog): static
-    {
-        if ($this->likedBlogs->removeElement($blog)) {
-            $blog->removeLike($this);
-        }
-
-        return $this;
-    }
-
-   }
+}
 

@@ -8,9 +8,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use App\Entity\Like;
-use App\Entity\Comment;
-use App\Entity\User;
 
 #[ORM\Entity(repositoryClass: BlogRepository::class)]
 class Blog
@@ -22,20 +19,12 @@ class Blog
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: "Le titre ne peut pas être vide")]
-    #[Assert\Length(
-        min: 3,
-        max: 255,
-        minMessage: "Le titre doit contenir au moins {{ limit }} caractères",
-        maxMessage: "Le titre ne peut pas dépasser {{ limit }} caractères"
-    )]
+    #[Assert\Length(min: 3, max: 255)]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: "Le contenu ne peut pas être vide")]
-    #[Assert\Length(
-        min: 10,
-        minMessage: "Le contenu doit contenir au moins {{ limit }} caractères"
-    )]
+    #[Assert\Length(min: 10)]
     private ?string $content = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
@@ -44,14 +33,9 @@ class Blog
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $updatedAt = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 50)]
     #[Assert\NotBlank(message: "Le nom du créateur ne peut pas être vide")]
-    #[Assert\Length(
-        min: 2,
-        max: 50,
-        minMessage: "Le nom doit contenir au moins {{ limit }} caractères",
-        maxMessage: "Le nom ne peut pas dépasser {{ limit }} caractères"
-    )]
+    #[Assert\Length(min: 2, max: 50)]
     private ?string $creatorName = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -67,22 +51,14 @@ class Blog
 
     #[ORM\OneToMany(mappedBy: 'blog', targetEntity: Comment::class, orphanRemoval: true)]
     private Collection $comments;
-    #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'likedBlogs')]
-    #[ORM\JoinTable(name: 'blog_likes')]
-    private Collection $likedBy;
 
-    /**
-     * @var Collection<int, user>
-     */
-    #[ORM\ManyToMany(targetEntity: user::class, inversedBy: 'blogs')]
-    private Collection $Likes;
+  
 
     public function __construct()
     {
         $this->createdAt = new \DateTime();
         $this->likes = new ArrayCollection();
         $this->comments = new ArrayCollection();
-        $this->Likes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -167,25 +143,15 @@ class Blog
         return $this;
     }
 
-    /**
-     * @return Collection<int, Like>
-     */
     public function getLikes(): Collection
     {
         return $this->likes;
     }
 
-    /**
-     * @return Collection<int, Comment>
-     */
     public function getComments(): Collection
     {
         return $this->comments;
     }
-
-   
-
-   
 
     public function addComment(Comment $comment): self
     {
@@ -205,39 +171,29 @@ class Blog
         }
         return $this;
     }
-    
+
     
     public function isLikedByUser(int $userId): bool
-{
-    foreach ($this->likedBy as $user) {
-        if ($user->getId() === $userId) {
-            return true;
-        }
-    }
-    return false;
-}
-
-    public function addLike(User $user): self
     {
-        if (!$this->likedBy->contains($user)) {
-            $this->likedBy[] = $user;
+        return $this->likes->exists(fn($key, $like) => $like->getUser()->getId() === $userId);
+    }
+
+    public function addLike(Like $like): self
+    {
+        if (!$this->likes->contains($like)) {
+            $this->likes->add($like);
         }
         return $this;
     }
 
-    public function removeLike(User $user): self
+    public function removeLike(Like $like): self
     {
-        $this->likedBy->removeElement($user);
+        $this->likes->removeElement($like);
         return $this;
     }
 
     public function getLikesCount(): int
     {
-        return $this->likedBy->count();
-    }
-
-    public function getLikedBy(): Collection
-    {
-        return $this->likedBy;
+        return $this->likes->count();
     }
 }

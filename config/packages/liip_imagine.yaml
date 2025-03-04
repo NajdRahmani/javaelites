@@ -1,7 +1,0 @@
-liip_imagine:
-    filter_sets:
-        my_filter:
-            format: jpeg # Force output to JPEG
-            quality: 80
-            filters:
-                thumbnail: { size: [400, 300], mode: outbound }

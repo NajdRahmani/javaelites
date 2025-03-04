@@ -3,6 +3,7 @@
 {% block stylesheets %}
     {{ parent() }}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         /* Styles globaux */
         body {
@@ -355,6 +356,45 @@
         .animate__fadeInRight {
             animation-duration: 0.8s;
         }
+
+        /* Système de notation */
+        .rating-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .rating {
+            display: inline-flex;
+            flex-direction: row-reverse;
+            gap: 5px;
+        }
+
+        .rating input {
+            display: none;
+        }
+
+        .rating label {
+            cursor: pointer;
+            font-size: 25px;
+            color: #ddd;
+            transition: color 0.2s;
+        }
+
+        .rating label:hover,
+        .rating label:hover ~ label,
+        .rating input:checked ~ label {
+            color: #ffd700;
+        }
+
+        .rating-title {
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: #2d3436;
+        }
     </style>
 {% endblock %}
 
@@ -407,6 +447,27 @@
 
                 <!-- Like et Commentaires -->
                 <div class="actions animate__animated animate__fadeInUp">
+                <div class="rating-system">
+    <form action="{{ path('app_blog_rate', {'id': blog.id, 'score': '__SCORE__'}) }}" 
+          method="post" 
+          class="d-inline"
+          data-rating-form>
+        <input type="hidden" name="_token" value="{{ csrf_token('blog-rate' ~ blog.id) }}">
+        
+        {% for i in 5..1 %}
+            <button type="submit" 
+                    class="btn btn-star {% if blog.getUserRating(app.user) >= i %}text-warning{% else %}text-muted{% endif %}"
+                    data-score="{{ i }}"
+                    onclick="this.form.action = this.form.action.replace('__SCORE__', {{ i }})">
+                ★
+            </button>
+        {% endfor %}
+        
+        <span class="rating-average ms-2">
+            ({{ blog.getAverageRating|number_format(1) }} / 5)
+        </span>
+    </form>
+</div>
     <form action="{{ path('app_blog_toggle_like', {'id': blog.id}) }}" method="POST" class="d-inline">
         <input type="hidden" name="_token" value="{{ csrf_token('like' ~ blog.id) }}">
         <button type="submit" class="btn btn-like {% if blog.isLikedByUser(app.session.get('id')) %}btn-danger{% else %}btn-outline-danger{% endif %}">
@@ -461,6 +522,47 @@
                     {% endfor %}
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Section de notation -->
+    <div class="rating-container animate__animated animate__fadeInUp">
+        <h4 class="rating-title">Notez cet article</h4>
+        {% if app.user %}
+            <form action="{{ path('app_blog_rate', {'id': blog.id}) }}" method="POST" class="rating-form">
+                <div class="rating">
+                    <input type="radio" id="star5" name="rating" value="5" {% if blog.getUserRating(app.user) == 5 %}checked{% endif %}>
+                    <label for="star5" class="fas fa-star"></label>
+                    <input type="radio" id="star4" name="rating" value="4" {% if blog.getUserRating(app.user) == 4 %}checked{% endif %}>
+                    <label for="star4" class="fas fa-star"></label>
+                    <input type="radio" id="star3" name="rating" value="3" {% if blog.getUserRating(app.user) == 3 %}checked{% endif %}>
+                    <label for="star3" class="fas fa-star"></label>
+                    <input type="radio" id="star2" name="rating" value="2" {% if blog.getUserRating(app.user) == 2 %}checked{% endif %}>
+                    <label for="star2" class="fas fa-star"></label>
+                    <input type="radio" id="star1" name="rating" value="1" {% if blog.getUserRating(app.user) == 1 %}checked{% endif %}>
+                    <label for="star1" class="fas fa-star"></label>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Envoyer la note</button>
+            </form>
+        {% else %}
+            <p class="text-muted">Connectez-vous pour noter cet article</p>
+        {% endif %}
+
+        <div class="average-rating mt-3">
+            <p>Note moyenne : 
+                {% set total = 0 %}
+                {% set count = 0 %}
+                {% for rating in blog.ratings %}
+                    {% set total = total + rating %}
+                    {% set count = count + 1 %}
+                {% endfor %}
+                {% if count > 0 %}
+                    {{ (total / count)|number_format(1) }}/5
+                    <small>({{ count }} vote{{ count > 1 ? 's' : '' }})</small>
+                {% else %}
+                    Aucune note
+                {% endif %}
+            </p>
         </div>
     </div>
 
