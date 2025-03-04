@@ -3,95 +3,352 @@
 {% block title %}EventRegistration{% endblock %}
 
 {% block stylesheet %}
-<link rel="stylesheet" href="{{ asset('assets/css/event_chart.css') }}">
 {% endblock %}
 
 {% block body %}
-    <div id="chart-container"></div>
+    <div class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-lg-6">
+            <div class="card">
+              <div class="card-header border-0">
+                <div class="d-flex justify-content-between">
+                  <h3 class="card-title">Online Store Visitors</h3>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="d-flex">
+                  <p class="d-flex flex-column">
+                    <span class="text-bold text-lg">{{ events|length }}</span>
+                    <span>Events Over Time</span>
+                  </p>
+                  <p class="ml-auto d-flex flex-column text-right">
+                    <span class="text-success">
+                      <i class="fas fa-arrow-up"></i> 12.5%
+                    </span>
+                    <span class="text-muted">Since last week</span>
+                  </p>
+                </div>
+                <!-- /.d-flex -->
+
+                <div class="position-relative mb-4">
+                  <canvas id="visitors-chart" height="200"></canvas>
+                </div>
+
+                <div class="d-flex flex-row justify-content-end">
+                  <span class="mr-2">
+                    <i class="fas fa-square text-primary"></i> This Week
+                  </span>
+
+                  <span>
+                    <i class="fas fa-square text-gray"></i> Last Week
+                  </span>
+                </div>
+              </div>
+            </div>
+            <!-- /.card -->
+
+            <div class="card">
+              <div class="card-header border-0">
+                <h3 class="card-title">Products</h3>
+                <div class="card-tools">
+                  <a href="#" class="btn btn-tool btn-sm">
+                    <i class="fas fa-download"></i>
+                  </a>
+                  <a href="#" class="btn btn-tool btn-sm">
+                    <i class="fas fa-bars"></i>
+                  </a>
+                </div>
+              </div>
+              <div class="card-body table-responsive p-0">
+                <table class="table table-striped table-valign-middle">
+                  <thead>
+                  <tr>
+                    <th>Event</th>
+                    <th>User</th>
+                    <th>Status</th>
+                    <th>More</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  {% for registration in events_registration %}
+                  <tr>
+                    <td>
+                      {{ registration.getEvent.getTitle }}
+                    </td>
+                    <td>
+                      {{ registration.getUser.getNom }}
+                    </td>
+                    <td>
+  <span class="{% if registration.status == 'Confirmed' %}text-success
+                {% elseif registration.status == 'pending' %}text-warning
+                {% elseif registration.status == 'Canceled' %}text-danger
+                {% else %}text-secondary{% endif %}">
+    {{ registration.status }}
+  </span>
+</td>
+
+                    <td>
+                      <a href="{{ path('app_event_registration_show' ,{'id': registration.id}) }}" class="text-muted">
+                        <i class="fas fa-search"></i>
+                      </a>
+                    </td>
+                  </tr>
+                  {% else %}
+            <h1>no records found</h1>
+    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <!-- /.card -->
+          </div>
+          <!-- /.col-md-6 -->
+          <div class="col-lg-6">
+            <div class="card">
+              <div class="card-header border-0">
+                <div class="d-flex justify-content-between">
+                  <h3 class="card-title">Reservations</h3>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="d-flex">
+                  <p class="d-flex flex-column">
+                    <span class="text-bold text-lg"></span>
+                    <span>Reservations have been made</span>
+                  </p>
+                  <p class="ml-auto d-flex flex-column text-right">
+                    <span class="text-success">
+                      <i class="fas fa-arrow-up"></i> 33.1%
+                    </span>
+                    <span class="text-muted">Since last month</span>
+                  </p>
+                </div>
+                <!-- /.d-flex -->
+
+                <div class="position-relative mb-4">
+                  <canvas id="sales-chart" height="200"></canvas>
+                </div>
+
+                <div class="d-flex flex-row justify-content-end">
+                  <span class="mr-2">
+                    <i class="fas fa-square text-primary"></i> Available
+                  </span>
+
+                  <span>
+                    <i class="fas fa-square text-gray"></i> Max
+                  </span>
+                </div>
+              </div>
+            </div>
+            <!-- /.card -->
+
+            <div class="card">
+              <div class="card-header border-0">
+                <h3 class="card-title">Online Store Overview</h3>
+                <div class="card-tools">
+                  <a href="#" class="btn btn-sm btn-tool">
+                    <i class="fas fa-download"></i>
+                  </a>
+                  <a href="#" class="btn btn-sm btn-tool">
+                    <i class="fas fa-bars"></i>
+                  </a>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center border-bottom mb-3">
+                  <p class="text-success text-xl">
+                    <i class="ion ion-ios-refresh-empty"></i>
+                  </p>
+                  <p class="d-flex flex-column text-right">
+                    <span class="font-weight-bold">
+                      <i class="ion ion-android-arrow-up text-success"></i> 12%
+                    </span>
+                    <span class="text-muted">CONVERSION RATE</span>
+                  </p>
+                </div>
+                <!-- /.d-flex -->
+                <div class="d-flex justify-content-between align-items-center border-bottom mb-3">
+                  <p class="text-warning text-xl">
+                    <i class="ion ion-ios-cart-outline"></i>
+                  </p>
+                  <p class="d-flex flex-column text-right">
+                    <span class="font-weight-bold">
+                      <i class="ion ion-android-arrow-up text-warning"></i> 0.8%
+                    </span>
+                    <span class="text-muted">SALES RATE</span>
+                  </p>
+                </div>
+                <!-- /.d-flex -->
+                <div class="d-flex justify-content-between align-items-center mb-0">
+                  <p class="text-danger text-xl">
+                    <i class="ion ion-ios-people-outline"></i>
+                  </p>
+                  <p class="d-flex flex-column text-right">
+                    <span class="font-weight-bold">
+                      <i class="ion ion-android-arrow-down text-danger"></i> 1%
+                    </span>
+                    <span class="text-muted">REGISTRATION RATE</span>
+                  </p>
+                </div>
+                <!-- /.d-flex -->
+              </div>
+            </div>
+          </div>
+          <!-- /.col-md-6 -->
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </div>
 {% endblock %}
 
 {% block script %}
-<script src="https://echarts.apache.org/en/js/vendors/echarts/dist/echarts.min.js"></script>
 <script>
-    var dom = document.getElementById('chart-container');
-    var myChart = echarts.init(dom, null, {
-        renderer: 'canvas',
-        useDirtyRect: false
-    });
+document.addEventListener("DOMContentLoaded", function () {
+    'use strict'
 
-    // Convert dates to readable format
-    var eventDates = {{ events|map(e => e.startDate.format('Y-m-d'))|json_encode()|raw }};
-    var seatsAvailable = {{ events|map(e => e.seatsAvailable)|json_encode()|raw }};
-    var maxParticipants = {{ events|map(e => e.maxParticipants)|json_encode()|raw }};
-
-    var option = {
-        title: {
-            text: 'Event Registration Statistics',
-            subtext: 'Seats Availability by Date'
-        },
-        tooltip: {
-            trigger: 'axis'
-        },
-        legend: {
-            data: ['Seats Available', 'Max Participants']
-        },
-        toolbox: {
-            show: true,
-            feature: {
-                dataView: { show: true, readOnly: false },
-                magicType: { show: true, type: ['line', 'bar'] },
-                restore: { show: true },
-                saveAsImage: { show: true }
-            }
-        },
-        calculable: true,
-        xAxis: [
-            {
-                type: 'category',
-                data: eventDates
-            }
-        ],
-        yAxis: [
-            {
-                type: 'value'
-            }
-        ],
-        series: [
-            {
-                name: 'Seats Available',
-                type: 'bar',
-                data: seatsAvailable,
-                markPoint: {
-                    data: [
-                        { type: 'max', name: 'Max' },
-                        { type: 'min', name: 'Min' }
-                    ]
-                },
-                markLine: {
-                    data: [{ type: 'average', name: 'Avg' }]
-                }
-            },
-            {
-                name: 'Max Participants',
-                type: 'bar',
-                data: maxParticipants,
-                markPoint: {
-                    data: [
-                        { type: 'max', name: 'Max' },
-                        { type: 'min', name: 'Min' }
-                    ]
-                },
-                markLine: {
-                    data: [{ type: 'average', name: 'Avg' }]
-                }
-            }
-        ]
-    };
-
-    if (option && typeof option === 'object') {
-        myChart.setOption(option);
+    var ticksStyle = {
+        fontColor: '#495057',
+        fontStyle: 'bold'
     }
 
-    window.addEventListener('resize', myChart.resize);
+    var mode = 'index'
+    var intersect = true
+
+    // Prepare data for sales chart (Reservations)
+    var eventNames = [];
+    var registrations = [];
+    var maxParticipants = [];
+
+    {% for event in events %}
+        eventNames.push("{{ event.id }}");
+        registrations.push({{ event.seatsAvailable }});
+        maxParticipants.push({{ event.maxParticipants }});
+    {% endfor %}
+
+    var $salesChart = $('#sales-chart');
+    var salesChart = new Chart($salesChart, {
+        type: 'bar',
+        data: {
+            labels: eventNames,
+            datasets: [
+                {
+                    label: 'Available',
+                    backgroundColor: '#007bff',
+                    borderColor: '#007bff',
+                    data: registrations
+                },
+                {
+                    label: 'Max Participants',
+                    backgroundColor: '#ced4da',
+                    borderColor: '#ced4da',
+                    data: maxParticipants
+                }
+            ]
+        },
+        options: {
+            maintainAspectRatio: false,
+            tooltips: {
+                mode: mode,
+                intersect: intersect
+            },
+            hover: {
+                mode: mode,
+                intersect: intersect
+            },
+            legend: {
+                display: true
+            },
+            scales: {
+                yAxes: [{
+                    gridLines: {
+                        display: true,
+                        lineWidth: '4px',
+                        color: 'rgba(0, 0, 0, .2)',
+                        zeroLineColor: 'transparent'
+                    },
+                    ticks: $.extend({
+                        beginAtZero: true
+                    }, ticksStyle)
+                }],
+                xAxes: [{
+                    display: true,
+                    gridLines: {
+                        display: false
+                    },
+                    ticks: ticksStyle
+                }]
+            }
+        }
+    });
+
+    // Prepare data for visitors chart (Events Timeline)
+    var eventDates = [];
+    var eventCounts = {};
+
+    {% for event in events %}
+        var eventDate = "{{ event.startDate|date('Y-m-d') }}";
+        if (!eventCounts[eventDate]) {
+            eventCounts[eventDate] = 0;
+            eventDates.push(eventDate);
+        }
+        eventCounts[eventDate]++;
+    {% endfor %}
+
+    var eventData = eventDates.map(date => eventCounts[date]);
+
+    var $visitorsChart = $('#visitors-chart');
+    var visitorsChart = new Chart($visitorsChart, {
+        type: 'line',
+        data: {
+            labels: eventDates,
+            datasets: [{
+                label: 'Events',
+                backgroundColor: 'transparent',
+                borderColor: '#007bff',
+                pointBorderColor: '#007bff',
+                pointBackgroundColor: '#007bff',
+                data: eventData,
+                fill: false
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            tooltips: {
+                mode: mode,
+                intersect: intersect
+            },
+            hover: {
+                mode: mode,
+                intersect: intersect
+            },
+            legend: {
+                display: true
+            },
+            scales: {
+                yAxes: [{
+                    gridLines: {
+                        display: true,
+                        lineWidth: '4px',
+                        color: 'rgba(0, 0, 0, .2)',
+                        zeroLineColor: 'transparent'
+                    },
+                    ticks: $.extend({
+                        beginAtZero: true
+                    }, ticksStyle)
+                }],
+                xAxes: [{
+                    display: true,
+                    gridLines: {
+                        display: false
+                    },
+                    ticks: ticksStyle
+                }]
+            }
+        }
+    });
+});
 </script>
 {% endblock %}
+

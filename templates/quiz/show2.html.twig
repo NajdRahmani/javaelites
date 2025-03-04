@@ -68,12 +68,19 @@ document.addEventListener('DOMContentLoaded', function() {
             const nextQuestionId = this.getAttribute('data-next');
             const nextQuestion = document.getElementById(nextQuestionId);
 
-            if (currentQuestion && nextQuestion) {
+            if (currentQuestion) {
                 currentQuestion.style.display = 'none';
+            }
+
+            if (nextQuestion) {
                 nextQuestion.style.display = 'block';
+            } else {
+                // If there's no next question, ensure the last one stays visible
+                currentQuestion.style.display = 'block';
             }
         });
     });
 });
+
 </script>
 {% endblock %}

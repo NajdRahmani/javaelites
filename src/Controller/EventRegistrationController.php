@@ -17,7 +17,13 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\ErrorCorrectionLevel;
+use Endroid\QrCode\Label\LabelAlignment;
+use Endroid\QrCode\Label\Font\OpenSans;
+use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\SvgWriter;
+use Endroid\QrCode\Writer\PngWriter;
 use App\Entity\UserEventPreference;
 
 #[Route('/event/registration')]
@@ -179,26 +185,43 @@ final class EventRegistrationController extends AbstractController
                 $seatsAvailable = $event->getSeatsAvailable();
                 if ($seatsAvailable > $eventRegistration->getPlacesReserved()) {
                     $event->setSeatsAvailable($seatsAvailable - $eventRegistration->getPlacesReserved());
+                    $data = "Event Registration Details:\n";
+                    $data .= "🔹 ID: " . $eventRegistration->getId() . "\n";
+                    $data .= "🔹 Name: " . $eventRegistration->getName() . "\n";
+                    $data .= "🔹 Place Reserved: " . $eventRegistration->getPlacesReserved() . "\n";
+                    $data .= "🔹 Coming From: " . $eventRegistration->getComingFrom() . "\n";
+                    $data .= "🔹 Event: " . $eventRegistration->getEvent()->getTitle() . " (ID: " . $eventRegistration->getEvent()->getId() . ")\n";
+                    $data .= "🔹 User: " . $eventRegistration->getUser()->getRoles() . " (ID: " . $eventRegistration->getUser()->getId() . ")\n";
                 
-                    // Ensure the directory exists or create it
+                    $builder = new Builder(
+                        writer: new PngWriter(), // You can choose PngWriter or SvgWriter
+                        writerOptions: [],
+                        validateResult: false,
+                        data: $data, // Custom QR code contents
+                        encoding: new Encoding('UTF-8'),
+                        errorCorrectionLevel: ErrorCorrectionLevel::High,
+                        size: 350,
+                        margin: 10,
+                        roundBlockSizeMode: RoundBlockSizeMode::Margin,
+                        logoPath: __DIR__.'/../../public/145.png',
+                        logoResizeToWidth: 50,
+                        logoPunchoutBackground: true,
+                        labelText: 'Event Registration QR Code',
+                        labelFont: new OpenSans(20),
+                        labelAlignment: LabelAlignment::Center
+                    );
+                    $result = $builder->build();
+                    // Generate the QR code
                     $directory = realpath('public/uploads/qr-codes');
                     if (!$directory) {
-                        mkdir('public/uploads/qr-codes', 0775, true); // Create directory with permissions
+                        mkdir('public/uploads/qr-codes', 0775, true); // Create directory if not exists
                     }
-                
-                    // Create the QR code using SvgWriter
-                    $result = Builder::create()
-                        ->writer(new SvgWriter()) // Use SvgWriter for SVG output
-                        ->data($eventRegistration->getId()) // Data to encode
-                        ->size(300)
-                        ->margin(10)
-                        ->build();
-                
-                    // Save the SVG QR code to the directory
-                    $qrCodePath = $directory . '/qr-code.svg';
+
+                    $qrCodePath = $directory . '/qr-code.png';
                     $result->saveToFile($qrCodePath);
+
                 
-                    // Send the email with the SVG QR code attached
+                    // Send the email with the png QR code attached
                     $email = $user->getEmail();
                     $email = (new Email())
                         ->from('projetknowlity@gmail.com')
@@ -207,8 +230,8 @@ final class EventRegistrationController extends AbstractController
                         ->text('Event Registration to ' . $event->getTitle())
                         ->html('<p>Event Registration is successfully completed. This is a QR code for the confirmation:</p><img src="cid:qr-code-image" />');
                     
-                    // Attach the SVG QR code with the correct MIME type and Content-ID
-                    $email->attachFromPath($qrCodePath, 'qr-code.svg', 'image/svg+xml')
+                    // Attach the png QR code with the correct MIME type and Content-ID
+                    $email->attachFromPath($qrCodePath, 'qr-code.png', 'image/png+xml')
                         ->getHeaders()->addTextHeader('Content-ID', '<qr-code-image>'); // Ensure correct Content-ID format
                 
                     // Send the email
