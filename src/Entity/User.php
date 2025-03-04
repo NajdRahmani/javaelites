@@ -523,34 +523,9 @@ class User  implements PasswordAuthenticatedUserInterface
     }
 
 
-   }
+   
 
-    /**
-     * @return Collection<int, Blog>
-     */
-    public function getBlogs(): Collection
-    {
-        return $this->likedBlogs;
-    }
-
-    public function addBlog(Blog $blog): static
-    {
-        if (!$this->likedBlogs->contains($blog)) {
-            $this->likedBlogs->add($blog);
-            $blog->addLike($this);
-        }
-
-        return $this;
-    }
-
-    public function removeBlog(Blog $blog): static
-    {
-        if ($this->likedBlogs->removeElement($blog)) {
-            $blog->removeLike($this);
-        }
-
-        return $this;
-    }
+    
 
    }
 
