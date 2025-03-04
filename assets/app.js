@@ -16,6 +16,7 @@ import './bootstrap';
 import Chart from 'chart.js/auto';
 
 console.log('This log comes from assets/app.js - welcome to AssetMapper! 🎉');
+
 import { startStimulusApp } from '@symfony/stimulus-bridge';
 
 // Enregistrez vos contrôleurs Stimulus ici
