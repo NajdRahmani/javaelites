@@ -15,12 +15,8 @@ class UserQuizSelection
     #[ORM\Column(type: 'integer')]
     private $id;
 
-    #[ORM\Column(type: 'string', length: 255)]
-    private $username;
-
-    #[ORM\ManyToOne(targetEntity: Quiz::class)]
-    #[ORM\JoinColumn(nullable: false)]
-    private $quiz;
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $score = null;
 
     #[ORM\Column(type: 'datetime')]
     private $selectionDate;
@@ -28,10 +24,20 @@ class UserQuizSelection
     #[ORM\OneToMany(targetEntity: UserQuizResult::class, mappedBy: 'userQuizSelection', cascade: ['persist', 'remove'])]
     private Collection $userQuizResults;
 
+    #[ORM\ManyToOne(inversedBy: 'userQuizSelections')]
+    private ?User $user = null;
+
+    /**
+     * @var Collection<int, QuizResponse>
+     */
+    #[ORM\ManyToMany(targetEntity: QuizResponse::class, inversedBy: 'userQuizSelections')]
+    private Collection $response;
+
     public function __construct()
     {
         $this->userQuizResults = new ArrayCollection();
         $this->selectionDate = new \DateTime(); // Initialize selectionDate to current date and time
+        $this->response = new ArrayCollection();
     }
 
     // Getters and setters
@@ -43,6 +49,17 @@ class UserQuizSelection
     public function getUsername(): ?string
     {
         return $this->username;
+    }
+
+    public function getScore(): ?float
+    {
+        return $this->score;
+    }
+
+    public function setScore(float $score): self
+    {
+        $this->score = $score;
+        return $this;
     }
 
     public function setUsername(string $username): self
@@ -97,6 +114,42 @@ class UserQuizSelection
                 $userQuizResult->setUserQuizSelection(null);
             }
         }
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): static
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, QuizResponse>
+     */
+    public function getResponse(): Collection
+    {
+        return $this->response;
+    }
+
+    public function addResponse(QuizResponse $response): static
+    {
+        if (!$this->response->contains($response)) {
+            $this->response->add($response);
+        }
+
+        return $this;
+    }
+
+    public function removeResponse(QuizResponse $response): static
+    {
+        $this->response->removeElement($response);
+
         return $this;
     }
 }

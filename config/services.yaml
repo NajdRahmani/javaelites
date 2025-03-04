@@ -8,6 +8,7 @@ parameters:
     upload_directory: '%kernel.project_dir%/public/uploads/'
     ml_endpoint: '%env(ML_ENDPOINT)%'
     app_name: 'Knowlity'
+    google_recaptcha_site_key: '%env(GOOGLE_RECAPTCHA_SITE_KEY)%'
 
 services:
     # default configuration for services in *this* file
@@ -38,4 +39,4 @@ services:
 
     Knp\Component\Pager\PaginatorInterface:
         alias: knp_paginator        
-    
+   

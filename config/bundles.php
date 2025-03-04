@@ -16,9 +16,7 @@ return [
     Symfony\WebpackEncoreBundle\WebpackEncoreBundle::class => ['all' => true],
     Liip\ImagineBundle\LiipImagineBundle::class => ['all' => true],
     JMS\TranslationBundle\JMSTranslationBundle::class => ['all' => true],
-    Endroid\QrCodeBundle\EndroidQrCodeBundle::class => ['all' => true],
-<<<<<<< HEAD
-=======
     Knp\Bundle\PaginatorBundle\KnpPaginatorBundle::class => ['all' => true],
->>>>>>> 7dc5d7d53a6346b8efa38f919daa976bf6c26cd3
+    Endroid\QrCodeBundle\EndroidQrCodeBundle::class => ['all' => true],
+    Karser\Recaptcha3Bundle\KarserRecaptcha3Bundle::class => ['all' => true],
 ];

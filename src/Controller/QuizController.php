@@ -3,22 +3,25 @@
 namespace App\Controller;
 
 use App\Entity\Quiz;
+use App\Entity\Cours;
 use App\Entity\QuizResponse;
 use App\Entity\UserQuizSelection;
 use App\Entity\UserQuizResult;
 use App\Entity\QuizQuestion;
 use App\Entity\Response as UserResponse;
 use App\Form\QuizType;
+use App\Repository\QUIZRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use App\Repository\UserQuizSelectionRepository;
 
 #[Route('/quiz')]
 final class QuizController extends AbstractController
 {
-   #[Route('/submit/{id}', name: 'quiz_submit', methods: ['POST'])]
+    #[Route('/submit/{id}', name: 'quiz_submit', methods: ['POST'])]
 public function submitQuiz(int $id, Request $request, EntityManagerInterface $entityManager): Response
 {
     // Hardcoded user information for testing
@@ -42,40 +45,60 @@ public function submitQuiz(int $id, Request $request, EntityManagerInterface $en
     $userQuizSelection->setQuiz($quiz);
     $userQuizSelection->setSelectionDate(new \DateTime());
 
+    // Variables to calculate the result
+    $correctResponses = 0;
+    $totalQuestions = count($responses);
+
     // Store the responses in UserQuizResult entities
-    // Inside the foreach loop where responses are processed
     foreach ($responses as $questionId => $responseData) {
         $question = $entityManager->getRepository(QuizQuestion::class)->find($questionId);
 
-        // ... existing validation code ...
+        if (!$question) {
+            $this->addFlash('error', 'Invalid question ID.');
+            continue;
+        }
 
         $userQuizResult = new UserQuizResult();
         $userQuizResult->setUserQuizSelection($userQuizSelection);
         $userQuizResult->setQuiz($quiz);
-        $userQuizResult->setQuizQuestion($question); // Make sure this line exists
+        $userQuizResult->setQuizQuestion($question);
         $userQuizResult->setSoumisLe(new \DateTime());
 
         if ($question->getType() === 'text') {
             $userQuizResult->setResponse($responseData);
-        }
-        elseif ($question->getType() === 'single_choice') {
+        } elseif ($question->getType() === 'single_choice') {
             // Get the answer text from the selected ID
             $answer = $entityManager->getRepository(QuizResponse::class)->find($responseData);
             if ($answer) {
                 $userQuizResult->setResponse($answer->getTexte());
+                // Check if the selected answer is correct
+                if ($answer->getEstCorrecte()) {
+                    $correctResponses++;
+                }
             } else {
                 $this->addFlash('error', 'Invalid answer selected for question.');
                 continue;
             }
-        }
-        elseif ($question->getType() === 'multiple_choice') {
+        } elseif ($question->getType() === 'multiple_choice') {
             // Get answer texts from selected IDs
             $answers = $entityManager->getRepository(QuizResponse::class)->findBy(['id' => $responseData]);
             if (!empty($answers)) {
-                $answerTexts = array_map(function($answer) {
+                $answerTexts = array_map(function ($answer) {
                     return $answer->getTexte();
                 }, $answers);
                 $userQuizResult->setResponse(implode(', ', $answerTexts));
+
+                // Check if all selected answers are correct
+                $allCorrect = true;
+                foreach ($answers as $answer) {
+                    if (!$answer->getEstCorrecte()) {
+                        $allCorrect = false;
+                        break;
+                    }
+                }
+                if ($allCorrect) {
+                    $correctResponses++;
+                }
             } else {
                 $this->addFlash('error', 'Invalid answers selected for question.');
                 continue;
@@ -85,16 +108,23 @@ public function submitQuiz(int $id, Request $request, EntityManagerInterface $en
         $entityManager->persist($userQuizResult);
     }
 
-        $entityManager->persist($userQuizSelection);
-        $entityManager->flush();
+    // Calculate the score
+    $score = $totalQuestions > 0 ? ($correctResponses / $totalQuestions) * 100 : 0;
 
-        // Add a flash message
-        $this->addFlash('success', 'Quiz submitted successfully!');
+    // Store the score in the UserQuizSelection entity
+    $userQuizSelection->setScore($score);
 
-        // Redirect to the UserQuizSelection show page
-        return $this->redirectToRoute('app_user_quiz_selection_show', ['id' => $userQuizSelection->getId()]);
-    }
+    $entityManager->persist($userQuizSelection);
+    $entityManager->flush();
 
+    // Add a flash message
+    $this->addFlash('success', 'Quiz submitted successfully!');
+
+    // Redirect to the UserQuizSelection show page
+    return $this->redirectToRoute('app_user_quiz_selection_show', [
+        'id' => $userQuizSelection->getId(),
+    ]);
+}
 
     #[Route('/', name: 'app_quiz_index', methods: ['GET'])]
     public function index(EntityManagerInterface $entityManager): Response
@@ -107,12 +137,14 @@ public function submitQuiz(int $id, Request $request, EntityManagerInterface $en
             'quizzes' => $quizzes,
         ]);
     }
+    
 
-    #[Route('/new', name: 'app_quiz_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    #[Route('/new/{id}', name: 'app_quiz_new', methods: ['GET', 'POST'])]
+    public function new(Request $request, EntityManagerInterface $entityManager , $id): Response
     {
         $quiz = new Quiz();
-        
+        $cour = $entityManager->getRepository(Cours::class)->find($id);
+        $quiz->setCour($cour);
         $form = $this->createForm(QuizType::class, $quiz);
         $form->handleRequest($request);
 
@@ -128,6 +160,55 @@ public function submitQuiz(int $id, Request $request, EntityManagerInterface $en
             'form' => $form,
         ]);
     }
+    #[Route('/quizstatistic', name: 'app_quiz_statistic')]
+    public function statistic(EntityManagerInterface $entityManager): Response
+    {
+        $quizRepository = $entityManager->getRepository(Quiz::class);
+        $resultRepository = $entityManager->getRepository(UserQuizResult::class);
+    
+        $quizzes = $quizRepository->findAll();
+        $quizStats = [];
+    
+        foreach ($quizzes as $quiz) {
+            $quizId = $quiz->getId();
+            $results = $resultRepository->findBy(['quiz' => $quiz]);
+    
+            $totalScore = 0;
+            $totalParticipants = count($results);
+            $maxScore = 0;
+            $minScore = PHP_INT_MAX;
+            $correctAnswers = 0;
+            $totalQuestions = count($quiz->getQuestions());
+    
+            foreach ($results as $result) {
+                $score = $result->getScore();
+                $totalScore += $score;
+                $maxScore = max($maxScore, $score);
+                $minScore = min($minScore, $score);
+                
+                if ($result->getScore() > 0) {
+                    $correctAnswers++;
+                }
+            }
+    
+            $averageScore = $totalParticipants > 0 ? $totalScore / $totalParticipants : 0;
+            $successRate = $totalQuestions > 0 ? ($correctAnswers / $totalQuestions) * 100 : 0;
+    
+            $quizStats[] = [
+                'name' => $quiz->getTitre(),
+                'averageScore' => $averageScore,
+                'maxScore' => $maxScore,
+                'minScore' => $minScore == PHP_INT_MAX ? 0 : $minScore,
+                'successRate' => $successRate
+            ];
+        }
+    
+        return $this->render('quiz/statistic.html.twig', [
+            'quizStats' => $quizStats
+        ]);
+    }
+    
+
 
     #[Route('/{id}', name: 'app_quiz_show', methods: ['GET'])]
     public function show(Quiz $quiz): Response

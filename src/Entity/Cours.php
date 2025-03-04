@@ -94,6 +94,12 @@ class Cours
     #[ORM\OneToMany(mappedBy: 'cours', targetEntity: Evaluation::class, cascade: ['remove'], orphanRemoval: true)]
     private Collection $evaluations;
 
+    /**
+     * @var Collection<int, Quiz>
+     */
+    #[ORM\OneToMany(targetEntity: Quiz::class, mappedBy: 'Cour')]
+    private Collection $quizzes;
+
     #[Assert\Callback]
     public function validateLienDePaiment(ExecutionContextInterface $context): void
     {
@@ -110,6 +116,7 @@ class Cours
         $this->etudiants = new ArrayCollection();
         $this->etudiantsfavoris = new ArrayCollection();
         $this->evaluations = new ArrayCollection();
+        $this->quizzes = new ArrayCollection();
         
     }
     public function isUserFavorite(int $userId): bool
@@ -365,6 +372,36 @@ class Cours
     public function setLienDePaiment(string $lienDePaiment): static
     {
         $this->lienDePaiment = $lienDePaiment;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Quiz>
+     */
+    public function getQuizzes(): Collection
+    {
+        return $this->quizzes;
+    }
+
+    public function addQuiz(Quiz $quiz): static
+    {
+        if (!$this->quizzes->contains($quiz)) {
+            $this->quizzes->add($quiz);
+            $quiz->setCour($this);
+        }
+
+        return $this;
+    }
+
+    public function removeQuiz(Quiz $quiz): static
+    {
+        if ($this->quizzes->removeElement($quiz)) {
+            // set the owning side to null (unless already changed)
+            if ($quiz->getCour() === $this) {
+                $quiz->setCour(null);
+            }
+        }
 
         return $this;
     }

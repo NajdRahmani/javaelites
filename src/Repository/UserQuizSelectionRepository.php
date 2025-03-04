@@ -15,6 +15,23 @@ class UserQuizSelectionRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, UserQuizSelection::class);
     }
+    public function getScoreStatistics(): array
+    {
+        $scores = $this->createQueryBuilder('u')
+            ->select('u.score')
+            ->getQuery()
+            ->getResult();
+
+        // Extract scores into a simple array
+        $scores = array_column($scores, 'score');
+
+        // Calculate statistics
+        return [
+            'max' => max($scores),
+            'min' => min($scores),
+            'average' => array_sum($scores) / count($scores),
+        ];
+    }
 
     //    /**
     //     * @return UserQuizSelection[] Returns an array of UserQuizSelection objects

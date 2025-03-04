@@ -1,13 +1,17 @@
 <?php
 
 namespace App\Form;
+
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\NotBlank;
 
 class QuizType extends AbstractType
 {
@@ -31,15 +35,22 @@ class QuizType extends AbstractType
                 'widget' => 'single_text',
                 'format' => 'yyyy-MM-dd',
                 'attr' => ['placeholder' => 'jj/mm/aaaa --:--'],
-                'required' => false, // Permettre la valeur null
-                'empty_data' => null, // Fournir null comme valeur par défaut
+                'required' => false,
+                'empty_data' => null,
+            ])
+            ->add('recaptcha', HiddenType::class, [
+                'mapped' => false,
+                'constraints' => [
+                    new NotBlank(['message' => 'Please complete the reCAPTCHA']),
+                ],
+            ])
+            ->add('submit', SubmitType::class, [
+                'label' => 'Passer le quiz'
             ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults([
-            // 'data_class' => App\\Entity\\Quiz::class,
-        ]);
+        $resolver->setDefaults([]);
     }
 }

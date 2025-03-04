@@ -45,6 +45,9 @@ class Quiz
     #[ORM\OneToMany(targetEntity: QuizQuestion::class, mappedBy: 'quiz', cascade: ['persist', 'remove'])]
     private Collection $questions;
 
+    #[ORM\ManyToOne(inversedBy: 'quizzes')]
+    private ?Cours $Cour = null;
+
     public function __construct()
     {
         $this->questions = new ArrayCollection();
@@ -120,6 +123,18 @@ class Quiz
                 $question->setQuiz(null);
             }
         }
+        return $this;
+    }
+
+    public function getCour(): ?Cours
+    {
+        return $this->Cour;
+    }
+
+    public function setCour(?Cours $Cour): static
+    {
+        $this->Cour = $Cour;
+
         return $this;
     }
 }
