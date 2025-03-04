@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Catalogue des Cours{% endblock %}
+{% block title %}Mes Cours{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
@@ -59,11 +59,11 @@
                 
                 <div class="card-body position-relative pt-4">
                     <div class="course-avatar position-absolute top-0 start-50 translate-middle" style="top: -21px;">
-                       <img src="{{ asset('uploads/user/' ~ cour.enseignant.image) }}"  
-                             class="rounded-circle shadow-lg border border-3 border-white" 
-                             width="80" 
-                             height="80" 
-                             alt="Formateur">
+                        <img src="{{ asset('uploads/' ~ cour.enseignant.image) }}"  
+                                 class="rounded-circle shadow-lg border border-3 border-white" 
+                                 width="80" 
+                                 height="80" 
+                                 alt="Formateur">
                     </div>
                     <h3 class="h5 fw-bold mb-3 text-center">{{ cour.title }}</h3>
                     

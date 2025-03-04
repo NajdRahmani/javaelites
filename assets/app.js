@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /*
  * Welcome to your app's main JavaScript file!
  *
@@ -15,3 +16,13 @@ import './bootstrap';
 import Chart from 'chart.js/auto';
 
 console.log('This log comes from assets/app.js - welcome to AssetMapper! 🎉');
+=======
+import { startStimulusApp } from '@symfony/stimulus-bridge';
+
+// Enregistrez vos contrôleurs Stimulus ici
+export const app = startStimulusApp(require.context(
+    './controllers',
+    true,
+    /\.js$/
+));
+>>>>>>> dfa94d0090eea8f5598197e859ef1ddb4569f4ea

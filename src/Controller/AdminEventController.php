@@ -21,11 +21,12 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 final class AdminEventController extends AbstractController
 {
     #[Route('/eventCharts', name: 'app_admin_event_charts')]
-    public function eventCharts(EventsRepository $eventsRepository): Response
+    public function eventCharts(EventsRepository $eventsRepository , EventRegistrationRepository $eventRegistrationRepository): Response
     {
-        
+        $events = $eventsRepository->findAll();
         return $this->render('admin_event/eventCharts.html.twig', [
-            'events' => $eventsRepository->findByStartDate(),
+            'events' => $events,
+            'events_registration' => $eventRegistrationRepository->findAll()
         ]);
     }
 

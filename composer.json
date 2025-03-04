@@ -11,6 +11,14 @@
         "doctrine/doctrine-bundle": "^2.13",
         "doctrine/doctrine-migrations-bundle": "^3.4",
         "doctrine/orm": "^3.3",
+<<<<<<< HEAD
+=======
+        "dompdf/dompdf": "^3.1",
+        "endroid/qr-code": "^6.0",
+        "endroid/qr-code-bundle": "^6.0",
+        "imagine/imagine": "^1.5",
+        "jms/translation-bundle": "2.6",
+>>>>>>> dfa94d0090eea8f5598197e859ef1ddb4569f4ea
         "knplabs/knp-paginator-bundle": "^6.6",
         "knplabs/knp-snappy-bundle": "^1.10",
         "phpdocumentor/reflection-docblock": "^5.6",
