@@ -103,19 +103,30 @@ public function new(Request $request, EntityManagerInterface $entityManager, $id
 }
 //etudiant
 #[Route('/etudiant/{id}', name: 'app_etudiant', methods: ['GET'])]
-public function showEtu(Chapitre $chapitre, EntityManagerInterface $entityManager): Response
+public function showEtu(Chapitre $chapitre, EntityManagerInterface $entityManager, Request $request): Response
 {
-    // Incrémenter le nombre de vues
-    $chapitre->setNbrVues($chapitre->getNbrVues() + 1);
+    $session = $request->getSession();
 
-    // Sauvegarder les modifications
-    $entityManager->persist($chapitre);
-    $entityManager->flush(); // Ne pas oublier de flusher pour appliquer les changements
+    // Vérifiez si l'utilisateur a déjà vu ce chapitre
+    $viewedChapters = $session->get('viewed_chapters', []);
+    if (!in_array($chapitre->getId(), $viewedChapters)) {
+        // Incrémenter le nombre de vues
+        $chapitre->incrementNbrVues();
+
+        // Sauvegarder les modifications
+        $entityManager->persist($chapitre);
+        $entityManager->flush();
+
+        // Marquer le chapitre comme vu dans la session
+        $viewedChapters[] = $chapitre->getId();
+        $session->set('viewed_chapters', $viewedChapters);
+    }
 
     return $this->render('chapitre/show.html.twig', [
         'chapitre' => $chapitre,
     ]);
 }
+
 //enseignant
     #[Route('/{id}', name: 'app_chapitre_show', methods: ['GET'])]
     public function show(Chapitre $chapitre): Response

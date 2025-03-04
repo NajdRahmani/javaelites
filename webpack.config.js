@@ -4,11 +4,11 @@ Encore
     .setOutputPath('public/build/')
     .setPublicPath('/build')
     .addEntry('app', './assets/app.js')
-    .enableStimulusBridge('./assets/controllers.json') // This line is important!
+    .enableStimulusBridge('./assets/controllers.json')
+    .splitEntryChunks()
     .enableSingleRuntimeChunk()
     .cleanupOutputBeforeBuild()
-    .enableBuildNotifications()
     .enableSourceMaps(!Encore.isProduction())
-    .enableVersioning(Encore.isProduction())
+    .enableVersioning(Encore.isProduction());
 
 module.exports = Encore.getWebpackConfig();
