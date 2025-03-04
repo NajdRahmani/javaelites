@@ -8,7 +8,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use App\Entity\Like;
 use App\Entity\Comment;
 use App\Entity\User;
 
@@ -59,28 +58,17 @@ class Blog
     private ?string $userImage = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Assert\Url(message: "L'URL de l'image n'est pas valide")]
     private ?string $blogImage = null;
-
-    #[ORM\OneToMany(mappedBy: 'blog', targetEntity: Like::class, orphanRemoval: true)]
-    private Collection $likes;
 
     #[ORM\OneToMany(mappedBy: 'blog', targetEntity: Comment::class, orphanRemoval: true)]
     private Collection $comments;
-    #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'likedBlogs')]
-    #[ORM\JoinTable(name: 'blog_likes')]
-    private Collection $likedBy;
 
-    /**
-     * @var Collection<int, user>
-     */
-    #[ORM\ManyToMany(targetEntity: user::class, inversedBy: 'blogs')]
+    #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'likedBlogs')]
     private Collection $Likes;
 
     public function __construct()
     {
         $this->createdAt = new \DateTime();
-        $this->likes = new ArrayCollection();
         $this->comments = new ArrayCollection();
         $this->Likes = new ArrayCollection();
     }
@@ -168,24 +156,12 @@ class Blog
     }
 
     /**
-     * @return Collection<int, Like>
-     */
-    public function getLikes(): Collection
-    {
-        return $this->likes;
-    }
-
-    /**
      * @return Collection<int, Comment>
      */
     public function getComments(): Collection
     {
         return $this->comments;
     }
-
-   
-
-   
 
     public function addComment(Comment $comment): self
     {
@@ -205,39 +181,41 @@ class Blog
         }
         return $this;
     }
-    
-    
-    public function isLikedByUser(int $userId): bool
-{
-    foreach ($this->likedBy as $user) {
-        if ($user->getId() === $userId) {
-            return true;
-        }
+
+    /**
+     * @return Collection<int, User>
+     */
+    public function getLikedBy(): Collection
+    {
+        return $this->Likes;
     }
-    return false;
-}
+
+    public function isLikedByUser(int $userId): bool
+    {
+        foreach ($this->Likes as $user) {
+            if ($user->getId() === $userId) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     public function addLike(User $user): self
     {
-        if (!$this->likedBy->contains($user)) {
-            $this->likedBy[] = $user;
+        if (!$this->Likes->contains($user)) {
+            $this->Likes[] = $user;
         }
         return $this;
     }
 
     public function removeLike(User $user): self
     {
-        $this->likedBy->removeElement($user);
+        $this->Likes->removeElement($user);
         return $this;
     }
 
     public function getLikesCount(): int
     {
-        return $this->likedBy->count();
-    }
-
-    public function getLikedBy(): Collection
-    {
-        return $this->likedBy;
+        return $this->Likes->count();
     }
 }
