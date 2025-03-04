@@ -8,8 +8,11 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+<<<<<<< HEAD
+=======
 use App\Entity\Comment;
 use App\Entity\User;
+>>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
 
 #[ORM\Entity(repositoryClass: BlogRepository::class)]
 class Blog
@@ -21,20 +24,12 @@ class Blog
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: "Le titre ne peut pas être vide")]
-    #[Assert\Length(
-        min: 3,
-        max: 255,
-        minMessage: "Le titre doit contenir au moins {{ limit }} caractères",
-        maxMessage: "Le titre ne peut pas dépasser {{ limit }} caractères"
-    )]
+    #[Assert\Length(min: 3, max: 255)]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: "Le contenu ne peut pas être vide")]
-    #[Assert\Length(
-        min: 10,
-        minMessage: "Le contenu doit contenir au moins {{ limit }} caractères"
-    )]
+    #[Assert\Length(min: 10)]
     private ?string $content = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
@@ -43,14 +38,9 @@ class Blog
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $updatedAt = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 50)]
     #[Assert\NotBlank(message: "Le nom du créateur ne peut pas être vide")]
-    #[Assert\Length(
-        min: 2,
-        max: 50,
-        minMessage: "Le nom doit contenir au moins {{ limit }} caractères",
-        maxMessage: "Le nom ne peut pas dépasser {{ limit }} caractères"
-    )]
+    #[Assert\Length(min: 2, max: 50)]
     private ?string $creatorName = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -63,14 +53,17 @@ class Blog
     #[ORM\OneToMany(mappedBy: 'blog', targetEntity: Comment::class, orphanRemoval: true)]
     private Collection $comments;
 
+<<<<<<< HEAD
+  
+=======
     #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'likedBlogs')]
     private Collection $Likes;
+>>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
 
     public function __construct()
     {
         $this->createdAt = new \DateTime();
         $this->comments = new ArrayCollection();
-        $this->Likes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -155,9 +148,17 @@ class Blog
         return $this;
     }
 
+<<<<<<< HEAD
+    public function getLikes(): Collection
+    {
+        return $this->likes;
+    }
+
+=======
     /**
      * @return Collection<int, Comment>
      */
+>>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
     public function getComments(): Collection
     {
         return $this->comments;
@@ -182,6 +183,18 @@ class Blog
         return $this;
     }
 
+<<<<<<< HEAD
+    
+    public function isLikedByUser(int $userId): bool
+    {
+        return $this->likes->exists(fn($key, $like) => $like->getUser()->getId() === $userId);
+    }
+
+    public function addLike(Like $like): self
+    {
+        if (!$this->likes->contains($like)) {
+            $this->likes->add($like);
+=======
     /**
      * @return Collection<int, User>
      */
@@ -204,18 +217,27 @@ class Blog
     {
         if (!$this->Likes->contains($user)) {
             $this->Likes[] = $user;
+>>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
         }
         return $this;
     }
 
-    public function removeLike(User $user): self
+    public function removeLike(Like $like): self
     {
+<<<<<<< HEAD
+        $this->likes->removeElement($like);
+=======
         $this->Likes->removeElement($user);
+>>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
         return $this;
     }
 
     public function getLikesCount(): int
     {
+<<<<<<< HEAD
+        return $this->likes->count();
+=======
         return $this->Likes->count();
+>>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
     }
 }

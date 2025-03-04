@@ -13,6 +13,10 @@ Encore
     .setPublicPath('/build')
 
     .addEntry('app', './assets/app.js')
+<<<<<<< HEAD
+
+=======
+>>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
 
     // enables the Symfony UX Stimulus bridge (used in assets/bootstrap.js)
     .enableStimulusBridge('./assets/controllers.json')
@@ -22,6 +26,10 @@ Encore
 
     // will require an extra script tag for runtime.js
     // but, you probably want this, unless you're building a single-page app
+<<<<<<< HEAD
+
+=======
+>>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
     .enableSingleRuntimeChunk()
 
     // enables Sass/SCSS support
@@ -29,6 +37,10 @@ Encore
 
     .cleanupOutputBeforeBuild()
     .enableSourceMaps(!Encore.isProduction())
+<<<<<<< HEAD
+
+=======
+>>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
     // enables hashed filenames (e.g. app.abc123.css)
     .enableVersioning(Encore.isProduction())
 
@@ -41,3 +53,7 @@ Encore
 ;
 
 module.exports = Encore.getWebpackConfig();
+<<<<<<< HEAD
+
+=======
+>>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec

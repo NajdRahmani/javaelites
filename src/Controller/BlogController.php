@@ -271,6 +271,10 @@ final class BlogController extends AbstractController
             return $this->json(['error' => 'Une erreur est survenue lors de la suppression du commentaire'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+<<<<<<< HEAD
+
+    
+=======
     #[Route('/blog/{id}/like', name: 'app_blog_toggle_like', methods: ['POST'])]
 public function toggleLike(
     Request $request,
@@ -306,5 +310,6 @@ public function toggleLike(
     // Rediriger vers la page d'affichage du blog
     return $this->redirectToRoute('app_blog_show2', ['id' => $blog->getId()]);
 }
+>>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
 
 }
