@@ -1,4 +1,4 @@
-{% extends 'base.html.twig' %}
+{% extends 'base3.html.twig' %}
 
 {% block title %}Liste des étudiants - {{ evaluation.title }}{% endblock %}
 
@@ -200,29 +200,36 @@
                                 </td>
                                 <td>
                                     {% if data.correctedCount == data.totalQuestions %}
-                                        <strong>{{ data.totalScore }}/{{ scoreMaxTotal }}</strong>
+                                        {{ data.totalScore }}/{{ scoreMaxTotal }}
                                     {% else %}
-                                        <span class="text-muted">-</span>
+                                        <span class="text-muted">En cours de correction</span>
                                     {% endif %}
                                 </td>
                                 <td>
                                     {% if data.correctedCount == data.totalQuestions %}
-                                        <span class="status-badge status-corrige">Corrigé</span>
+                                        <span class="status-badge status-corrige">
+                                            <i class="fas fa-check-circle"></i> Corrigé
+                                        </span>
                                     {% else %}
-                                        <span class="status-badge status-en-cours">En attente</span>
+                                        <span class="status-badge status-en-cours">
+                                            <i class="fas fa-clock"></i> En cours
+                                        </span>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <a href="{{ path('app_evaluation_correct', {
-                                        'evaluationId': evaluation.id,
-                                        'studentId': data.student.id
-                                    }) }}" class="action-btn btn btn-{% if data.correctedCount == data.totalQuestions %}success{% else %}primary{% endif %}">
-                                        {% if data.correctedCount == data.totalQuestions %}
-                                            <i class="fas fa-edit"></i> Recorriger
-                                        {% else %}
-                                            <i class="fas fa-check"></i> Corriger
-                                        {% endif %}
-                                    </a>
+                                    <div class="btn-group">
+                                        <a href="{{ path('app_evaluation_correct', {
+                                            'evaluationId': evaluation.id,
+                                            'studentId': data.student.id
+                                        }) }}" class="btn btn-primary btn-sm action-btn">
+                                            <i class="fas fa-edit"></i> 
+                                            {% if data.correctedCount == data.totalQuestions %}
+                                                Recorriger
+                                            {% else %}
+                                                Corriger
+                                            {% endif %}
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         {% endfor %}
