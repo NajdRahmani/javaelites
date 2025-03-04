@@ -70,7 +70,7 @@
                             <li class="has-sub">
                                 <a href="javascript:void(0)">Events</a>
                                 <ul class="sub-menu">
-                                    <li><a href="{{ path('app_events_index') }}">Events test</a></li>
+                                    <li><a href="{{ path('app_events_index') }}">Events</a></li>
                                     <li><a href="{{ path('app_events_my_events') }}">My Events</a></li>
                                     <li><a href="{{ path('app_events_my_registration') }}">My Reservation</a></li>
                                 </ul>
@@ -119,7 +119,7 @@
       <div class="header-info">
         <img class="chatbot-logo" src="{{ asset('assets/images/robotic.png') }}" alt="Chatbot Logo" width="50" height="50">
         </img>
-        <h2 class="logo-text">Chatbot</h2>
+        <h2 class="logo-text">Knowlity Chatbot</h2>
       </div>
       <button id="close-chatbot" class="material-symbols-rounded">keyboard_arrow_down</button>
     </div>
@@ -282,6 +282,15 @@
 
 
     <!-- ***** Footer Area End ***** -->
+<script>
+    var userinfo = {
+        id: "{{ app.session.get('id') }}",
+        name: "{{ app.session.get('user_prenom') }}",
+        email: "{{ app.session.get('email') }}",
+        role: "{{ app.session.get('roles') }}"
+    };
+</script>
+
 
     <!-- Scripts -->
     <script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
