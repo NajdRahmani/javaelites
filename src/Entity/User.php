@@ -140,11 +140,17 @@ class User  implements PasswordAuthenticatedUserInterface
      * @var Collection<int, Blog>
      */
  
+<<<<<<< HEAD
      #[ORM\ManyToMany(targetEntity: Blog::class, inversedBy: 'likedBy')] // Ligne ~260
      #[ORM\JoinTable(name: "user_blog_likes")]
      private Collection $likedBlogs;
      
 
+=======
+     #[ORM\ManyToMany(targetEntity: Blog::class, mappedBy: 'Likes')]
+     private Collection $likedBlogs;
+     
+>>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
     public function __construct()
     { $this->cours = new ArrayCollection();
         $this->coursFavoris = new ArrayCollection();
@@ -525,6 +531,14 @@ class User  implements PasswordAuthenticatedUserInterface
     }
 
 
+<<<<<<< HEAD
 
 }
+=======
+   
+
+    
+
+   }
+>>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
 

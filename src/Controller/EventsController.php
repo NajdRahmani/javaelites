@@ -106,8 +106,6 @@ final class EventsController extends AbstractController{
         }
             $event->setSeatsAvailable($form->get('max_participants')->getData());
             $event->setOrganizer($user);
-            $event->setLongitude(10.180712940476518);
-            $event->setLatitude(36.80197599768998);
     
             $entityManager->persist($event);
             $entityManager->flush();

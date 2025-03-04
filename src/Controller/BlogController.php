@@ -17,6 +17,10 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Component\Security\Core\Security;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 #[Route('/blog')]
 final class BlogController extends AbstractController
@@ -75,26 +79,50 @@ final class BlogController extends AbstractController
         ]);
     }
 
-    #[Route('/new', name: 'app_blog_new')]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
-    {
+    #[Route('/new', name: 'app_blog_new', methods: ['GET', 'POST'])]
+    public function new(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        SluggerInterface $slugger,
+        #[Autowire('%kernel.project_dir%/public/uploads/images')] string $imageDirectory
+    ): Response {
         $blog = new Blog();
         $form = $this->createForm(BlogType::class, $blog);
         $form->handleRequest($request);
-
+    
         if ($form->isSubmitted() && $form->isValid()) {
+            // Gestion du téléchargement de l'image
+            $imageFile = $form->get('blogImage')->getData();
+    
+            if ($imageFile) {
+                $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . $imageFile->guessExtension();
+    
+                try {
+                    $imageFile->move($imageDirectory, $newFilename);
+                } catch (FileException $e) {
+                    $this->addFlash('error', 'Erreur lors du téléchargement de l\'image.');
+                    return $this->redirectToRoute('app_blog_new');
+                }
+    
+                // Définit le chemin de l'image dans l'entité
+                $blog->setBlogImage($newFilename);
+            }
+    
             $blog->setCreatedAt(new \DateTime());
             $entityManager->persist($blog);
             $entityManager->flush();
-
+    
             $this->addFlash('success', 'Blog créé avec succès !');
             return $this->redirectToRoute('app_blog_show2', ['id' => $blog->getId()]);
         }
-
+    
         return $this->render('blog/new.html.twig', [
             'form' => $form->createView(),
         ]);
     }
+    
 
     #[Route('/{id}', name: 'app_blog_show', methods: ['GET'])]
     public function show(Blog $blog): Response
@@ -178,26 +206,7 @@ final class BlogController extends AbstractController
         ]);
     }
 
-    #[Route('/blog/{id}/like', name: 'app_blog_like', methods: ['POST'])]
-    public function like(Request $request, Blog $blog, EntityManagerInterface $entityManager, LikeRepository $likeRepository): Response
-    {
-        // Vérifier si le blog a déjà été liké
-        $existingLike = $likeRepository->findOneBy(['blog' => $blog]);
-
-        if ($existingLike) {
-            // Si un like existe, on le supprime
-            $entityManager->remove($existingLike);
-        } else {
-            // Si pas de like, on en crée un
-            $like = new Like();
-            $like->setBlog($blog);
-            $entityManager->persist($like);
-        }
-
-        $entityManager->flush();
-        
-        return $this->redirectToRoute('app_blog_show2', ['id' => $blog->getId()]);
-    }
+   
 
     #[Route('/blog/{id}/comment', name: 'app_blog_comment', methods: ['POST'])]
     public function comment(Request $request, Blog $blog, EntityManagerInterface $entityManager): Response
@@ -262,7 +271,45 @@ final class BlogController extends AbstractController
             return $this->json(['error' => 'Une erreur est survenue lors de la suppression du commentaire'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+<<<<<<< HEAD
 
     
+=======
+    #[Route('/blog/{id}/like', name: 'app_blog_toggle_like', methods: ['POST'])]
+public function toggleLike(
+    Request $request,
+    Blog $blog,
+    EntityManagerInterface $entityManager
+): Response {
+    // Récupérer l'ID de l'utilisateur depuis la session
+    $userId = $request->getSession()->get('id');
+
+    // Vérifier si l'utilisateur est connecté
+    if (!$userId) {
+        return $this->redirectToRoute('app_login');
+    }
+
+    // Récupérer l'utilisateur à partir de l'ID
+    $user = $entityManager->getRepository(User::class)->find($userId);
+
+    if (!$user) {
+        return $this->redirectToRoute('app_login');
+    }
+
+    // Ajouter ou retirer le like
+    if ($blog->isLikedByUser($user->getId())) {
+        $blog->removeLike($user);
+    } else {
+        $blog->addLike($user);
+    }
+
+    // Sauvegarder les modifications dans la base de données
+    $entityManager->persist($blog);
+    $entityManager->flush();
+
+    // Rediriger vers la page d'affichage du blog
+    return $this->redirectToRoute('app_blog_show2', ['id' => $blog->getId()]);
+}
+>>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
 
 }

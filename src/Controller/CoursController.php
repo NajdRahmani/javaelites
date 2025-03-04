@@ -27,7 +27,7 @@ use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Knp\Bundle\PaginatorBundle\Pagination\SlidingPagination;
-     
+
 #[Route('/cours')]
 final class CoursController extends AbstractController
 {

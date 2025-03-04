@@ -13,6 +13,8 @@ use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\Url;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
+use Symfony\Component\Validator\Constraints\File;
 
 class BlogType extends AbstractType
 {
@@ -72,18 +74,23 @@ class BlogType extends AbstractType
                     'placeholder' => 'Entrez votre nom'
                 ]
             ])
-            ->add('blogImage', TextType::class, [
-                'label' => 'Image du blog (URL)',
+            ->add('blogImage', FileType::class, [
+                'label' => 'Image du blog',
                 'required' => false,
+                'mapped' => false,
                 'constraints' => [
-                    new Url([
-                        'message' => 'Veuillez entrer une URL valide pour l\'image du blog'
-                    ])
+                    new File([
+                        'maxSize' => '2M',
+                        'mimeTypes' => [
+                            'image/jpeg',
+                            'image/png',
+                        ],
+                        'mimeTypesMessage' => 'Veuillez télécharger une image valide (JPEG ou PNG).',
+                    ]),
                 ],
                 'attr' => [
                     'class' => 'form-control',
-                    'placeholder' => 'https://exemple.com/image.jpg'
-                ]
+                ],
             ])
             ->add('userImage', TextType::class, [
                 'label' => 'Photo de profil (URL)',

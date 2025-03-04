@@ -434,7 +434,7 @@
         <!-- Image du blog -->
         {% if blog.blogImage %}
             <div class="blog-image-container animate__animated animate__fadeInUp">
-                <img src="{{ asset('uploads/' ~ blog.blogImage) }}" class="blog-image" alt="Image principale du blog">
+                <img src="{{ asset('uploads/images/' ~ blog.blogImage) }}" class="blog-image" alt="Image principale du blog">
             </div>
         {% endif %}
 
@@ -446,6 +446,7 @@
                 </div>
 
                 <!-- Like et Commentaires -->
+<<<<<<< HEAD
                 <div class="actions animate__animated animate__fadeInUp">
                 <div class="rating-system">
     <form action="{{ path('app_blog_rate', {'id': blog.id, 'score': '__SCORE__'}) }}" 
@@ -468,14 +469,23 @@
         </span>
     </form>
 </div>
+=======
+              <div class="actions animate__animated animate__fadeInUp">
+>>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
     <form action="{{ path('app_blog_toggle_like', {'id': blog.id}) }}" method="POST" class="d-inline">
-        <input type="hidden" name="_token" value="{{ csrf_token('like' ~ blog.id) }}">
-        <button type="submit" class="btn btn-like {% if blog.isLikedByUser(app.session.get('id')) %}btn-danger{% else %}btn-outline-danger{% endif %}">
+        {# Ajout du token CSRF pour sécuriser la requête #}
+        <input type="hidden" name="_token" value="{{ csrf_token('blog_toggle_like_' ~ blog.id) }}">
+        
+        {# Bouton de like/dislike #}
+        <button 
+            type="submit" 
+            class="btn btn-like {% if blog.isLikedByUser(app.session.get('id')) %}btn-danger{% else %}btn-outline-danger{% endif %}">
             <i class="fas fa-heart"></i>
-            <span class="likes-count">{{ blog.likedBy|length }}</span>
+            <span class="likes-count">{{ blog.getLikesCount() }}</span>
         </button>
     </form>
 </div>
+
 
                 <div class="comment-form animate__animated animate__fadeInUp">
                     <h4>Ajouter un commentaire</h4>

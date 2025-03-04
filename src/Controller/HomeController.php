@@ -24,7 +24,7 @@ final class HomeController extends AbstractController
     {
         return $this->render('home/front_home.html.twig', [
             'events'=>$eventsRepository->findAll(),
-            'cours'=>$coursRepository->findAll(),
+            'cours'=>$coursRepository->findBy([], null, 4),
             'teachers'=>$userRepository->findEnseignant(),
         ]);
     }
