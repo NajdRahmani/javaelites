@@ -271,45 +271,7 @@ final class BlogController extends AbstractController
             return $this->json(['error' => 'Une erreur est survenue lors de la suppression du commentaire'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-<<<<<<< HEAD
 
     
-=======
-    #[Route('/blog/{id}/like', name: 'app_blog_toggle_like', methods: ['POST'])]
-public function toggleLike(
-    Request $request,
-    Blog $blog,
-    EntityManagerInterface $entityManager
-): Response {
-    // Récupérer l'ID de l'utilisateur depuis la session
-    $userId = $request->getSession()->get('id');
-
-    // Vérifier si l'utilisateur est connecté
-    if (!$userId) {
-        return $this->redirectToRoute('app_login');
-    }
-
-    // Récupérer l'utilisateur à partir de l'ID
-    $user = $entityManager->getRepository(User::class)->find($userId);
-
-    if (!$user) {
-        return $this->redirectToRoute('app_login');
-    }
-
-    // Ajouter ou retirer le like
-    if ($blog->isLikedByUser($user->getId())) {
-        $blog->removeLike($user);
-    } else {
-        $blog->addLike($user);
-    }
-
-    // Sauvegarder les modifications dans la base de données
-    $entityManager->persist($blog);
-    $entityManager->flush();
-
-    // Rediriger vers la page d'affichage du blog
-    return $this->redirectToRoute('app_blog_show2', ['id' => $blog->getId()]);
-}
->>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
 
 }

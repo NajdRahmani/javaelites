@@ -139,24 +139,15 @@ class User  implements PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, UserQuizSelection>
      */
-<<<<<<< HEAD
     #[ORM\OneToMany(targetEntity: UserQuizSelection::class, mappedBy: 'user')]
     private Collection $userQuizSelections;
 
-=======
  
-<<<<<<< HEAD
      #[ORM\ManyToMany(targetEntity: Blog::class, inversedBy: 'likedBy')] // Ligne ~260
      #[ORM\JoinTable(name: "user_blog_likes")]
      private Collection $likedBlogs;
      
 
-=======
-     #[ORM\ManyToMany(targetEntity: Blog::class, mappedBy: 'Likes')]
-     private Collection $likedBlogs;
-     
->>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
->>>>>>> ef3fc06a25b26a3b1dfac2c07461b4c9b405097c
     public function __construct()
     { $this->cours = new ArrayCollection();
         $this->coursFavoris = new ArrayCollection();
@@ -512,21 +503,12 @@ class User  implements PasswordAuthenticatedUserInterface
     /**
      * @return Collection<int, UserQuizSelection>
      */
-<<<<<<< HEAD
     public function getUserQuizSelections(): Collection
-=======
-    public function getBlogs(): Collection  // Ligne ~390
->>>>>>> ef3fc06a25b26a3b1dfac2c07461b4c9b405097c
     {
         return $this->userQuizSelections;
     }
-<<<<<<< HEAD
 
     public function addUserQuizSelection(UserQuizSelection $userQuizSelection): static
-=======
-    
-    public function addBlog(Blog $blog): static
->>>>>>> ef3fc06a25b26a3b1dfac2c07461b4c9b405097c
     {
         if (!$this->userQuizSelections->contains($userQuizSelection)) {
             $this->userQuizSelections->add($userQuizSelection);
@@ -548,18 +530,6 @@ class User  implements PasswordAuthenticatedUserInterface
         return $this;
     }
 
-<<<<<<< HEAD
-=======
-
-<<<<<<< HEAD
 
 }
-=======
-   
-
-    
-
->>>>>>> ef3fc06a25b26a3b1dfac2c07461b4c9b405097c
-   }
->>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
 

@@ -13,27 +13,12 @@ return [
     Symfony\Bundle\MonologBundle\MonologBundle::class => ['all' => true],
     Symfony\Bundle\MakerBundle\MakerBundle::class => ['dev' => true],
     Symfony\WebpackEncoreBundle\WebpackEncoreBundle::class => ['all' => true],
-<<<<<<< HEAD
-<<<<<<< HEAD
     Liip\ImagineBundle\LiipImagineBundle::class => ['all' => true],
     JMS\TranslationBundle\JMSTranslationBundle::class => ['all' => true],
     Knp\Bundle\PaginatorBundle\KnpPaginatorBundle::class => ['all' => true],
     Endroid\QrCodeBundle\EndroidQrCodeBundle::class => ['all' => true],
-=======
-=======
-    JMS\TranslationBundle\JMSTranslationBundle::class => ['all' => true],
-    Endroid\QrCodeBundle\EndroidQrCodeBundle::class => ['all' => true],
-=======
->>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
->>>>>>> ef3fc06a25b26a3b1dfac2c07461b4c9b405097c
     Knp\Bundle\PaginatorBundle\KnpPaginatorBundle::class => ['all' => true],
     Knp\Bundle\SnappyBundle\KnpSnappyBundle::class => ['all' => true],
     Symfony\UX\Chartjs\ChartjsBundle::class => ['all' => true],
     Symfony\UX\Turbo\TurboBundle::class => ['all' => true],
-<<<<<<< HEAD
-=======
-    Endroid\QrCodeBundle\EndroidQrCodeBundle::class => ['all' => true],
-    JMS\TranslationBundle\JMSTranslationBundle::class => ['all' => true],
-    Liip\ImagineBundle\LiipImagineBundle::class => ['all' => true],
->>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
 ];

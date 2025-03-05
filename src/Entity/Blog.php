@@ -8,11 +8,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-<<<<<<< HEAD
-=======
-use App\Entity\Comment;
-use App\Entity\User;
->>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
 
 #[ORM\Entity(repositoryClass: BlogRepository::class)]
 class Blog
@@ -53,12 +48,7 @@ class Blog
     #[ORM\OneToMany(mappedBy: 'blog', targetEntity: Comment::class, orphanRemoval: true)]
     private Collection $comments;
 
-<<<<<<< HEAD
   
-=======
-    #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'likedBlogs')]
-    private Collection $Likes;
->>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
 
     public function __construct()
     {
@@ -148,17 +138,11 @@ class Blog
         return $this;
     }
 
-<<<<<<< HEAD
     public function getLikes(): Collection
     {
         return $this->likes;
     }
 
-=======
-    /**
-     * @return Collection<int, Comment>
-     */
->>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
     public function getComments(): Collection
     {
         return $this->comments;
@@ -183,7 +167,6 @@ class Blog
         return $this;
     }
 
-<<<<<<< HEAD
     
     public function isLikedByUser(int $userId): bool
     {
@@ -194,50 +177,18 @@ class Blog
     {
         if (!$this->likes->contains($like)) {
             $this->likes->add($like);
-=======
-    /**
-     * @return Collection<int, User>
-     */
-    public function getLikedBy(): Collection
-    {
-        return $this->Likes;
-    }
-
-    public function isLikedByUser(int $userId): bool
-    {
-        foreach ($this->Likes as $user) {
-            if ($user->getId() === $userId) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public function addLike(User $user): self
-    {
-        if (!$this->Likes->contains($user)) {
-            $this->Likes[] = $user;
->>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
         }
         return $this;
     }
 
     public function removeLike(Like $like): self
     {
-<<<<<<< HEAD
         $this->likes->removeElement($like);
-=======
-        $this->Likes->removeElement($user);
->>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
         return $this;
     }
 
     public function getLikesCount(): int
     {
-<<<<<<< HEAD
         return $this->likes->count();
-=======
-        return $this->Likes->count();
->>>>>>> 565333c476f05b108daaa4aaeb74a3547b8f7aec
     }
 }
